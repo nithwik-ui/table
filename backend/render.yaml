@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: sru-timetable-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: FCM_SERVER_KEY
+        sync: false
+      - key: SYNC_INTERVAL_MINUTES
+        value: 60
+      - key: PORT
+        value: 3000

@@ -47,7 +47,7 @@ async function executeInPool<T>(
   await Promise.all(workers);
 }
 
-async function sync() {
+export async function runSync() {
   console.log('=== Starting SRU Timetable Sync Worker ===');
   const startTime = Date.now();
 
@@ -316,7 +316,6 @@ async function sync() {
           .delete()
           .eq('batch_id', batchId);
 
-
         if (deleteErr) {
           throw new Error(`Failed to delete existing entries: ${deleteErr.message}`);
         }
@@ -364,7 +363,10 @@ async function sync() {
   console.log('=================================');
 }
 
-sync().catch(err => {
-  console.error('Fatal sync error:', err);
-  process.exit(1);
-});
+// Support running directly from CLI (ts-node src/sync/index.ts)
+if (require.main === module) {
+  runSync().catch(err => {
+    console.error('Fatal sync error:', err);
+    process.exit(1);
+  });
+}
