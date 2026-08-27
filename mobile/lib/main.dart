@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'core/constants.dart';
 import 'core/storage.dart';
-import 'core/api.dart';
 import 'core/notifications.dart';
 import 'features/onboarding/welcome_screen.dart';
 import 'features/dashboard/dashboard_screen.dart';
@@ -28,14 +25,6 @@ void main() async {
     debugPrint('Notification service initialization failed: $e');
   }
 
-  // Initialize Firebase safely (crash protection if google-services.json is missing)
-  try {
-    await Firebase.initializeApp();
-    await _initFirebaseMessaging();
-  } catch (e) {
-    debugPrint('Firebase initialization failed (missing configuration files is expected for testing): $e');
-  }
-
   // Initialize AdMob
   try {
     await MobileAds.instance.initialize();
@@ -44,48 +33,6 @@ void main() async {
   }
 
   runApp(const MyApp());
-}
-
-Future<void> _initFirebaseMessaging() async {
-  final messaging = FirebaseMessaging.instance;
-  
-  // Request notifications permissions
-  await messaging.requestPermission(
-    alert: true,
-    announcement: false,
-    badge: true,
-    carPlay: false,
-    criticalAlert: false,
-    provisional: false,
-    sound: true,
-  );
-
-  // Background message handler
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-  // Auto-register token if user has already configured their timetable
-  final selection = StorageService.getSelection();
-  if (selection != null) {
-    final batchId = selection['batchId']!;
-    try {
-      final token = await messaging.getToken();
-      if (token != null) {
-        await ApiService.registerDevice(token, batchId);
-        debugPrint('FCM Token registered on app launch: $token');
-      }
-    } catch (e) {
-      debugPrint('Failed to get or send FCM token: $e');
-    }
-  }
-}
-
-// Background message handler
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  try {
-    await Hive.initFlutter();
-  } catch (_) {}
-  debugPrint("Handling a background message: ${message.messageId}");
 }
 
 class MyApp extends StatelessWidget {

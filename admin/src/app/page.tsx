@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 
 const DEFAULT_API_URL = 'https://sru-timetable-api.onrender.com';
-const LOCAL_API_URL = 'http://localhost:3000';
+const LOCAL_API_URL = 'http://localhost:8000';
 
 interface Batch {
   id: string;
