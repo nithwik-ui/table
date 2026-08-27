@@ -2,6 +2,7 @@ import { SRUClient, TimetableEntry } from '../sru/sru-client';
 import { supabase } from '../db/supabase';
 import * as crypto from 'crypto';
 import { diffTimetables } from './diff';
+import { sendBatchNotifications } from '../notifications/fcm';
 
 // Politeness settings
 const CONCURRENCY_LIMIT = 3;
@@ -291,6 +292,9 @@ export async function runSync() {
                 console.error(`Failed to write timetable changes: ${insertChangesErr.message}`);
               } else {
                 console.log(`[+] Recorded ${changes.length} schedule updates in timetable_changes.`);
+                sendBatchNotifications(batchId, changes).catch(err => {
+                  console.error('Failed to dispatch push notifications:', err);
+                });
               }
             }
           }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../core/constants.dart';
 import '../../core/api.dart';
 import '../../core/storage.dart';
@@ -47,9 +48,17 @@ class _SyncingScreenState extends State<SyncingScreen> {
       // 2. Cache timetable entries locally
       await StorageService.saveTimetableCache(entries);
 
-      // 3. Register device with a mock token for now (FCM is Phase 7)
-      // Standard fallback so a failure here doesn't block sync completion
-      await ApiService.registerDevice('MOCK_DEVICE_TOKEN_PHASE_6', widget.batchId);
+      // 3. Register device token
+      String fcmToken = 'MOCK_DEVICE_TOKEN_PHASE_6';
+      try {
+        final token = await FirebaseMessaging.instance.getToken();
+        if (token != null) {
+          fcmToken = token;
+        }
+      } catch (_) {
+        // FCM not configured or initialized
+      }
+      await ApiService.registerDevice(fcmToken, widget.batchId);
 
       // 4. Save batch variables to local storage (marks onboarding as complete)
       await StorageService.saveSelection(
