@@ -42,12 +42,14 @@ class _YearScreenState extends State<YearScreen> {
     try {
       final cached = StorageService.getYearsCache(widget.degree);
       if (cached != null && cached.isNotEmpty) {
-        final list = cached.cast<String>();
-        _setSortedYears(list);
-        _isLoading = false;
-        // Background refresh
-        _refreshYears();
-        return;
+        final list = cached.cast<String>().where((y) => !y.startsWith('{')).toList();
+        if (list.isNotEmpty) {
+          _setSortedYears(list);
+          _isLoading = false;
+          // Background refresh
+          _refreshYears();
+          return;
+        }
       }
       await _refreshYears();
     } catch (e) {
@@ -61,7 +63,13 @@ class _YearScreenState extends State<YearScreen> {
   Future<void> _refreshYears() async {
     try {
       final list = await ApiService.fetchYears(widget.degree);
-      final yearNames = list.map((item) => item.toString()).toList();
+      final yearNames = list.map((item) {
+        if (item is Map) {
+          return item['name'] as String;
+        }
+        return item.toString();
+      }).toList();
+      
       await StorageService.saveYearsCache(widget.degree, yearNames);
 
       if (mounted) {
