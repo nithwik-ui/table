@@ -9,7 +9,8 @@
     "start": "node dist/index.js",
     "sync": "ts-node src/sync/index.ts",
     "test:adapter": "ts-node src/sru/test-adapter.ts",
-    "test:rls": "ts-node src/db/verify-rls.ts"
+    "test:rls": "ts-node src/db/verify-rls.ts",
+    "test:changes": "ts-node src/sync/test-change-detection.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.44.0",

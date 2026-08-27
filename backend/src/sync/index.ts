@@ -1,6 +1,7 @@
 import { SRUClient, TimetableEntry } from '../sru/sru-client';
 import { supabase } from '../db/supabase';
 import * as crypto from 'crypto';
+import { diffTimetables } from './diff';
 
 // Politeness settings
 const CONCURRENCY_LIMIT = 3;
@@ -270,6 +271,31 @@ async function sync() {
         // Hash changed or is new
         console.log(`[+] Batch ${batchCode} (${degreeCode} / ${yearName}): Update detected! Syncing...`);
 
+        // Diff with old entries if snapshot existed previously
+        if (snapshot) {
+          const { data: oldEntries, error: oldEntriesErr } = await supabase
+            .from('timetable_entries')
+            .select('id, day, start_time, end_time, subject, faculty, room, ltp, semester')
+            .eq('batch_id', batchId);
+
+          if (oldEntriesErr) {
+            console.error(`Failed to fetch old entries for diff: ${oldEntriesErr.message}`);
+          } else {
+            const { changes } = diffTimetables(batchId, oldEntries || [], sorted);
+            if (changes.length > 0) {
+              const { error: insertChangesErr } = await supabase
+                .from('timetable_changes')
+                .insert(changes);
+
+              if (insertChangesErr) {
+                console.error(`Failed to write timetable changes: ${insertChangesErr.message}`);
+              } else {
+                console.log(`[+] Recorded ${changes.length} schedule updates in timetable_changes.`);
+              }
+            }
+          }
+        }
+
         // Update raw snapshot
         const { error: snapshotUpsertErr } = await supabase
           .from('timetable_snapshots')
@@ -289,6 +315,7 @@ async function sync() {
           .from('timetable_entries')
           .delete()
           .eq('batch_id', batchId);
+
 
         if (deleteErr) {
           throw new Error(`Failed to delete existing entries: ${deleteErr.message}`);
