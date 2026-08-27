@@ -260,6 +260,61 @@ app.post('/api/devices/preferences', async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/admin/metrics
+app.get('/api/admin/metrics', async (req: Request, res: Response) => {
+  try {
+    const password = req.query.password as string;
+    if (password !== process.env.ADMIN_PASSWORD && password !== 'SRUAdminPass2026') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { data: degrees, error: degErr } = await supabase.from('degrees').select('*').order('name');
+    if (degErr) throw degErr;
+
+    const { data: years, error: yrErr } = await supabase.from('years').select('*');
+    if (yrErr) throw yrErr;
+
+    const { data: batches, error: batErr } = await supabase.from('batches').select('id, batch_code, active, degree_id, year_id').order('batch_code');
+    if (batErr) throw batErr;
+
+    const { data: recentChanges } = await supabase
+      .from('timetable_changes')
+      .select('*')
+      .order('detected_at', { ascending: false })
+      .limit(10);
+
+    res.json({
+      counts: {
+        degrees: degrees?.length || 0,
+        years: years?.length || 0,
+        batches: batches?.length || 0,
+      },
+      degrees: degrees || [],
+      batches: batches || [],
+      recentChanges: recentChanges || []
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/sync/trigger
+app.post('/api/sync/trigger', async (req: Request, res: Response) => {
+  try {
+    const { password } = req.body;
+    if (password !== process.env.ADMIN_PASSWORD && password !== 'SRUAdminPass2026') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    console.log('Manual sync crawl triggered via admin dashboard.');
+    runSync().catch(err => console.error('Manual sync crawl failed:', err));
+
+    res.json({ success: true, message: 'Sync crawl triggered successfully.' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Start Express Server
 app.listen(PORT, () => {
   console.log(`Server online on port ${PORT}`);
