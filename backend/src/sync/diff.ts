@@ -69,13 +69,13 @@ export function diffTimetables(
 
       // Check for attribute updates
       if (match.room !== newEntry.room) {
-        recordChange(match.id, 'ROOM_CHANGED', 'room', match.room, newEntry.room);
+        recordChange(match.id, 'ROOM_CHANGED', `room:${match.subject}`, match.room, newEntry.room);
       }
       if (match.faculty !== newEntry.faculty) {
-        recordChange(match.id, 'FACULTY_CHANGED', 'faculty', match.faculty, newEntry.faculty);
+        recordChange(match.id, 'FACULTY_CHANGED', `faculty:${match.subject}`, match.faculty, newEntry.faculty);
       }
       if (match.ltp !== newEntry.ltp) {
-        recordChange(match.id, 'LTP_CHANGED', 'ltp', match.ltp, newEntry.ltp);
+        recordChange(match.id, 'LTP_CHANGED', `ltp:${match.subject}`, match.ltp, newEntry.ltp);
       }
     }
   }
@@ -95,17 +95,17 @@ export function diffTimetables(
       matchedOld.add(match.id);
       matchedNew.add(i);
 
-      recordChange(match.id, 'SUBJECT_CHANGED', 'subject', match.subject, newEntry.subject);
+      recordChange(match.id, 'SUBJECT_CHANGED', `subject:${match.subject}`, match.subject, newEntry.subject);
 
       // Check other properties as well
       if (match.room !== newEntry.room) {
-        recordChange(match.id, 'ROOM_CHANGED', 'room', match.room, newEntry.room);
+        recordChange(match.id, 'ROOM_CHANGED', `room:${match.subject}`, match.room, newEntry.room);
       }
       if (match.faculty !== newEntry.faculty) {
-        recordChange(match.id, 'FACULTY_CHANGED', 'faculty', match.faculty, newEntry.faculty);
+        recordChange(match.id, 'FACULTY_CHANGED', `faculty:${match.subject}`, match.faculty, newEntry.faculty);
       }
       if (match.ltp !== newEntry.ltp) {
-        recordChange(match.id, 'LTP_CHANGED', 'ltp', match.ltp, newEntry.ltp);
+        recordChange(match.id, 'LTP_CHANGED', `ltp:${match.subject}`, match.ltp, newEntry.ltp);
       }
     }
   }
@@ -128,13 +128,13 @@ export function diffTimetables(
       recordChange(
         match.id,
         'TIME_CHANGED',
-        'time',
+        `time:${match.subject}`,
         `${match.day} ${match.start_time}-${match.end_time}`,
         `${newEntry.day} ${newEntry.start_time}-${newEntry.end_time}`
       );
 
       if (match.room !== newEntry.room) {
-        recordChange(match.id, 'ROOM_CHANGED', 'room', match.room, newEntry.room);
+        recordChange(match.id, 'ROOM_CHANGED', `room:${match.subject}`, match.room, newEntry.room);
       }
     }
   }

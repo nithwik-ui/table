@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
 import '../../core/api.dart';
@@ -314,8 +315,10 @@ class _ProfileTabState extends State<ProfileTab> {
                         ListTile(
                           leading: const Icon(Icons.update, color: AppConstants.primary),
                           title: Text('Check for updates', style: AppConstants.getBodyLarge()),
-                          trailing: const Icon(Icons.chevron_right, color: AppConstants.textSecondary),
-                          onTap: _isRefreshing ? null : _refreshTimetable, // alias to refresh per spec
+                          trailing: _isCheckingUpdates
+                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppConstants.primary))
+                              : const Icon(Icons.chevron_right, color: AppConstants.textSecondary),
+                          onTap: _isRefreshing || _isCheckingUpdates ? null : () => _checkForUpdates(context),
                         ),
                         const Divider(height: 1, color: AppConstants.outline),
                         // Clear cache
@@ -332,9 +335,18 @@ class _ProfileTabState extends State<ProfileTab> {
 
                   // About / App version
                   Center(
-                    child: Text(
-                      'SRU Timetable v1.0.0',
-                      style: AppConstants.getLabelSmall(color: AppConstants.textSecondary),
+                    child: Column(
+                      children: [
+                        Text(
+                          'SRU Timetable v${AppConstants.currentVersion}',
+                          style: AppConstants.getLabelSmall(color: AppConstants.textSecondary),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Open-source dashboard updates',
+                          style: AppConstants.getLabelSmall(color: AppConstants.textSecondary).copyWith(fontSize: 10),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -344,6 +356,113 @@ class _ProfileTabState extends State<ProfileTab> {
           ],
         ),
       ),
+    );
+  }
+
+  bool _isCheckingUpdates = false;
+
+  Future<void> _checkForUpdates(BuildContext context, {bool showToast = true}) async {
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _isCheckingUpdates = true);
+    
+    final release = await ApiService.fetchLatestGithubRelease();
+    setState(() => _isCheckingUpdates = false);
+
+    if (release == null) {
+      if (showToast && mounted) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Could not check for updates. You are offline.')),
+        );
+      }
+      return;
+    }
+
+    final String latestTag = release['tag_name'] as String? ?? '1.0.1';
+    final String htmlUrl = release['html_url'] as String? ?? 'https://github.com/${AppConstants.githubRepo}';
+    
+    // Find apk asset url if present
+    String? downloadUrl;
+    final assets = release['assets'] as List<dynamic>?;
+    if (assets != null && assets.isNotEmpty) {
+      for (final asset in assets) {
+        final name = asset['name'] as String? ?? '';
+        if (name.endsWith('.apk')) {
+          downloadUrl = asset['browser_download_url'] as String?;
+          break;
+        }
+      }
+    }
+    
+    final targetUrl = downloadUrl ?? htmlUrl;
+
+    if (_isNewerVersion(AppConstants.currentVersion, latestTag)) {
+      if (mounted) {
+        _showUpdateDialog(latestTag, targetUrl);
+      }
+    } else {
+      if (showToast && mounted) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('App is up to date!')),
+        );
+      }
+    }
+  }
+
+  bool _isNewerVersion(String current, String latest) {
+    try {
+      final cleanCurrent = current.replaceAll('v', '').replaceAll('+', '.');
+      final cleanLatest = latest.replaceAll('v', '').replaceAll('+', '.');
+      
+      final currentParts = cleanCurrent.split('.').map(int.parse).toList();
+      final latestParts = cleanLatest.split('.').map(int.parse).toList();
+      
+      for (int i = 0; i < latestParts.length; i++) {
+        if (i >= currentParts.length) {
+          return true;
+        }
+        if (latestParts[i] > currentParts[i]) {
+          return true;
+        } else if (latestParts[i] < currentParts[i]) {
+          return false;
+        }
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  void _showUpdateDialog(String latestTag, String downloadUrl) {
+    final messenger = ScaffoldMessenger.of(context);
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Update Available'),
+          content: Text('A new version of SRU Timetable ($latestTag) is available on GitHub. Would you like to download it now?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Later', style: TextStyle(color: AppConstants.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                try {
+                  final uri = Uri.parse(downloadUrl);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
+                } catch (_) {
+                  messenger.showSnackBar(
+                    const SnackBar(content: Text('Could not open download link.')),
+                  );
+                }
+              },
+              child: const Text('Download', style: TextStyle(color: AppConstants.primary, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
     );
   }
 }

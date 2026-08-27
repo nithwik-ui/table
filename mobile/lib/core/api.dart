@@ -119,4 +119,18 @@ class ApiService {
       return false;
     }
   }
+
+  static Future<Map<String, dynamic>?> fetchLatestGithubRelease() async {
+    try {
+      final response = await http.get(
+        Uri.parse('https://api.github.com/repos/${AppConstants.githubRepo}/releases/latest'),
+        headers: {'Accept': 'application/vnd.github.v3+json'},
+      ).timeout(timeoutDuration);
+      
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      }
+    } catch (_) {}
+    return null;
+  }
 }

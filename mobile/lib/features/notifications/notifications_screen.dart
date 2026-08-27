@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
+import '../../core/storage.dart';
+import '../../core/api.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -10,46 +12,118 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  // Mock notification data since push notifications (FCM) is Phase 7
-  // We populate mock items so the UI is fully complete and testable
-  final List<Map<String, dynamic>> _mockNotifications = [
-    {
-      'id': '1',
-      'title': 'Room Changed',
-      'body': 'Algorithms (CS-301) moved to 1202-BL1-SF.',
-      'type': 'ROOM_CHANGED',
-      'timestamp': DateTime.now().subtract(const Duration(minutes: 45)).toIso8601String(),
-      'read': false,
-    },
-    {
-      'id': '2',
-      'title': 'Class Cancelled',
-      'body': 'Software Engineering and System Design (CS-303) has been cancelled for today.',
-      'type': 'CLASS_CANCELLED',
-      'timestamp': DateTime.now().subtract(const Duration(hours: 3)).toIso8601String(),
-      'read': false,
-    },
-    {
-      'id': '3',
-      'title': 'Faculty Changed',
-      'body': 'Statistics for Computer Science will be taken by Dr. Kiran Kumar Thula today.',
-      'type': 'FACULTY_CHANGED',
-      'timestamp': DateTime.now().subtract(const Duration(hours: 5)).toIso8601String(),
-      'read': true,
-    },
-    {
-      'id': '4',
-      'title': 'Class Reminder',
-      'body': 'Algorithms starting in 15 mins (1106-B_BL1-FF).',
-      'type': 'CLASS_REMINDER',
-      'timestamp': DateTime.now().subtract(const Duration(days: 1, hours: 2)).toIso8601String(),
-      'read': true,
-    },
-  ];
+  List<Map<String, dynamic>> _notifications = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNotificationHistory();
+  }
+
+  Future<void> _loadNotificationHistory() async {
+    final selection = StorageService.getSelection();
+    if (selection == null) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'No batch selected. Please configure your timetable.';
+      });
+      return;
+    }
+
+    final batchId = selection['batchId']!;
+    final batchCode = selection['batchCode']!;
+
+    try {
+      final changes = await ApiService.fetchChanges(batchId);
+      final List<Map<String, dynamic>> parsedList = [];
+
+      for (final change in changes) {
+        final type = change['change_type'] as String;
+        final oldVal = change['old_value'] as String? ?? '';
+        final newVal = change['new_value'] as String? ?? '';
+        final detectedAt = change['detected_at'] as String;
+
+        String title = '';
+        String body = '';
+
+        // Decode subject from field_name if present (stored as "fieldName:SubjectName")
+        String subject = 'Class';
+        final fieldParts = (change['field_name'] as String? ?? '').split(':');
+        if (fieldParts.length > 1) {
+          subject = fieldParts.skip(1).join(':');
+        }
+
+        if (type == 'ROOM_CHANGED') {
+          title = 'Room Changed';
+          body = '$subject ($batchCode) moved to $newVal.';
+        } else if (type == 'FACULTY_CHANGED') {
+          title = 'Faculty Changed';
+          body = '$subject will be taken by $newVal today.';
+        } else if (type == 'CLASS_REMOVED') {
+          title = 'Class Cancelled';
+          final oldSubject = oldVal.split(' (')[0];
+          body = '$oldSubject ($batchCode) has been cancelled for today.';
+        } else if (type == 'CLASS_ADDED') {
+          title = 'Class Added';
+          final newSubject = newVal.split(' (')[0];
+          body = '$newSubject ($batchCode) has been added.';
+        } else if (type == 'TIME_CHANGED') {
+          title = 'Class Rescheduled';
+          body = '$subject rescheduled from $oldVal to $newVal.';
+        } else {
+          title = 'Schedule Update';
+          body = '$subject details updated.';
+        }
+
+        parsedList.add({
+          'id': change['id'] as String,
+          'title': title,
+          'body': body,
+          'type': type,
+          'timestamp': detectedAt,
+          'read': true,
+        });
+      }
+
+      // Add a simulated local class reminder notification if reminders are enabled, to showcase it visually
+      if (StorageService.isClassRemindersEnabled() && parsedList.isNotEmpty) {
+        final timetable = StorageService.getTimetableCache();
+        if (timetable.isNotEmpty) {
+          final firstClass = timetable.first;
+          final room = (firstClass['room'] as String? ?? 'No Room').split('_')[0];
+          parsedList.insert(0, {
+            'id': 'simulated_reminder',
+            'title': 'Class Reminder',
+            'body': '${firstClass['subject']} starting in 15 mins ($room).',
+            'type': 'CLASS_REMINDER',
+            'timestamp': DateTime.now().subtract(const Duration(minutes: 5)).toIso8601String(),
+            'read': false,
+          });
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _notifications = parsedList;
+          _isLoading = false;
+          _errorMessage = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Could not retrieve notifications. You are offline.';
+        });
+      }
+    }
+  }
 
   void _markAllRead() {
     setState(() {
-      for (final n in _mockNotifications) {
+      for (final n in _notifications) {
         n['read'] = true;
       }
     });
@@ -64,6 +138,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       case 'FACULTY_CHANGED':
         return Icons.person_outline;
       case 'CLASS_CANCELLED':
+      case 'CLASS_REMOVED':
         return Icons.cancel_outlined;
       default:
         return Icons.notifications_outlined;
@@ -79,6 +154,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       case 'FACULTY_CHANGED':
         return AppConstants.purpleAccent;
       case 'CLASS_CANCELLED':
+      case 'CLASS_REMOVED':
         return AppConstants.error;
       default:
         return AppConstants.textSecondary;
@@ -88,13 +164,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Color _getIconBgColor(String type) {
     switch (type) {
       case 'CLASS_REMINDER':
-        return AppConstants.infoContainer.withOpacity(0.5);
+        return AppConstants.infoContainer.withValues(alpha: 0.5);
       case 'ROOM_CHANGED':
-        return AppConstants.warningContainer.withOpacity(0.5);
+        return AppConstants.warningContainer.withValues(alpha: 0.5);
       case 'FACULTY_CHANGED':
-        return AppConstants.purpleContainer.withOpacity(0.5);
+        return AppConstants.purpleContainer.withValues(alpha: 0.5);
       case 'CLASS_CANCELLED':
-        return AppConstants.errorContainer.withOpacity(0.5);
+      case 'CLASS_REMOVED':
+        return AppConstants.errorContainer.withValues(alpha: 0.5);
       default:
         return AppConstants.outline;
     }
@@ -102,8 +179,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   String _formatTimestamp(String isoString) {
     try {
-      final dt = DateTime.parse(isoString);
-      return DateFormat('h:mm a').format(dt);
+      final dt = DateTime.parse(isoString).toLocal();
+      final now = DateTime.now();
+      if (dt.day == now.day && dt.month == now.month && dt.year == now.year) {
+        return DateFormat('h:mm a').format(dt);
+      }
+      return DateFormat('MMM d, h:mm a').format(dt);
     } catch (_) {
       return '';
     }
@@ -111,18 +192,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Separate today vs yesterday
     final now = DateTime.now();
     final todayNotifications = <Map<String, dynamic>>[];
-    final yesterdayNotifications = <Map<String, dynamic>>[];
+    final olderNotifications = <Map<String, dynamic>>[];
 
-    for (final n in _mockNotifications) {
+    for (final n in _notifications) {
       try {
-        final dt = DateTime.parse(n['timestamp'] as String);
+        final dt = DateTime.parse(n['timestamp'] as String).toLocal();
         if (dt.day == now.day && dt.month == now.month && dt.year == now.year) {
           todayNotifications.add(n);
         } else {
-          yesterdayNotifications.add(n);
+          olderNotifications.add(n);
         }
       } catch (_) {
         todayNotifications.add(n);
@@ -143,7 +223,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           style: AppConstants.getHeadline().copyWith(fontSize: 18),
         ),
         actions: [
-          if (_mockNotifications.any((n) => !n['read']))
+          if (_notifications.any((n) => !n['read']))
             TextButton(
               onPressed: _markAllRead,
               child: Text(
@@ -154,70 +234,96 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ],
       ),
       body: SafeArea(
-        child: _mockNotifications.isNotEmpty
-            ? ListView(
-                padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer),
-                children: [
-                  const SizedBox(height: 12),
-                  // TODAY section
-                  if (todayNotifications.isNotEmpty) ...[
-                    Text(
-                      'TODAY',
-                      style: AppConstants.getLabelSmall().copyWith(fontSize: 11, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: todayNotifications.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) => _buildNotificationRow(todayNotifications[index]),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-
-                  // YESTERDAY section
-                  if (yesterdayNotifications.isNotEmpty) ...[
-                    Text(
-                      'YESTERDAY',
-                      style: AppConstants.getLabelSmall().copyWith(fontSize: 11, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: yesterdayNotifications.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) => _buildNotificationRow(yesterdayNotifications[index]),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                  
-                  // Footer divider
-                  Center(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator(color: AppConstants.primary))
+            : _errorMessage != null && _notifications.isEmpty
+                ? Center(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Text(
-                        'No older notifications',
-                        style: AppConstants.getLabelSmall(color: AppConstants.textSecondary),
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.error_outline, color: AppConstants.error, size: 48),
+                          const SizedBox(height: 16),
+                          Text(
+                            _errorMessage!,
+                            textAlign: TextAlign.center,
+                            style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _loadNotificationHistory,
+                            style: ElevatedButton.styleFrom(backgroundColor: AppConstants.primary),
+                            child: const Text('Retry'),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
-              )
-            : Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.notifications_none, color: AppConstants.textSecondary, size: 48),
-                    const SizedBox(height: 16),
-                    Text(
-                      "You're all caught up",
-                      style: AppConstants.getHeadline().copyWith(fontSize: 18),
-                    ),
-                  ],
-                ),
-              ),
+                  )
+                : _notifications.isNotEmpty
+                    ? ListView(
+                        padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer),
+                        children: [
+                          const SizedBox(height: 12),
+                          // TODAY section
+                          if (todayNotifications.isNotEmpty) ...[
+                            Text(
+                              'TODAY',
+                              style: AppConstants.getLabelSmall().copyWith(fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 8),
+                            ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: todayNotifications.length,
+                              separatorBuilder: (context, index) => const SizedBox(height: 8),
+                              itemBuilder: (context, index) => _buildNotificationRow(todayNotifications[index]),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+
+                          // OLDER section
+                          if (olderNotifications.isNotEmpty) ...[
+                            Text(
+                              'OLDER',
+                              style: AppConstants.getLabelSmall().copyWith(fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 8),
+                            ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: olderNotifications.length,
+                              separatorBuilder: (context, index) => const SizedBox(height: 8),
+                              itemBuilder: (context, index) => _buildNotificationRow(olderNotifications[index]),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+
+                          // Footer divider
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              child: Text(
+                                'No older notifications',
+                                style: AppConstants.getLabelSmall(color: AppConstants.textSecondary),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    : Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.notifications_none, color: AppConstants.textSecondary, size: 48),
+                            const SizedBox(height: 16),
+                            Text(
+                              "You're all caught up",
+                              style: AppConstants.getHeadline().copyWith(fontSize: 18),
+                            ),
+                          ],
+                        ),
+                      ),
       ),
     );
   }
@@ -225,7 +331,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget _buildNotificationRow(Map<String, dynamic> n) {
     final type = n['type'] as String;
     final isRead = n['read'] as bool;
-    
+
     final iconData = _getIconData(type);
     final iconColor = _getIconColor(type);
     final iconBg = _getIconBgColor(type);
