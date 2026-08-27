@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'core/constants.dart';
 import 'core/storage.dart';
 import 'core/api.dart';
+import 'core/notifications.dart';
 import 'features/onboarding/welcome_screen.dart';
 import 'features/dashboard/dashboard_screen.dart';
 
@@ -19,12 +21,26 @@ void main() async {
     debugPrint('Local storage initialization failed: $e');
   }
 
+  // Initialize Notifications
+  try {
+    await NotificationService.init();
+  } catch (e) {
+    debugPrint('Notification service initialization failed: $e');
+  }
+
   // Initialize Firebase safely (crash protection if google-services.json is missing)
   try {
     await Firebase.initializeApp();
     await _initFirebaseMessaging();
   } catch (e) {
     debugPrint('Firebase initialization failed (missing configuration files is expected for testing): $e');
+  }
+
+  // Initialize AdMob
+  try {
+    await MobileAds.instance.initialize();
+  } catch (e) {
+    debugPrint('AdMob initialization failed: $e');
   }
 
   runApp(const MyApp());

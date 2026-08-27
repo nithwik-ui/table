@@ -120,7 +120,7 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>?> fetchLatestGithubRelease() async {
+  static Future<Map<String, dynamic>> fetchLatestGithubRelease() async {
     try {
       final response = await http.get(
         Uri.parse('https://api.github.com/repos/${AppConstants.githubRepo}/releases/latest'),
@@ -128,9 +128,19 @@ class ApiService {
       ).timeout(timeoutDuration);
       
       if (response.statusCode == 200) {
-        return json.decode(response.body) as Map<String, dynamic>;
+        final data = json.decode(response.body) as Map<String, dynamic>;
+        data['status'] = 'success';
+        return data;
+      } else if (response.statusCode == 404) {
+        return {'status': 'no_release'};
+      } else {
+        return {'status': 'error', 'message': 'GitHub API error: ${response.statusCode}'};
       }
-    } catch (_) {}
-    return null;
+    } catch (e) {
+      if (e.toString().contains('TimeoutException') || e.toString().contains('SocketException') || e.toString().contains('ClientException')) {
+        return {'status': 'no_internet'};
+      }
+      return {'status': 'error', 'message': 'Unknown error occurred.'};
+    }
   }
 }

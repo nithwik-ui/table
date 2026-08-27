@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
 import '../../core/api.dart';
+import '../../core/notifications.dart';
 import '../onboarding/degree_screen.dart';
 
 class ProfileTab extends StatefulWidget {
@@ -113,6 +114,14 @@ class _ProfileTabState extends State<ProfileTab> {
   void _toggleReminders(bool val) async {
     setState(() => _remindersEnabled = val);
     await StorageService.setClassRemindersEnabled(val);
+    if (val) {
+      final list = StorageService.getTimetableCache();
+      if (list != null && list.isNotEmpty) {
+        await NotificationService.scheduleClassReminders(list);
+      }
+    } else {
+      await NotificationService.cancelAll();
+    }
   }
 
   Future<void> _refreshTimetable() async {
@@ -126,6 +135,11 @@ class _ProfileTabState extends State<ProfileTab> {
       final list = await ApiService.fetchTimetable(batchId);
       await StorageService.saveTimetableCache(list);
       await StorageService.saveLastSyncedAt(DateTime.now());
+      
+      final remindersEnabled = StorageService.isClassRemindersEnabled();
+      if (remindersEnabled) {
+        await NotificationService.scheduleClassReminders(list);
+      }
       
       setState(() => _isRefreshing = false);
       _loadProfileData();
@@ -167,15 +181,14 @@ class _ProfileTabState extends State<ProfileTab> {
               padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer, vertical: 8),
               child: Row(
                 children: [
-                  Text(
-                    'sru',
-                    style: AppConstants.getDisplay(color: AppConstants.primary).copyWith(fontSize: 24),
-                  ),
-                  const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      'SRU Timetable',
-                      style: AppConstants.getHeadline().copyWith(fontSize: 18),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Image.asset(
+                        'assets/logo.png',
+                        height: 28,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
                 ],
@@ -368,10 +381,26 @@ class _ProfileTabState extends State<ProfileTab> {
     final release = await ApiService.fetchLatestGithubRelease();
     setState(() => _isCheckingUpdates = false);
 
-    if (release == null) {
+    if (release['status'] == 'no_internet') {
       if (showToast && mounted) {
         messenger.showSnackBar(
-          const SnackBar(content: Text('Could not check for updates. You are offline.')),
+          const SnackBar(content: Text('Could not check for updates. Please check your internet connection.')),
+        );
+      }
+      return;
+    }
+    if (release['status'] == 'no_release') {
+      if (showToast && mounted) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('App is up to date!')),
+        );
+      }
+      return;
+    }
+    if (release['status'] == 'error') {
+      if (showToast && mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(release['message'] ?? 'Could not check for updates.')),
         );
       }
       return;

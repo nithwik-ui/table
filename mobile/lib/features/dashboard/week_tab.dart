@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
+import 'ad_banner.dart';
 import '../../core/api.dart';
 import '../notifications/notifications_screen.dart';
 
@@ -130,15 +131,14 @@ class _WeekTabState extends State<WeekTab> {
               padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer, vertical: 8),
               child: Row(
                 children: [
-                  Text(
-                    'sru',
-                    style: AppConstants.getDisplay(color: AppConstants.primary).copyWith(fontSize: 24),
-                  ),
-                  const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      'SRU Timetable',
-                      style: AppConstants.getHeadline().copyWith(fontSize: 18),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Image.asset(
+                        'assets/logo.png',
+                        height: 28,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
                   IconButton(
@@ -419,6 +419,7 @@ class _WeekTabState extends State<WeekTab> {
                       ],
                     ),
             ),
+            const AdBanner(),
           ],
         ),
       ),

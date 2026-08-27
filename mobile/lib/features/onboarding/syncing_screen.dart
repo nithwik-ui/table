@@ -3,6 +3,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../core/constants.dart';
 import '../../core/api.dart';
 import '../../core/storage.dart';
+import '../../core/notifications.dart';
 import '../dashboard/dashboard_screen.dart';
 
 class SyncingScreen extends StatefulWidget {
@@ -47,6 +48,11 @@ class _SyncingScreenState extends State<SyncingScreen> {
       
       // 2. Cache timetable entries locally
       await StorageService.saveTimetableCache(entries);
+
+      // 2.5 Schedule local reminders if enabled (default true)
+      if (StorageService.isClassRemindersEnabled()) {
+        await NotificationService.scheduleClassReminders(entries);
+      }
 
       // 3. Register device token
       String fcmToken = 'MOCK_DEVICE_TOKEN_PHASE_6';
