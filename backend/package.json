@@ -8,9 +8,11 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "sync": "ts-node src/sync/index.ts",
-    "test:adapter": "ts-node src/sru/test-adapter.ts"
+    "test:adapter": "ts-node src/sru/test-adapter.ts",
+    "test:rls": "ts-node src/db/verify-rls.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.44.0",
     "axios": "^1.7.2",
     "cheerio": "^1.0.0-rc.12",
     "dotenv": "^16.4.5",
