@@ -1,0 +1,315 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>SRU Timetable - Week View</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Google Fonts: Inter & Geist -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Geist:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary": "#ffffff",
+                    "inverse-on-surface": "#edf0ff",
+                    "error": "#ba1a1a",
+                    "on-secondary": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "surface": "#f9f9ff",
+                    "secondary": "#585f6c",
+                    "on-tertiary-fixed": "#321200",
+                    "secondary-container": "#dce2f3",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-dim": "#d3daef",
+                    "on-primary-fixed-variant": "#00468a",
+                    "on-error-container": "#93000a",
+                    "primary": "#003870",
+                    "on-secondary-container": "#5e6572",
+                    "on-primary-container": "#9fc3ff",
+                    "outline-variant": "#c2c6d2",
+                    "error-container": "#ffdad6",
+                    "secondary-fixed": "#dce2f3",
+                    "outline": "#727782",
+                    "on-surface": "#141b2b",
+                    "tertiary-container": "#823b00",
+                    "primary-fixed": "#d5e3ff",
+                    "primary-container": "#0b4f96",
+                    "tertiary-fixed": "#ffdbc8",
+                    "on-secondary-fixed-variant": "#404754",
+                    "tertiary": "#5f2900",
+                    "on-primary-fixed": "#001b3c",
+                    "surface-bright": "#f9f9ff",
+                    "primary-fixed-dim": "#a8c8ff",
+                    "on-tertiary-fixed-variant": "#753400",
+                    "surface-container-low": "#f1f3ff",
+                    "background": "#f9f9ff",
+                    "on-tertiary-container": "#ffaf7f",
+                    "surface-container-highest": "#dce2f7",
+                    "on-error": "#ffffff",
+                    "surface-tint": "#265ea6",
+                    "secondary-fixed-dim": "#c0c7d6",
+                    "inverse-surface": "#293040",
+                    "inverse-primary": "#a8c8ff",
+                    "on-secondary-fixed": "#151c27",
+                    "on-background": "#141b2b",
+                    "tertiary-fixed-dim": "#ffb68b",
+                    "on-surface-variant": "#424751",
+                    "surface-container-high": "#e1e8fd",
+                    "surface-variant": "#dce2f7",
+                    "surface-container": "#e9edff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-padding": "16px",
+                    "lg": "24px",
+                    "stack-gap": "12px",
+                    "base": "8px",
+                    "xs": "4px",
+                    "md": "16px",
+                    "xl": "32px",
+                    "sm": "8px"
+            },
+            "fontFamily": {
+                    "label-sm": [
+                            "Geist"
+                    ],
+                    "headline": [
+                            "Inter"
+                    ],
+                    "mono-label": [
+                            "Geist"
+                    ],
+                    "body-lg": [
+                            "Inter"
+                    ],
+                    "body-md": [
+                            "Inter"
+                    ],
+                    "display": [
+                            "Inter"
+                    ]
+            },
+            "fontSize": {
+                    "label-sm": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.02em",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "headline": [
+                            "18px",
+                            {
+                                    "lineHeight": "24px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "mono-label": [
+                            "13px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.01em",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "body-lg": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "body-md": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "display": [
+                            "28px",
+                            {
+                                    "lineHeight": "34px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        /* Utility to hide scrollbar for horizontal scrolling containers */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface flex flex-col h-screen overflow-hidden antialiased">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-md h-16 w-full z-50 bg-surface sticky top-0 border-b border-outline-variant dark:border-outline flat no shadows">
+<div class="flex items-center gap-sm">
+<img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSjhdJgIOwK0vvmJLzbXC58NLdyeBU0cJYULkGj2y0ws2Qj14CQAKcy5e3jiEepX8LtKcxmUh-J2r9unUCUk8P6FDKtIpZ7FytBXjBlG8pq2IprQgpc07aut00CbVu-jQcV7PGiKyFHokEZS-tj7V7NfBbjpZyr_SYHGH8vUkMLVkMI11eP2iw3KaPWSGfq_Cwf7CtYe_ApglghtxsVRZ3irgEywhLFY3sj1_a_2-r30Yw3FKS0nAE9ElxDr1mLedLEA" alt="SRU Logo" class="w-8 h-8 object-contain">
+<span class="font-display text-headline font-bold text-primary dark:text-inverse-primary">SRU Timetable</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-secondary dark:text-secondary-fixed-dim hover:bg-surface-container-high transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 overflow-y-auto px-md py-lg flex flex-col gap-lg pb-24">
+<!-- Header Section -->
+<section class="flex flex-col gap-md">
+<h1 class="font-display text-display text-on-surface">This week</h1>
+<!-- Day Pill Selector (Horizontal Scroll) -->
+<div class="flex gap-sm overflow-x-auto no-scrollbar pb-xs -mx-md px-md">
+<button class="px-md py-sm rounded-full border border-outline-variant text-secondary font-label-sm text-label-sm whitespace-nowrap hover:bg-surface-container-low transition-colors active:scale-95">
+                    Mon, 24
+                </button>
+<button class="px-md py-sm rounded-full border border-outline-variant text-secondary font-label-sm text-label-sm whitespace-nowrap hover:bg-surface-container-low transition-colors active:scale-95">
+                    Tue, 25
+                </button>
+<button class="px-md py-sm rounded-full bg-primary text-on-primary font-label-sm text-label-sm whitespace-nowrap shadow-[0px_4px_6px_-2px_rgba(0,0,0,0.03)] active:scale-95">
+                    Wed, 26
+                </button>
+<button class="px-md py-sm rounded-full border border-outline-variant text-secondary font-label-sm text-label-sm whitespace-nowrap hover:bg-surface-container-low transition-colors active:scale-95">
+                    Thu, 27
+                </button>
+<button class="px-md py-sm rounded-full border border-outline-variant text-secondary font-label-sm text-label-sm whitespace-nowrap hover:bg-surface-container-low transition-colors active:scale-95">
+                    Fri, 28
+                </button>
+<button class="px-md py-sm rounded-full border border-outline-variant text-secondary font-label-sm text-label-sm whitespace-nowrap hover:bg-surface-container-low transition-colors active:scale-95">
+                    Sat, 29
+                </button>
+<button class="px-md py-sm rounded-full border border-outline-variant text-secondary font-label-sm text-label-sm whitespace-nowrap hover:bg-surface-container-low transition-colors active:scale-95">
+                    Sun, 30
+                </button>
+</div>
+</section>
+<!-- Selected Day Schedule -->
+<section class="flex flex-col gap-stack-gap">
+<h2 class="font-headline text-headline text-on-surface mb-xs">Wednesday, 26 August</h2>
+<!-- Course Card 1 -->
+<article class="bg-surface-container-lowest rounded-xl shadow-[0px_1px_3px_rgba(0,0,0,0.05),_0px_1px_2px_rgba(0,0,0,0.03)] border border-outline-variant flex overflow-hidden active:scale-[0.98] active:shadow-none active:bg-surface-container-low transition-all duration-150 cursor-pointer">
+<div class="w-1 bg-tertiary-container shrink-0"></div>
+<div class="p-md flex-1 flex flex-col gap-xs">
+<div class="flex justify-between items-start gap-md">
+<h3 class="font-headline text-headline text-on-surface line-clamp-2">Data Structures &amp; Algorithms</h3>
+<span class="font-mono-label text-mono-label text-on-surface-variant bg-surface-container-low px-sm py-xs rounded-md shrink-0 border border-outline-variant/50">09:00 - 10:30</span>
+</div>
+<div class="flex flex-wrap items-center gap-x-sm gap-y-xs mt-xs">
+<div class="flex items-center gap-xs text-secondary">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+<span class="font-label-sm text-label-sm">Room 402, Building A</span>
+</div>
+<div class="w-1 h-1 rounded-full bg-outline-variant hidden sm:block"></div>
+<div class="flex items-center gap-xs text-secondary">
+<span class="material-symbols-outlined text-[16px]">person</span>
+<span class="font-label-sm text-label-sm">Prof. A. Turing</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Course Card 2 -->
+<article class="bg-surface-container-lowest rounded-xl shadow-[0px_1px_3px_rgba(0,0,0,0.05),_0px_1px_2px_rgba(0,0,0,0.03)] border border-outline-variant flex overflow-hidden active:scale-[0.98] active:shadow-none active:bg-surface-container-low transition-all duration-150 cursor-pointer relative">
+<!-- Highlight for current/next class -->
+<div class="absolute top-0 right-0 p-sm">
+<span class="bg-primary/10 text-primary font-label-sm text-label-sm px-2 py-1 rounded-md">Next</span>
+</div>
+<div class="w-1 bg-primary shrink-0"></div>
+<div class="p-md flex-1 flex flex-col gap-xs">
+<div class="flex justify-between items-start gap-md">
+<h3 class="font-headline text-headline text-on-surface line-clamp-2 pr-12">Computer Architecture</h3>
+<span class="font-mono-label text-mono-label text-on-surface-variant bg-surface-container-low px-sm py-xs rounded-md shrink-0 border border-outline-variant/50">11:00 - 12:30</span>
+</div>
+<div class="flex flex-wrap items-center gap-x-sm gap-y-xs mt-xs">
+<div class="flex items-center gap-xs text-secondary">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+<span class="font-label-sm text-label-sm">Lab 1, Engineering Block</span>
+</div>
+<div class="w-1 h-1 rounded-full bg-outline-variant hidden sm:block"></div>
+<div class="flex items-center gap-xs text-secondary">
+<span class="material-symbols-outlined text-[16px]">person</span>
+<span class="font-label-sm text-label-sm">Dr. J. von Neumann</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Course Card 3 -->
+<article class="bg-surface-container-lowest rounded-xl shadow-[0px_1px_3px_rgba(0,0,0,0.05),_0px_1px_2px_rgba(0,0,0,0.03)] border border-outline-variant flex overflow-hidden active:scale-[0.98] active:shadow-none active:bg-surface-container-low transition-all duration-150 cursor-pointer">
+<div class="w-1 bg-secondary shrink-0"></div>
+<div class="p-md flex-1 flex flex-col gap-xs">
+<div class="flex justify-between items-start gap-md">
+<h3 class="font-headline text-headline text-on-surface line-clamp-2">Principles of Economics</h3>
+<span class="font-mono-label text-mono-label text-on-surface-variant bg-surface-container-low px-sm py-xs rounded-md shrink-0 border border-outline-variant/50">14:00 - 15:30</span>
+</div>
+<div class="flex flex-wrap items-center gap-x-sm gap-y-xs mt-xs">
+<div class="flex items-center gap-xs text-secondary">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+<span class="font-label-sm text-label-sm">Lecture Hall B</span>
+</div>
+<div class="w-1 h-1 rounded-full bg-outline-variant hidden sm:block"></div>
+<div class="flex items-center gap-xs text-secondary">
+<span class="material-symbols-outlined text-[16px]">person</span>
+<span class="font-label-sm text-label-sm">Prof. A. Smith</span>
+</div>
+</div>
+</div>
+</article>
+<!-- Empty State / End of Day -->
+<div class="flex items-center justify-center py-lg mt-sm">
+<div class="h-px bg-outline-variant flex-1"></div>
+<span class="px-md font-label-sm text-label-sm text-secondary">End of classes</span>
+<div class="h-px bg-outline-variant flex-1"></div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full h-16 flex justify-around items-center px-container-padding bg-surface z-50 border-t border-outline-variant dark:border-outline flat no shadows pb-safe">
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:bg-surface-container-low active:scale-90 transition-transform duration-200 w-16 h-full gap-1">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary dark:text-inverse-primary font-semibold hover:bg-surface-container-low active:scale-90 transition-transform duration-200 w-16 h-full gap-1">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_view_week</span>
+<span class="font-label-sm text-label-sm">Week</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:bg-surface-container-low active:scale-90 transition-transform duration-200 w-16 h-full gap-1">
+<span class="material-symbols-outlined">sync_problem</span>
+<span class="font-label-sm text-label-sm">Changes</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:bg-surface-container-low active:scale-90 transition-transform duration-200 w-16 h-full gap-1">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</button>
+</nav>
+<!-- Support for safe area padding on mobile devices -->
+<style>
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+            .pb-safe {
+                padding-bottom: env(safe-area-inset-bottom);
+                height: calc(4rem + env(safe-area-inset-bottom));
+            }
+        }
+    </style>
+</body></html>

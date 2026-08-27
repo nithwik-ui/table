@@ -1,0 +1,188 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>SRU Timetable - Notifications</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Geist:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary": "#5f2900",
+                    "secondary-fixed": "#dce2f3",
+                    "inverse-primary": "#a8c8ff",
+                    "on-tertiary-fixed-variant": "#753400",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed": "#321200",
+                    "surface-bright": "#f9f9ff",
+                    "tertiary-fixed-dim": "#ffb68b",
+                    "surface-tint": "#265ea6",
+                    "secondary": "#585f6c",
+                    "error-container": "#ffdad6",
+                    "surface-container-highest": "#dce2f7",
+                    "surface-container-lowest": "#ffffff",
+                    "surface": "#f9f9ff",
+                    "inverse-on-surface": "#edf0ff",
+                    "primary-fixed-dim": "#a8c8ff",
+                    "on-secondary-container": "#5e6572",
+                    "tertiary-container": "#823b00",
+                    "secondary-container": "#dce2f3",
+                    "primary": "#003870",
+                    "on-primary-fixed-variant": "#00468a",
+                    "background": "#f9f9ff",
+                    "on-primary-fixed": "#001b3c",
+                    "on-error-container": "#93000a",
+                    "outline": "#727782",
+                    "surface-variant": "#dce2f7",
+                    "surface-container": "#e9edff",
+                    "on-primary-container": "#9fc3ff",
+                    "surface-container-low": "#f1f3ff",
+                    "outline-variant": "#c2c6d2",
+                    "surface-container-high": "#e1e8fd",
+                    "on-secondary-fixed-variant": "#404754",
+                    "on-secondary": "#ffffff",
+                    "surface-dim": "#d3daef",
+                    "on-tertiary": "#ffffff",
+                    "on-background": "#141b2b",
+                    "primary-fixed": "#d5e3ff",
+                    "on-surface-variant": "#424751",
+                    "primary-container": "#0b4f96",
+                    "on-surface": "#141b2b",
+                    "inverse-surface": "#293040",
+                    "on-tertiary-container": "#ffaf7f",
+                    "secondary-fixed-dim": "#c0c7d6",
+                    "on-primary": "#ffffff",
+                    "on-secondary-fixed": "#151c27",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed": "#ffdbc8"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "base": "8px",
+                    "xl": "32px",
+                    "lg": "24px",
+                    "md": "16px",
+                    "sm": "8px",
+                    "stack-gap": "12px",
+                    "container-padding": "16px",
+                    "xs": "4px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "mono-label": ["Geist"],
+                    "body-md": ["Inter"],
+                    "display": ["Inter"],
+                    "label-sm": ["Geist"],
+                    "headline": ["Inter"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "mono-label": ["13px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "display": ["28px", {"lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "headline": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased font-body-md h-screen w-full flex flex-col md:hidden">
+<!-- Header -->
+<header class="flex items-center justify-between px-md h-16 w-full z-50 bg-surface border-b border-outline-variant sticky top-0">
+<div class="w-8 h-8 shrink-0 flex items-center justify-center"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTQRTWFI1Ut2JOhOzMJKLxdPj1FELnyCdED1uG_48dYclBpf3cpM9HCioXZJa-spqVTat6X63aLH7GfybtMhzBhUvSFa4uI1wpfyTUdJkyPOxuir43trgS3ZKjtHMBkLBkwC6Z0zzqjIgNyA-nidrFsEzTZSE2X3DjxSUF_Ns2TxbH2dPDSVFOvpmUHL1DdlAp5qNWWh2khIVkzjUrG95bqk2ZA7TV4mvVJoqYFoa_VPa-wXgfXl_SE1wOCjH6sCMSiQ" alt="SRU Logo" class="w-full h-full object-contain"></div>
+<h1 class="font-headline text-headline text-on-surface">Notifications</h1>
+<button class="px-3 h-10 flex items-center justify-center text-primary font-label-sm text-label-sm active:opacity-70 transition-opacity whitespace-nowrap">
+            Mark all read
+        </button>
+</header>
+<!-- Content -->
+<main class="flex-1 overflow-y-auto">
+<!-- Section: Today -->
+<section>
+<div class="px-md py-sm bg-surface-container-low font-label-sm text-label-sm text-secondary uppercase tracking-wider sticky top-0 z-10 border-b border-outline-variant">
+                TODAY
+            </div>
+<div class="flex flex-col">
+<!-- Notification Item 1 (Unread) -->
+<div class="flex items-start gap-md p-md border-b border-outline-variant bg-surface active:bg-surface-container-highest transition-colors cursor-pointer">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center shrink-0 mt-xs">
+<span class="material-symbols-outlined text-on-primary-container text-[18px]" data-icon="schedule" data-weight="fill" style="font-variation-settings: 'FILL' 1;">schedule</span>
+</div>
+<div class="flex-1 min-w-0">
+<h2 class="font-body-lg text-body-lg font-semibold text-on-surface truncate">Class Reminder</h2>
+<p class="font-body-md text-body-md text-secondary mt-xs">AI &amp; Deep Learning starting in 15 mins (Room 402).</p>
+<p class="font-mono-label text-mono-label text-outline mt-sm">08:45 AM</p>
+</div>
+<div class="w-2 h-2 rounded-full bg-primary shrink-0 mt-2"></div>
+</div>
+<!-- Notification Item 2 (Unread) -->
+<div class="flex items-start gap-md p-md border-b border-outline-variant bg-surface active:bg-surface-container-highest transition-colors cursor-pointer">
+<div class="w-8 h-8 rounded-full bg-tertiary-container flex items-center justify-center shrink-0 mt-xs">
+<span class="material-symbols-outlined text-on-tertiary-container text-[18px]" data-icon="location_on" data-weight="fill" style="font-variation-settings: 'FILL' 1;">location_on</span>
+</div>
+<div class="flex-1 min-w-0">
+<h2 class="font-body-lg text-body-lg font-semibold text-on-surface truncate">Room Changed</h2>
+<p class="font-body-md text-body-md text-secondary mt-xs">Algorithms (CS301) moved to Room 105.</p>
+<p class="font-mono-label text-mono-label text-outline mt-sm">07:30 AM</p>
+</div>
+<div class="w-2 h-2 rounded-full bg-primary shrink-0 mt-2"></div>
+</div>
+</div>
+</section>
+<!-- Section: Yesterday -->
+<section>
+<div class="px-md py-sm bg-surface-container-low font-label-sm text-label-sm text-secondary uppercase tracking-wider sticky top-0 z-10 border-b border-outline-variant">
+                YESTERDAY
+            </div>
+<div class="flex flex-col">
+<!-- Notification Item 3 (Read) -->
+<div class="flex items-start gap-md p-md border-b border-outline-variant bg-surface opacity-75 active:bg-surface-container-highest transition-colors cursor-pointer">
+<div class="w-8 h-8 rounded-full bg-error-container flex items-center justify-center shrink-0 mt-xs">
+<span class="material-symbols-outlined text-on-error-container text-[18px]" data-icon="person" data-weight="fill" style="font-variation-settings: 'FILL' 1;">person</span>
+</div>
+<div class="flex-1 min-w-0">
+<h2 class="font-body-lg text-body-lg font-semibold text-on-surface truncate">Faculty Changed</h2>
+<p class="font-body-md text-body-md text-secondary mt-xs">Software Engineering will be taken by Prof. Davis today.</p>
+<p class="font-mono-label text-mono-label text-outline mt-sm">04:15 PM</p>
+</div>
+<!-- No unread dot -->
+<div class="w-2 h-2 shrink-0 mt-2"></div>
+</div>
+<!-- Notification Item 4 (Read) -->
+<div class="flex items-start gap-md p-md border-b border-outline-variant bg-surface opacity-75 active:bg-surface-container-highest transition-colors cursor-pointer">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center shrink-0 mt-xs">
+<span class="material-symbols-outlined text-on-primary-container text-[18px]" data-icon="schedule" data-weight="fill" style="font-variation-settings: 'FILL' 1;">schedule</span>
+</div>
+<div class="flex-1 min-w-0">
+<h2 class="font-body-lg text-body-lg font-semibold text-on-surface truncate">Class Cancelled</h2>
+<p class="font-body-md text-body-md text-secondary mt-xs">Database Systems (CS204) has been cancelled for today.</p>
+<p class="font-mono-label text-mono-label text-outline mt-sm">09:00 AM</p>
+</div>
+<!-- No unread dot -->
+<div class="w-2 h-2 shrink-0 mt-2"></div>
+</div>
+</div>
+</section>
+<div class="h-24 flex items-center justify-center">
+<p class="text-secondary font-body-md text-body-md">No older notifications</p>
+</div>
+</main>
+</body></html>

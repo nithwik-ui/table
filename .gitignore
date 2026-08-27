@@ -1,0 +1,16 @@
+.env
+**/key.properties
+**/*.jks
+**/google-services.json
+**/GoogleService-Info.plist
+build/
+.dart_tool/
+node_modules/
+android/local.properties
+.gradle/
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln

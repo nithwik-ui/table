@@ -1,0 +1,295 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>SRU Timetable - Search &amp; Status</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Geist:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#dce2f7",
+                        "on-background": "#141b2b",
+                        "tertiary-fixed-dim": "#ffb68b",
+                        "secondary-fixed": "#dce2f3",
+                        "on-secondary": "#ffffff",
+                        "surface-container-highest": "#dce2f7",
+                        "secondary": "#585f6c",
+                        "on-primary-container": "#9fc3ff",
+                        "tertiary-container": "#823b00",
+                        "on-tertiary-container": "#ffaf7f",
+                        "surface-container-high": "#e1e8fd",
+                        "secondary-container": "#dce2f3",
+                        "on-error-container": "#93000a",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#753400",
+                        "surface-dim": "#d3daef",
+                        "inverse-on-surface": "#edf0ff",
+                        "surface-bright": "#f9f9ff",
+                        "on-primary-fixed": "#001b3c",
+                        "surface-container-low": "#f1f3ff",
+                        "inverse-primary": "#a8c8ff",
+                        "on-secondary-fixed-variant": "#404754",
+                        "on-tertiary-fixed": "#321200",
+                        "primary": "#003870",
+                        "secondary-fixed-dim": "#c0c7d6",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#ffdbc8",
+                        "surface-container": "#e9edff",
+                        "outline": "#727782",
+                        "on-surface-variant": "#424751",
+                        "on-primary-fixed-variant": "#00468a",
+                        "surface": "#f9f9ff",
+                        "inverse-surface": "#293040",
+                        "error-container": "#ffdad6",
+                        "primary-container": "#0b4f96",
+                        "outline-variant": "#c2c6d2",
+                        "primary-fixed": "#d5e3ff",
+                        "primary-fixed-dim": "#a8c8ff",
+                        "on-error": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#151c27",
+                        "surface-tint": "#265ea6",
+                        "tertiary": "#5f2900",
+                        "on-secondary-container": "#5e6572",
+                        "on-surface": "#141b2b",
+                        "background": "#f9f9ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-gap": "12px",
+                        "sm": "8px",
+                        "md": "16px",
+                        "lg": "24px",
+                        "xs": "4px",
+                        "base": "8px",
+                        "xl": "32px",
+                        "container-padding": "16px"
+                    },
+                    "fontFamily": {
+                        "display": ["Inter"],
+                        "label-sm": ["Geist"],
+                        "headline": ["Inter"],
+                        "mono-label": ["Geist"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "headline": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "mono-label": ["13px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Spin Animation */
+        @keyframes custom-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .animate-custom-spin {
+            animation: custom-spin 1.2s linear infinite;
+        }
+        
+        /* Fade Out for Sync Overlay */
+        .fade-out {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease-in-out;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen relative">
+<!-- Screen 6: Syncing State Overlay -->
+<div class="fixed inset-0 z-[100] bg-surface flex flex-col items-center justify-center transition-opacity duration-500" id="sync-overlay">
+<div class="flex flex-col items-center gap-lg">
+<div class="w-16 h-16 rounded-2xl bg-primary-container flex items-center justify-center shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.08),0px_4px_6px_-2px_rgba(0,0,0,0.03)]"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXsrpDQKeVGrJVGy0ZTUOY5tzL2xiwREa8Lc3FGPkCC4dNwWLR3UpyA46dqt36QHP8GRT1PVnKO7vRzxRhFUx51pXHXTvjx2elBAl8FO8e93beANrsQDivHHYwM2az48liRbABo3st8r01b0G36EU7MoCWf1WYaDc6MRG9Da3-Ix00BvP0t4_Z0NDHkqdxgcE3_-cmjJW8OkuaQbv5vzrvM88kf323rs6IU6n5SeoUd5pza7sIivbC2dPkBCF22jJrxw" alt="SRU Logo" class="w-full h-full object-contain rounded-2xl"></div>
+<div class="flex flex-col items-center gap-sm">
+<h2 class="font-display text-display text-primary">SRU</h2>
+<p class="font-body-lg text-body-lg text-secondary">Setting up your timetable...</p>
+</div>
+<svg class="w-8 h-8 text-primary animate-custom-spin mt-md" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+<path class="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor"></path>
+</svg>
+</div>
+</div>
+<!-- Main App Container -->
+<div class="pb-[80px] flex flex-col min-h-screen">
+<!-- Shared Component: TopAppBar -->
+<header class="w-full sticky top-0 flex justify-between items-center px-md h-16 w-full z-50 bg-surface border-b border-outline-variant dark:border-outline flat no shadows hover:bg-surface-container-high transition-colors press:scale-95 duration-100">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant transition-colors group">
+<span class="material-symbols-outlined text-primary dark:text-inverse-primary group-active:scale-90 transition-transform">school</span>
+</button>
+<div class="flex flex-col items-center justify-center">
+<h1 class="font-display text-headline font-bold text-primary dark:text-inverse-primary">SRU Timetable</h1>
+<!-- Screen 17: Sync Status (Small Component) -->
+<div class="flex items-center gap-[4px] mt-[2px] opacity-80">
+<span class="material-symbols-outlined text-[14px] text-secondary">check_circle</span>
+<span class="font-label-sm text-label-sm text-secondary">Updated 12 min ago</span>
+</div>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant transition-colors group">
+<span class="material-symbols-outlined text-primary dark:text-inverse-primary group-active:scale-90 transition-transform">notifications</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col gap-lg p-md max-w-3xl mx-auto w-full">
+<!-- Screen 16: Offline State Banner -->
+<div class="bg-error-container rounded-xl p-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-md border border-[#ffb4ab]/30 shadow-[0px_1px_3px_rgba(0,0,0,0.05),0px_1px_2px_rgba(0,0,0,0.03)]">
+<div class="flex items-start gap-md">
+<div class="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-error">wifi_off</span>
+</div>
+<div class="flex flex-col gap-xs">
+<h3 class="font-headline text-headline text-on-error-container">You're offline</h3>
+<p class="font-body-md text-body-md text-on-error-container/80">Showing last synchronized timetable.</p>
+</div>
+</div>
+<button class="px-md py-sm rounded-lg font-mono-label text-mono-label text-error bg-error/5 hover:bg-error/10 transition-colors self-end sm:self-auto border border-error/20">
+                    Try again
+                </button>
+</div>
+<!-- Screen 18: Search Section -->
+<div class="flex flex-col gap-md">
+<!-- Search Input Field -->
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-secondary group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full h-12 pl-xl pr-md py-sm bg-surface border border-outline-variant rounded-xl font-body-md text-body-md text-on-surface placeholder:text-secondary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary-container/50 transition-all shadow-[0px_1px_3px_rgba(0,0,0,0.05),0px_1px_2px_rgba(0,0,0,0.03)]" placeholder="Search courses, rooms, or faculty..." type="text">
+</div>
+<!-- Filter Chips -->
+<div class="flex gap-sm overflow-x-auto no-scrollbar pb-xs">
+<button class="flex-shrink-0 px-md py-sm rounded-full bg-primary text-on-primary font-label-sm text-label-sm shadow-sm transition-transform active:scale-95 border border-transparent">
+                        All Results
+                    </button>
+<button class="flex-shrink-0 px-md py-sm rounded-full bg-surface text-secondary font-label-sm text-label-sm shadow-[0px_1px_3px_rgba(0,0,0,0.05)] border border-outline-variant hover:bg-surface-variant transition-colors active:scale-95">
+                        Subjects
+                    </button>
+<button class="flex-shrink-0 px-md py-sm rounded-full bg-surface text-secondary font-label-sm text-label-sm shadow-[0px_1px_3px_rgba(0,0,0,0.05)] border border-outline-variant hover:bg-surface-variant transition-colors active:scale-95">
+                        Faculty
+                    </button>
+<button class="flex-shrink-0 px-md py-sm rounded-full bg-surface text-secondary font-label-sm text-label-sm shadow-[0px_1px_3px_rgba(0,0,0,0.05)] border border-outline-variant hover:bg-surface-variant transition-colors active:scale-95">
+                        Rooms
+                    </button>
+</div>
+<!-- Results List (Course Cards) -->
+<div class="flex flex-col gap-stack-gap mt-sm">
+<!-- Course Card 1 -->
+<div class="bg-surface rounded-[16px] border border-outline-variant shadow-[0px_1px_3px_rgba(0,0,0,0.05),0px_1px_2px_rgba(0,0,0,0.03)] relative overflow-hidden flex cursor-pointer hover:bg-surface-container-low transition-colors active:scale-[0.98]">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="p-md pl-lg flex-1 flex flex-col gap-xs">
+<div class="flex justify-between items-start">
+<h4 class="font-headline text-headline text-on-surface">Data Structures &amp; Algorithms</h4>
+<span class="px-sm py-[2px] rounded-md bg-[#e6f4ea] text-[#137333] font-label-sm text-[10px] tracking-wider uppercase">Ongoing</span>
+</div>
+<div class="flex flex-wrap items-center gap-x-md gap-y-xs mt-xs">
+<div class="flex items-center gap-[4px] text-secondary">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+<span class="font-label-sm text-label-sm">10:00 AM - 11:30 AM</span>
+</div>
+<div class="flex items-center gap-[4px] text-secondary">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+<span class="font-label-sm text-label-sm">Room 402, Tech Building</span>
+</div>
+<div class="flex items-center gap-[4px] text-secondary">
+<span class="material-symbols-outlined text-[16px]">person</span>
+<span class="font-label-sm text-label-sm">Prof. Alan Turing</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Course Card 2 -->
+<div class="bg-surface rounded-[16px] border border-outline-variant shadow-[0px_1px_3px_rgba(0,0,0,0.05),0px_1px_2px_rgba(0,0,0,0.03)] relative overflow-hidden flex cursor-pointer hover:bg-surface-container-low transition-colors active:scale-[0.98]">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-tertiary-container"></div>
+<div class="p-md pl-lg flex-1 flex flex-col gap-xs">
+<div class="flex justify-between items-start">
+<h4 class="font-headline text-headline text-on-surface">Modern Philosophy</h4>
+</div>
+<div class="flex flex-wrap items-center gap-x-md gap-y-xs mt-xs">
+<div class="flex items-center gap-[4px] text-secondary">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+<span class="font-label-sm text-label-sm">1:00 PM - 2:30 PM</span>
+</div>
+<div class="flex items-center gap-[4px] text-secondary">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+<span class="font-label-sm text-label-sm">Lib-201, Main Library</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Shared Component: BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full h-16 flex justify-around items-center px-container-padding bg-surface border-t border-outline-variant dark:border-outline flat no shadows z-50">
+<!-- Tab 1: Home (Set as Active logically for this view context) -->
+<button class="flex flex-col items-center justify-center text-primary dark:text-inverse-primary font-semibold hover:bg-surface-container-low press:scale-90 transition-transform duration-200 w-16 h-full rounded-lg gap-[2px]">
+<span class="material-symbols-outlined" data-weight="fill">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</button>
+<!-- Tab 2: Week -->
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:bg-surface-container-low press:scale-90 transition-transform duration-200 w-16 h-full rounded-lg gap-[2px]">
+<span class="material-symbols-outlined">calendar_view_week</span>
+<span class="font-label-sm text-label-sm">Week</span>
+</button>
+<!-- Tab 3: Changes -->
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:bg-surface-container-low press:scale-90 transition-transform duration-200 w-16 h-full rounded-lg gap-[2px] relative">
+<span class="material-symbols-outlined">sync_problem</span>
+<span class="font-label-sm text-label-sm">Changes</span>
+<span class="absolute top-2 right-3 w-2 h-2 rounded-full bg-error"></span>
+</button>
+<!-- Tab 4: Profile -->
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:bg-surface-container-low press:scale-90 transition-transform duration-200 w-16 h-full rounded-lg gap-[2px]">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</button>
+</nav>
+<!-- Script to simulate initial sync process -->
+<script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const overlay = document.getElementById('sync-overlay');
+            // Simulate sync completion after 1.5 seconds
+            setTimeout(() => {
+                overlay.classList.add('fade-out');
+                setTimeout(() => {
+                    overlay.remove();
+                }, 500); // Wait for transition to finish before removing from DOM
+            }, 1500);
+        });
+    </script>
+</body></html>

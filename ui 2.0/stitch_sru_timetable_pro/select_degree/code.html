@@ -1,0 +1,238 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>SRU - Select Degree</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#edf0ff",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface": "#f9f9ff",
+                        "secondary": "#585f6c",
+                        "on-tertiary-fixed": "#321200",
+                        "secondary-container": "#dce2f3",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-dim": "#d3daef",
+                        "on-primary-fixed-variant": "#00468a",
+                        "on-error-container": "#93000a",
+                        "primary": "#003870",
+                        "on-secondary-container": "#5e6572",
+                        "on-primary-container": "#9fc3ff",
+                        "outline-variant": "#c2c6d2",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed": "#dce2f3",
+                        "outline": "#727782",
+                        "on-surface": "#141b2b",
+                        "tertiary-container": "#823b00",
+                        "primary-fixed": "#d5e3ff",
+                        "primary-container": "#0b4f96",
+                        "tertiary-fixed": "#ffdbc8",
+                        "on-secondary-fixed-variant": "#404754",
+                        "tertiary": "#5f2900",
+                        "on-primary-fixed": "#001b3c",
+                        "surface-bright": "#f9f9ff",
+                        "primary-fixed-dim": "#a8c8ff",
+                        "on-tertiary-fixed-variant": "#753400",
+                        "surface-container-low": "#f1f3ff",
+                        "background": "#f9f9ff",
+                        "on-tertiary-container": "#ffaf7f",
+                        "surface-container-highest": "#dce2f7",
+                        "on-error": "#ffffff",
+                        "surface-tint": "#265ea6",
+                        "secondary-fixed-dim": "#c0c7d6",
+                        "inverse-surface": "#293040",
+                        "inverse-primary": "#a8c8ff",
+                        "on-secondary-fixed": "#151c27",
+                        "on-background": "#141b2b",
+                        "tertiary-fixed-dim": "#ffb68b",
+                        "on-surface-variant": "#424751",
+                        "surface-container-high": "#e1e8fd",
+                        "surface-variant": "#dce2f7",
+                        "surface-container": "#e9edff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-padding": "16px",
+                        "lg": "24px",
+                        "stack-gap": "12px",
+                        "base": "8px",
+                        "xs": "4px",
+                        "md": "16px",
+                        "xl": "32px",
+                        "sm": "8px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Geist"],
+                        "headline": ["Inter"],
+                        "mono-label": ["Geist"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "headline": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "mono-label": ["13px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "display": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Base styles */
+        body {
+            background-color: #F7F9FC; /* Enforced from prompt */
+        }
+        
+        /* Material Icon overrides */
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        /* Custom scrollbar hiding */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Subtle selection glow */
+        .degree-row:active {
+            background-color: theme('colors.surface-container-low');
+        }
+        .degree-row.selected {
+            background-color: theme('colors.primary-fixed');
+            border-left: 4px solid theme('colors.primary');
+        }
+        .degree-row.selected .material-symbols-outlined.chevron {
+            color: theme('colors.primary');
+        }
+    </style>
+</head>
+<body class="bg-[#F7F9FC] text-on-background min-h-screen flex flex-col font-body-md antialiased md:hidden relative pb-[88px]"> <!-- pb-[88px] accounts for sticky button + padding -->
+<!-- Header -->
+<header class="flex justify-between items-center px-container-padding h-16 w-full z-50 bg-[#F7F9FC] sticky top-0">
+<button aria-label="Go back" class="w-10 h-10 flex items-center justify-center text-on-surface-variant press:scale-95 duration-100 -ml-2">
+<span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+</button>
+<div class="h-8 w-auto flex items-center justify-center"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBRzo-Xlz5_2g46sfS7sKu6OwSGZUfxaE7bksObhp8CH32IQbvhlhOBNVqsCnbQ9th2gQ4RIdCtcZjdrhcsZhy8TyS86imWU-EhLYtnnTll6JfsBDdS7Xf2p18JF1xUl0Q2Ru108-PIaOMfVbleghUzbTrvWuNXhC2AymEeJZUxZcrJ_kLE7NcCTZ3eA_WCugW4mRR4usjh1wIahJgui--y_GJTUoucEUg4p52RP6zeRHQEmEUh8GLGuHEGpx2OAnaUFg" alt="SRU Logo" class="h-full w-auto object-contain"></div>
+<div class="w-10 h-10"></div> <!-- Spacer for centering -->
+</header>
+<!-- Main Content -->
+<main class="flex-1 px-container-padding pt-md flex flex-col gap-xl">
+<!-- Header Section -->
+<div class="flex flex-col gap-base">
+<!-- Step Indicator -->
+<div aria-label="Step 2 of 3" class="flex gap-2 items-center">
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+</div>
+<h1 class="font-display text-display text-on-surface mt-xs">Choose your degree</h1>
+</div>
+<!-- Search -->
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl py-[14px] pl-12 pr-4 text-body-lg text-on-surface placeholder:text-outline focus:border-primary focus:ring-2 focus:ring-primary-container/20 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.03)] outline-none" placeholder="Search degree — e.g. BTECH-CSE" type="text">
+</div>
+<!-- Degree List -->
+<div class="flex flex-col bg-surface-container-lowest rounded-2xl shadow-[0_1px_3px_rgba(0,0,0,0.05),_0_1px_2px_rgba(0,0,0,0.03)] border border-outline-variant/30 overflow-hidden mt-sm mb-lg">
+<!-- Degree Item 1 -->
+<button class="degree-row selected w-full flex items-center justify-between p-lg border-b border-outline-variant/30 text-left transition-colors relative" data-degree="btech-cse">
+<div class="flex flex-col gap-1">
+<span class="font-headline text-headline text-on-surface">BTECH-CSE</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Computer Science &amp; Engineering</span>
+</div>
+<span class="material-symbols-outlined chevron text-primary" data-icon="check">check</span>
+</button>
+<!-- Degree Item 2 -->
+<button class="degree-row w-full flex items-center justify-between p-lg border-b border-outline-variant/30 text-left transition-colors border-l-4 border-transparent hover:bg-surface-container-lowest" data-degree="bca-csai">
+<div class="flex flex-col gap-1">
+<span class="font-headline text-headline text-on-surface">BCA-CSAI</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Computer Applications (AI focus)</span>
+</div>
+<span class="material-symbols-outlined chevron text-outline" data-icon="chevron_right">chevron_right</span>
+</button>
+<!-- Degree Item 3 -->
+<button class="degree-row w-full flex items-center justify-between p-lg border-b border-outline-variant/30 text-left transition-colors border-l-4 border-transparent hover:bg-surface-container-lowest" data-degree="mba-bm">
+<div class="flex flex-col gap-1">
+<span class="font-headline text-headline text-on-surface">MBA-BM</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Business Management</span>
+</div>
+<span class="material-symbols-outlined chevron text-outline" data-icon="chevron_right">chevron_right</span>
+</button>
+<!-- Degree Item 4 -->
+<button class="degree-row w-full flex items-center justify-between p-lg text-left transition-colors border-l-4 border-transparent hover:bg-surface-container-lowest" data-degree="phd-ece">
+<div class="flex flex-col gap-1">
+<span class="font-headline text-headline text-on-surface">PhD-ECE</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Electronics &amp; Communication</span>
+</div>
+<span class="material-symbols-outlined chevron text-outline" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+<!-- Bottom padding for scrolling past sticky button -->
+<div class="h-8"></div>
+</main>
+<!-- Sticky Continue Button -->
+<div class="fixed bottom-0 left-0 w-full p-container-padding bg-gradient-to-t from-[#F7F9FC] via-[#F7F9FC] to-transparent pt-12 pb-md z-50">
+<button class="w-full bg-primary text-on-primary font-headline text-body-lg font-semibold py-4 rounded-xl shadow-[0_4px_6px_-2px_rgba(0,0,0,0.03)] active:scale-[0.98] active:bg-primary-container transition-all flex items-center justify-center gap-2">
+            Continue
+            <span class="material-symbols-outlined text-[20px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<script>
+        // Simple interaction script for degree selection
+        document.addEventListener('DOMContentLoaded', () => {
+            const rows = document.querySelectorAll('.degree-row');
+            
+            rows.forEach(row => {
+                row.addEventListener('click', () => {
+                    // Remove selected state from all
+                    rows.forEach(r => {
+                        r.classList.remove('selected');
+                        r.style.borderLeftColor = 'transparent';
+                        const icon = r.querySelector('.chevron');
+                        icon.textContent = 'chevron_right';
+                        icon.classList.remove('text-primary');
+                        icon.classList.add('text-outline');
+                    });
+                    
+                    // Add selected state to clicked
+                    row.classList.add('selected');
+                    row.style.borderLeftColor = ''; // Reset inline style to let CSS handle it
+                    const icon = row.querySelector('.chevron');
+                    icon.textContent = 'check';
+                    icon.classList.remove('text-outline');
+                    icon.classList.add('text-primary');
+                });
+            });
+        });
+    </script>
+
+
+</body></html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>SRU Timetable - Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#edf0ff",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface": "#f9f9ff",
+                        "secondary": "#585f6c",
+                        "on-tertiary-fixed": "#321200",
+                        "secondary-container": "#dce2f3",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-dim": "#d3daef",
+                        "on-primary-fixed-variant": "#00468a",
+                        "on-error-container": "#93000a",
+                        "primary": "#003870",
+                        "on-secondary-container": "#5e6572",
+                        "on-primary-container": "#9fc3ff",
+                        "outline-variant": "#c2c6d2",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed": "#dce2f3",
+                        "outline": "#727782",
+                        "on-surface": "#141b2b",
+                        "tertiary-container": "#823b00",
+                        "primary-fixed": "#d5e3ff",
+                        "primary-container": "#0b4f96",
+                        "tertiary-fixed": "#ffdbc8",
+                        "on-secondary-fixed-variant": "#404754",
+                        "tertiary": "#5f2900",
+                        "on-primary-fixed": "#001b3c",
+                        "surface-bright": "#f9f9ff",
+                        "primary-fixed-dim": "#a8c8ff",
+                        "on-tertiary-fixed-variant": "#753400",
+                        "surface-container-low": "#f1f3ff",
+                        "background": "#f9f9ff",
+                        "on-tertiary-container": "#ffaf7f",
+                        "surface-container-highest": "#dce2f7",
+                        "on-error": "#ffffff",
+                        "surface-tint": "#265ea6",
+                        "secondary-fixed-dim": "#c0c7d6",
+                        "inverse-surface": "#293040",
+                        "inverse-primary": "#a8c8ff",
+                        "on-secondary-fixed": "#151c27",
+                        "on-background": "#141b2b",
+                        "tertiary-fixed-dim": "#ffb68b",
+                        "on-surface-variant": "#424751",
+                        "surface-container-high": "#e1e8fd",
+                        "surface-variant": "#dce2f7",
+                        "surface-container": "#e9edff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-padding": "16px",
+                        "lg": "24px",
+                        "stack-gap": "12px",
+                        "base": "8px",
+                        "xs": "4px",
+                        "md": "16px",
+                        "xl": "32px",
+                        "sm": "8px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Geist", "sans-serif"],
+                        "headline": ["Inter", "sans-serif"],
+                        "mono-label": ["Geist", "monospace"],
+                        "body-lg": ["Inter", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "headline": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "mono-label": ["13px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "display": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        /* Toggle Switch CSS */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #003870; /* primary */
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #003870; /* primary */
+        }
+        
+        /* Subtle shadow for Level 1 depth */
+        .shadow-level-1 {
+            box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.05), 0px 1px 2px rgba(0, 0, 0, 0.03);
+        }
+        
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen pb-24 selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="w-full sticky top-0 flex justify-between items-center px-md h-16 z-50 bg-surface border-b border-outline-variant">
+<div class="flex items-center gap-xs">
+<img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGcGQtKDeXcPHign89ObzCRIQKUx19ASepn2fQtn1ITgvjpbwjYIWroOQ2CDEITd6AOeitl9Q2Yz9YdJMpbOOE-1UzDlj-d_UFJkRyckZ6B67xX-hy6HZEKp1WOYneYi77tgl4Vi0tQ2U062xI7lM1pLzl9O4pg7antXrrZC6RjEQRfMeb7qFJ5NhgAvjvfMWAJPY1ArT7oWE7vmYWo8Smq9f3zPhjyTwmS-bM3lxP7RDvIywDAucLScSlNXwIrY6Wnw" alt="SRU Logo" class="w-6 h-6 object-contain">
+<h1 class="font-display text-headline font-bold text-primary">SRU Timetable</h1>
+</div>
+<button aria-label="Notifications" class="w-10 h-10 flex items-center justify-center rounded-full text-secondary hover:bg-surface-container-high transition-colors press:scale-95 duration-100">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="px-md py-lg space-y-lg max-w-2xl mx-auto">
+<!-- Page Title -->
+<h2 class="font-headline text-headline text-on-surface">Profile</h2>
+<!-- Profile Summary Card -->
+<section class="bg-surface rounded-xl border border-outline-variant shadow-level-1 p-md relative overflow-hidden flex flex-col items-center text-center gap-md">
+<!-- Left Accent (Optional design flair based on style guide) -->
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="w-20 h-20 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-display text-display font-bold shadow-sm">
+                N
+            </div>
+<div class="space-y-xs">
+<h3 class="font-headline text-headline text-on-surface">Nithwik</h3>
+<div class="flex flex-col gap-1 items-center">
+<span class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm px-2 py-1 rounded-full border border-outline-variant">BTECH-CSE · Third Year</span>
+<span class="font-mono-label text-mono-label text-secondary">24BTCAICYB02</span>
+</div>
+</div>
+<button class="mt-xs px-md py-sm rounded-lg text-primary font-body-md font-medium hover:bg-surface-container-low transition-colors active:scale-95 border border-transparent">
+                Change timetable
+            </button>
+</section>
+<!-- Settings List Card -->
+<section class="bg-surface rounded-xl border border-outline-variant shadow-level-1 overflow-hidden">
+<div class="px-md py-sm border-b border-outline-variant bg-surface-container-lowest">
+<h3 class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Preferences</h3>
+</div>
+<ul class="divide-y divide-outline-variant">
+<!-- Notifications Toggle -->
+<li class="px-md py-stack-gap flex items-center justify-between hover:bg-surface-container-lowest transition-colors">
+<div class="flex items-center gap-stack-gap">
+<span class="material-symbols-outlined text-secondary">notifications_active</span>
+<span class="font-body-md text-on-surface">Notifications</span>
+</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-surface-container-high appearance-none cursor-pointer transition-transform duration-200 ease-in-out z-10 checked:translate-x-6 checked:border-primary" id="toggle-notif" name="toggle" type="checkbox">
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-container-high cursor-pointer transition-colors duration-200 ease-in-out" for="toggle-notif"></label>
+</div>
+</li>
+<!-- Class Reminders Toggle -->
+<li class="px-md py-stack-gap flex items-center justify-between hover:bg-surface-container-lowest transition-colors">
+<div class="flex items-center gap-stack-gap">
+<span class="material-symbols-outlined text-secondary">alarm</span>
+<span class="font-body-md text-on-surface">Class reminders</span>
+</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-surface-container-high appearance-none cursor-pointer transition-transform duration-200 ease-in-out z-10 checked:translate-x-6 checked:border-primary" id="toggle-reminders" name="toggle" type="checkbox">
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-surface-container-high cursor-pointer transition-colors duration-200 ease-in-out" for="toggle-reminders"></label>
+</div>
+</li>
+<!-- Appearance -->
+
+</ul>
+</section>
+<section class="bg-surface rounded-xl border border-outline-variant shadow-level-1 overflow-hidden">
+<div class="px-md py-sm border-b border-outline-variant bg-surface-container-lowest flex justify-between items-center">
+<h3 class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Data</h3>
+<span class="font-label-sm text-label-sm text-secondary">Last synced: Today, 08:30</span>
+</div>
+<ul class="divide-y divide-outline-variant">
+<!-- Refresh -->
+<li class="px-md py-stack-gap flex items-center justify-between hover:bg-surface-container-lowest transition-colors cursor-pointer active:bg-surface-container-low">
+<div class="flex items-center gap-stack-gap">
+<span class="material-symbols-outlined text-primary">sync</span>
+<span class="font-body-md text-on-surface">Refresh timetable</span>
+</div>
+</li><li class="px-md py-stack-gap flex items-center justify-between hover:bg-surface-container-lowest transition-colors cursor-pointer active:bg-surface-container-low">
+<div class="flex items-center gap-stack-gap">
+<span class="material-symbols-outlined text-secondary">system_update</span>
+<span class="font-body-md text-on-surface">Check for updates</span>
+</div>
+<span class="material-symbols-outlined text-[20px] text-secondary">chevron_right</span>
+</li>
+<!-- Clear Cache -->
+<li class="px-md py-stack-gap flex items-center justify-between hover:bg-surface-container-lowest transition-colors cursor-pointer active:bg-surface-container-low text-error">
+<div class="flex items-center gap-stack-gap">
+<span class="material-symbols-outlined">delete_sweep</span>
+<span class="font-body-md">Clear cache</span>
+</div>
+</li>
+</ul>
+</section>
+<!-- About & Version -->
+<section class="bg-surface rounded-xl border border-outline-variant shadow-level-1 overflow-hidden">
+<ul class="divide-y divide-outline-variant">
+<li class="px-md py-stack-gap flex items-center justify-between hover:bg-surface-container-lowest transition-colors cursor-pointer active:bg-surface-container-low">
+<div class="flex items-center gap-stack-gap">
+<span class="material-symbols-outlined text-secondary">info</span>
+<span class="font-body-md text-on-surface">About</span>
+</div>
+<span class="material-symbols-outlined text-[20px] text-secondary">chevron_right</span>
+</li>
+</ul>
+</section>
+<div class="flex justify-center pt-sm pb-xl">
+<span class="font-label-sm text-label-sm text-outline">SRU Timetable v1.0.0</span>
+</div>
+</main>
+<!-- BottomNavBar -->
+<!-- Applying ACTIVE classes to "Profile" based on JSON instructions -->
+<nav class="fixed bottom-0 left-0 w-full h-16 flex justify-around items-center px-container-padding bg-surface border-t border-outline-variant z-50 md:hidden">
+<!-- Home -->
+<button aria-label="Home" class="flex flex-col items-center justify-center text-secondary hover:bg-surface-container-low transition-transform duration-200 active:scale-90 w-16 h-full rounded-lg">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</button>
+<!-- Week -->
+<button aria-label="Week" class="flex flex-col items-center justify-center text-secondary hover:bg-surface-container-low transition-transform duration-200 active:scale-90 w-16 h-full rounded-lg">
+<span class="material-symbols-outlined mb-1">calendar_view_week</span>
+<span class="font-label-sm text-label-sm">Week</span>
+</button>
+<!-- Changes -->
+<button aria-label="Changes" class="flex flex-col items-center justify-center text-secondary hover:bg-surface-container-low transition-transform duration-200 active:scale-90 w-16 h-full rounded-lg">
+<span class="material-symbols-outlined mb-1">sync_problem</span>
+<span class="font-label-sm text-label-sm">Changes</span>
+</button>
+<!-- Profile (ACTIVE) -->
+<button aria-label="Profile" class="flex flex-col items-center justify-center text-primary font-semibold hover:bg-surface-container-low transition-transform duration-200 active:scale-90 w-16 h-full rounded-lg">
+<span class="material-symbols-outlined mb-1 fill text-primary">person</span>
+<span class="font-label-sm text-label-sm">Profile</span>
+</button>
+</nav>
+<!-- Web Desktop Navigation (Hidden on mobile, matching structural rules) -->
+<nav class="hidden md:flex fixed top-16 left-0 w-full bg-surface border-b border-outline-variant z-40 px-xl h-12 items-center gap-lg">
+<button class="text-secondary font-body-md hover:text-primary transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">home</span> Home
+        </button>
+<button class="text-secondary font-body-md hover:text-primary transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">calendar_view_week</span> Week
+        </button>
+<button class="text-secondary font-body-md hover:text-primary transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">sync_problem</span> Changes
+        </button>
+<button class="text-primary font-body-md font-semibold border-b-2 border-primary h-full flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] fill">person</span> Profile
+        </button>
+</nav>
+
+
+</body></html>

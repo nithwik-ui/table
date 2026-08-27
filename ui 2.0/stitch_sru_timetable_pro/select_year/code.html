@@ -1,0 +1,257 @@
+<!DOCTYPE html><html class="h-full" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Select Year - SRU Timetable</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Geist:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#edf0ff",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "surface": "#f9f9ff",
+                        "secondary": "#585f6c",
+                        "on-tertiary-fixed": "#321200",
+                        "secondary-container": "#dce2f3",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-dim": "#d3daef",
+                        "on-primary-fixed-variant": "#00468a",
+                        "on-error-container": "#93000a",
+                        "primary": "#003870",
+                        "on-secondary-container": "#5e6572",
+                        "on-primary-container": "#9fc3ff",
+                        "outline-variant": "#c2c6d2",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed": "#dce2f3",
+                        "outline": "#727782",
+                        "on-surface": "#141b2b",
+                        "tertiary-container": "#823b00",
+                        "primary-fixed": "#d5e3ff",
+                        "primary-container": "#0b4f96",
+                        "tertiary-fixed": "#ffdbc8",
+                        "on-secondary-fixed-variant": "#404754",
+                        "tertiary": "#5f2900",
+                        "on-primary-fixed": "#001b3c",
+                        "surface-bright": "#f9f9ff",
+                        "primary-fixed-dim": "#a8c8ff",
+                        "on-tertiary-fixed-variant": "#753400",
+                        "surface-container-low": "#f1f3ff",
+                        "background": "#f9f9ff",
+                        "on-tertiary-container": "#ffaf7f",
+                        "surface-container-highest": "#dce2f7",
+                        "on-error": "#ffffff",
+                        "surface-tint": "#265ea6",
+                        "secondary-fixed-dim": "#c0c7d6",
+                        "inverse-surface": "#293040",
+                        "inverse-primary": "#a8c8ff",
+                        "on-secondary-fixed": "#151c27",
+                        "on-background": "#141b2b",
+                        "tertiary-fixed-dim": "#ffb68b",
+                        "on-surface-variant": "#424751",
+                        "surface-container-high": "#e1e8fd",
+                        "surface-variant": "#dce2f7",
+                        "surface-container": "#e9edff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-padding": "16px",
+                        "lg": "24px",
+                        "stack-gap": "12px",
+                        "base": "8px",
+                        "xs": "4px",
+                        "md": "16px",
+                        "xl": "32px",
+                        "sm": "8px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Geist"],
+                        "headline": ["Inter"],
+                        "mono-label": ["Geist"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "headline": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "mono-label": ["13px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "display": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    },
+                    "boxShadow": {
+                        "level-1": "0px 1px 3px rgba(0, 0, 0, 0.05), 0px 1px 2px rgba(0, 0, 0, 0.03)",
+                        "level-2": "0px 10px 15px -3px rgba(0, 0, 0, 0.08), 0px 4px 6px -2px rgba(0, 0, 0, 0.03)"
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface h-full flex flex-col font-body-md text-on-surface antialiased overflow-hidden selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="w-full flex justify-between items-center px-md h-16 bg-surface z-50 shrink-0">
+<button aria-label="Go back" class="w-10 h-10 flex items-center justify-center text-primary hover:bg-surface-container-high transition-colors rounded-full active:scale-95 duration-100"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqldyjlSTNu8eIeq4Jt_iBdTQJxuW-3XKMi_11fp7842syzbS4XhK9WZcrlD4aiauD4FjG47etP-VyTLnmiZFzAzHoQZ0Ob4DkyIitnsqCDbWJzjYeBrKIGLDOg0j_N5JvpInGT1iCT-pYbhE8wabxlln_B5uigm45AVPtQVc6_dE2kmEizYTHSNImikh28fA046UvKYxCeZyyKE3lED6uUECFb-qsaMKCKY0BAJsfaOzkJ200oXYI5Fv5g8FAHksm8Q" alt="SRU Logo" class="w-8 h-8 object-contain"></button>
+<div class="flex-1 text-center font-display text-headline font-bold text-primary truncate px-2">
+            SRU Timetable
+        </div>
+<div class="w-10"></div> <!-- Spacer for centering -->
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 overflow-y-auto px-md pt-lg pb-[100px] flex flex-col">
+<!-- Step Indicator -->
+<div class="flex items-center justify-center space-x-2 mb-xl">
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+<div class="w-8 h-2 rounded-full bg-primary transition-all duration-300"></div>
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+</div>
+<!-- Headline & Context -->
+<div class="mb-xl text-center">
+<h1 class="font-display text-display text-on-surface mb-md">Which year are you in?</h1>
+<div class="inline-flex items-center justify-center px-3 py-1 bg-surface-container-high rounded-full border border-outline-variant/30">
+<span class="font-mono-label text-mono-label text-secondary">BTECH-CSE</span>
+</div>
+</div>
+<!-- Year Selection Stack -->
+<div class="flex flex-col gap-stack-gap w-full max-w-md mx-auto">
+<!-- First Year Card -->
+<button class="group w-full bg-surface-container-lowest rounded-[16px] p-md flex items-center justify-between border border-outline-variant shadow-level-1 hover:shadow-level-2 hover:-translate-y-0.5 transition-all duration-200 active:scale-[0.98] active:shadow-level-1 relative overflow-hidden text-left" onclick="selectYear(this)">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary/20 group-hover:bg-primary transition-colors"></div>
+<div class="flex items-center gap-md pl-2">
+<div class="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined text-[24px]" data-icon="school">school</span>
+</div>
+<div>
+<h3 class="font-headline text-headline text-on-surface group-hover:text-primary transition-colors">First Year</h3>
+<p class="font-label-sm text-label-sm text-secondary">Semesters 1 &amp; 2</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</button>
+<!-- Second Year Card (Selected State Example) -->
+<button class="group w-full bg-surface-container rounded-[16px] p-md flex items-center justify-between border-2 border-primary shadow-level-1 relative overflow-hidden text-left" onclick="selectYear(this)">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="flex items-center gap-md pl-2">
+<div class="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[24px]" data-icon="menu_book">menu_book</span>
+</div>
+<div>
+<h3 class="font-headline text-headline text-primary">Second Year</h3>
+<p class="font-label-sm text-label-sm text-primary/80">Semesters 3 &amp; 4</p>
+</div>
+</div>
+<div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[16px]" data-icon="check" style="font-variation-settings: 'FILL' 1, 'wght' 700;">check</span>
+</div>
+</button>
+<!-- Third Year Card -->
+<button class="group w-full bg-surface-container-lowest rounded-[16px] p-md flex items-center justify-between border border-outline-variant shadow-level-1 hover:shadow-level-2 hover:-translate-y-0.5 transition-all duration-200 active:scale-[0.98] active:shadow-level-1 relative overflow-hidden text-left" onclick="selectYear(this)">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary/20 group-hover:bg-primary transition-colors"></div>
+<div class="flex items-center gap-md pl-2">
+<div class="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined text-[24px]" data-icon="library_books">library_books</span>
+</div>
+<div>
+<h3 class="font-headline text-headline text-on-surface group-hover:text-primary transition-colors">Third Year</h3>
+<p class="font-label-sm text-label-sm text-secondary">Semesters 5 &amp; 6</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</button>
+<!-- Fourth Year Card -->
+<button class="group w-full bg-surface-container-lowest rounded-[16px] p-md flex items-center justify-between border border-outline-variant shadow-level-1 hover:shadow-level-2 hover:-translate-y-0.5 transition-all duration-200 active:scale-[0.98] active:shadow-level-1 relative overflow-hidden text-left" onclick="selectYear(this)">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary/20 group-hover:bg-primary transition-colors"></div>
+<div class="flex items-center gap-md pl-2">
+<div class="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined text-[24px]" data-icon="workspace_premium">workspace_premium</span>
+</div>
+<div>
+<h3 class="font-headline text-headline text-on-surface group-hover:text-primary transition-colors">Fourth Year</h3>
+<p class="font-label-sm text-label-sm text-secondary">Semesters 7 &amp; 8</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</main>
+<!-- Sticky Continue Button Area -->
+<div class="fixed bottom-0 left-0 w-full p-md bg-gradient-to-t from-surface via-surface to-transparent z-40 pb-lg">
+<button class="w-full max-w-md mx-auto h-14 bg-primary text-on-primary rounded-xl font-headline text-headline flex items-center justify-center gap-2 shadow-level-1 hover:bg-primary-container hover:text-on-primary-container transition-all active:scale-95 duration-100">
+            Continue
+            <span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<script>
+        // Simple mock interaction for demonstrating selection state toggle
+        function selectYear(clickedCard) {
+            // Reset all cards
+            const allCards = document.querySelectorAll('button.group');
+            allCards.forEach(card => {
+                card.className = "group w-full bg-surface-container-lowest rounded-[16px] p-md flex items-center justify-between border border-outline-variant shadow-level-1 hover:shadow-level-2 hover:-translate-y-0.5 transition-all duration-200 active:scale-[0.98] active:shadow-level-1 relative overflow-hidden text-left";
+                
+                // Reset left bar
+                card.querySelector('.absolute').className = "absolute left-0 top-0 bottom-0 w-1 bg-primary/20 group-hover:bg-primary transition-colors";
+                
+                // Reset icon container
+                const iconContainer = card.querySelector('.flex.items-center.gap-md > div:first-child');
+                iconContainer.className = "w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors";
+                
+                // Reset text colors
+                card.querySelector('h3').className = "font-headline text-headline text-on-surface group-hover:text-primary transition-colors";
+                card.querySelector('p').className = "font-label-sm text-label-sm text-secondary";
+                
+                // Reset trailing icon (ensure it's a chevron and right color)
+                const trailingElement = card.lastElementChild;
+                if(trailingElement.tagName === 'SPAN') {
+                     trailingElement.className = "material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors";
+                     trailingElement.innerHTML = "chevron_right";
+                     trailingElement.style = "";
+                } else {
+                     // Need to convert checkmark div back to chevron span
+                     const newSpan = document.createElement('span');
+                     newSpan.className = "material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors";
+                     newSpan.setAttribute('data-icon', 'chevron_right');
+                     newSpan.innerHTML = "chevron_right";
+                     card.replaceChild(newSpan, trailingElement);
+                }
+            });
+
+            // Set selected state classes on clicked card
+            clickedCard.className = "group w-full bg-surface-container rounded-[16px] p-md flex items-center justify-between border-2 border-primary shadow-level-1 relative overflow-hidden text-left";
+            
+            // Set left bar active
+            clickedCard.querySelector('.absolute').className = "absolute left-0 top-0 bottom-0 w-1 bg-primary";
+            
+            // Set icon container active
+            const iconContainer = clickedCard.querySelector('.flex.items-center.gap-md > div:first-child');
+            iconContainer.className = "w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-on-primary";
+            
+            // Set text active
+            clickedCard.querySelector('h3').className = "font-headline text-headline text-primary";
+            clickedCard.querySelector('p').className = "font-label-sm text-label-sm text-primary/80";
+
+            // Transform chevron into checkmark
+            const trailingElement = clickedCard.lastElementChild;
+            const checkContainer = document.createElement('div');
+            checkContainer.className = "w-6 h-6 rounded-full bg-primary flex items-center justify-center text-on-primary";
+            checkContainer.innerHTML = `<span class="material-symbols-outlined text-[16px]" data-icon="check" style="font-variation-settings: 'FILL' 1, 'wght' 700;">check</span>`;
+            
+            clickedCard.replaceChild(checkContainer, trailingElement);
+        }
+    </script>
+
+
+</body></html>
