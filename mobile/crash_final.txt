@@ -1,0 +1,974 @@
+﻿--------- beginning of system
+08-27 17:42:18.683 10675 10675 I VirtualizationService: virtualizationservice::maintenance: Failed to find a Secretkeeper instance; skipping secret management
+08-27 17:42:18.690 10675 10675 I VirtualizationService: virtualizationservice: Registered Binder service android.system.virtualizationservice.
+08-27 17:42:18.693 10675 10675 I VirtualizationService: virtualizationservice: Registered Binder service android.system.virtualizationmaintenance.
+08-27 17:42:18.699 10675 10716 I VirtualizationService: virtualizationservice::aidl: ignoring packageRemoved(user_id=0, app_id=10628)
+08-27 17:43:01.504 17574 11566 E ActivityThread: Failed to find provider info for com.facebook.stella.assistant.deviceconnectionstate
+08-27 17:43:01.506 17574 11566 E ActivityThread: Failed to find provider info for com.facebook.stella_debug.assistant.deviceconnectionstate
+08-27 17:43:14.882 17574 11897 E ActivityThread: Failed to find provider info for com.facebook.stella.assistant.deviceconnectionstate
+08-27 17:43:14.883 17574 11897 E ActivityThread: Failed to find provider info for com.facebook.stella_debug.assistant.deviceconnectionstate
+08-27 17:43:34.507 17574 12086 E ActivityThread: Failed to find provider info for com.facebook.stella.assistant.deviceconnectionstate
+08-27 17:43:34.507 17574 12086 E ActivityThread: Failed to find provider info for com.facebook.stella_debug.assistant.deviceconnectionstate
+08-27 17:43:37.848 17574 12129 E ActivityThread: Failed to find provider info for com.facebook.stella.assistant.deviceconnectionstate
+08-27 17:43:37.849 17574 12129 E ActivityThread: Failed to find provider info for com.facebook.stella_debug.assistant.deviceconnectionstate
+08-27 17:43:37.959  3417  4971 W AutofillSession: AugmentedAutofillInlineSuggestionsResponseCallback: Session destroyed, but following through
+08-27 17:44:15.986  6229 12739 I DisplayManager: Choreographer implicitly registered for the refresh rate.
+08-27 17:48:56.229 17574 15961 E ActivityThread: Failed to find provider info for com.facebook.stella.assistant.deviceconnectionstate
+08-27 17:48:56.230 17574 15961 E ActivityThread: Failed to find provider info for com.facebook.stella_debug.assistant.deviceconnectionstate
+08-27 17:49:01.742 17574 16209 E ActivityThread: Failed to find provider info for com.facebook.stella.assistant.deviceconnectionstate
+08-27 17:49:01.746 17574 16209 E ActivityThread: Failed to find provider info for com.facebook.stella_debug.assistant.deviceconnectionstate
+08-27 17:49:28.608 17574 16865 E ActivityThread: Failed to find provider info for com.facebook.stella.assistant.deviceconnectionstate
+08-27 17:49:28.610 17574 16865 E ActivityThread: Failed to find provider info for com.facebook.stella_debug.assistant.deviceconnectionstate
+08-27 17:49:38.593 17574 16861 E ActivityThread: Failed to find provider info for com.facebook.stella.assistant.deviceconnectionstate
+08-27 17:49:38.594 17574 16861 E ActivityThread: Failed to find provider info for com.facebook.stella_debug.assistant.deviceconnectionstate
+08-27 17:51:00.317 18878 18967 I DisplayManager: Choreographer implicitly registered for the refresh rate.
+08-27 17:51:00.603 18811 19003 E ActivityThread: Failed to find provider info for com.facebook.appmanager.nekodirect
+08-27 17:51:02.628 17574 19350 E ActivityThread: Failed to find provider info for com.facebook.stella.assistant.deviceconnectionstate
+08-27 17:51:02.630 17574 19350 E ActivityThread: Failed to find provider info for com.facebook.stella_debug.assistant.deviceconnectionstate
+08-27 17:51:13.699 14550 14550 I ActivityThread: Removing dead content provider:android.content.ContentProviderProxy@2ca95a1
+08-27 17:51:21.721 14550 14550 I ActivityThread: Removing dead content provider:android.content.ContentProviderProxy@8d84f87
+08-27 17:51:27.629 17574 20373 E ActivityThread: Failed to find provider info for com.facebook.stella.assistant.deviceconnectionstate
+08-27 17:51:27.630 17574 20373 E ActivityThread: Failed to find provider info for com.facebook.stella_debug.assistant.deviceconnectionstate
+08-27 17:51:31.279 20581 20606 E ActivityThread: Failed to find provider info for com.voconfig.globalsettings.provider
+08-27 17:51:31.280 20581 20606 E ActivityThread: Failed to find provider info for com.voconfig.globalsettings.provider
+08-27 17:51:39.426 20790 20877 I DisplayManager: Choreographer implicitly registered for the refresh rate.
+08-27 17:51:39.438 20751 20836 E ActivityThread: Failed to find provider info for com.facebook.appmanager.nekodirect
+08-27 17:51:49.375 21279 21322 E ActivityThread: Failed to find provider info for com.vivo.sos.searchProvider
+08-27 17:52:32.591 23316 23316 W FileUtils: Failed to chmod(/data/user/0/com.facebook.services/app_restricted_mode): android.system.ErrnoException: chmod failed: ENOENT (No such file or directory)
+08-27 17:52:32.591 23316 23316 W FileUtils: Failed to chmod(/data/user/0/com.facebook.services/app_restricted_mode): android.system.ErrnoException: chmod failed: ENOENT (No such file or directory)
+08-27 17:52:32.592 23316 23316 W FileUtils: Failed to chmod(/data/user/0/com.facebook.services/app_restricted_mode): android.system.ErrnoException: chmod failed: ENOENT (No such file or directory)
+08-27 17:52:33.800 23409 23454 E ActivityThread: Failed to find provider info for com.facebook.appmanager.nekodirect
+08-27 17:53:38.051 24755 24778 E ActivityThread: Failed to find provider info for com.vivo.push.sdk.service.SystemPushConfig
+08-27 17:53:38.057 24755 24778 E ActivityThread: Failed to find provider info for com.vivo.push.sdk.service.SystemPushConfig
+08-27 17:53:38.059 24755 24777 E ActivityThread: Failed to find provider info for com.vivo.push.sdk.service.SystemPushConfig
+08-27 17:53:38.060 24755 24777 E ActivityThread: Failed to find provider info for com.vivo.push.sdk.service.SystemPushConfig
+08-27 17:53:38.076 24755 24777 E ActivityThread: Failed to find provider info for com.vivo.push.sdk.service.SystemPushConfig
+08-27 17:53:38.077 24755 24780 E ActivityThread: Failed to find provider info for com.vivo.push.sdk.service.SystemPushConfig
+08-27 17:53:39.651 24986 24986 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2143 android.content.ContextWrapper.bindService:891 com.vivo.globalanimation.DrawingService.onCreate:31 android.app.ActivityThread.handleCreateService:6030 android.app.ActivityThread.-$$Nest$mhandleCreateService:0 
+08-27 17:53:39.705 24986 24986 I DisplayManager: Implicitly registering for refresh rate
+08-27 17:53:39.795 24755 24858 W ratelimit: Single process limit 50/s drop 66 lines.
+08-27 17:53:39.795 24755 24858 E ActivityThread: Failed to find provider info for com.vivo.abe.unifiedconfig.provider
+08-27 17:53:39.939 24879 24879 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.sendBroadcast:1290 android.content.ContextWrapper.sendBroadcast:506 com.iqoo.powersaving.BasePowerModeChangeService.h:18 com.iqoo.powersaving.PowerModeChangeService$a.handleMessage:117 android.os.Handler.dispatchMessage:114 
+08-27 17:53:41.501 24879 24879 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.sendBroadcast:1290 android.content.ContextWrapper.sendBroadcast:506 com.iqoo.powersaving.BasePowerModeChangeService.h:18 com.iqoo.powersaving.PowerModeChangeService$a.handleMessage:86 android.os.Handler.dispatchMessage:114 
+08-27 17:53:42.562 24755 24755 I DisplayManager: Implicitly registering for refresh rate
+08-27 17:54:29.008  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.008  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015392, name: com.instagram.android
+08-27 17:54:29.008  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.034  3417  5362 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015392, name: com.instagram.android
+08-27 17:54:29.035  3417  5362 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.043  3417  4657 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015392, name: com.instagram.android
+08-27 17:54:29.043  3417  4657 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.062  3417  4657 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015392, name: com.instagram.android
+08-27 17:54:29.063  3417  6234 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.070  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015392, name: com.instagram.android
+08-27 17:54:29.071  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.081  3417  6234 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015392, name: com.instagram.android
+08-27 17:54:29.081  3417  6234 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.088  3417  4972 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015392, name: com.instagram.android
+08-27 17:54:29.088  3417  6234 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.097  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015392, name: com.instagram.android
+08-27 17:54:29.097  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.106  3417  5359 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015392, name: com.instagram.android
+08-27 17:54:29.107  3417  5359 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.120  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015392, name: com.instagram.android
+08-27 17:54:29.121  3417  5362 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.135  3417  6234 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015392, name: com.instagram.android
+08-27 17:54:29.139  3417  4657 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.146  3417  4971 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015392, name: com.instagram.android
+08-27 17:54:29.147  3417  4971 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.163  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015392, name: com.instagram.android
+08-27 17:54:29.164  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.173  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015392, name: com.instagram.android
+08-27 17:54:29.174  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.187  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015392, name: com.instagram.android
+08-27 17:54:29.188  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.195  3417  5453 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: -1, arg2: -1, arg3: 20790, arg4: 72146886408015392, name: com.instagram.android
+08-27 17:54:29.232  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.966  3417  5453 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015589, name: com.instagram.android
+08-27 17:54:29.968  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.969  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015589, name: com.instagram.android
+08-27 17:54:29.975  3417  5453 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.975  3417  5453 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015589, name: com.instagram.android
+08-27 17:54:29.982  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.982  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015589, name: com.instagram.android
+08-27 17:54:29.987  3417  4972 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.987  3417  4972 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015589, name: com.instagram.android
+08-27 17:54:29.997  3417  5453 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:29.997  3417  5453 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015589, name: com.instagram.android
+08-27 17:54:30.004  3417  5453 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:30.004  3417  4972 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015589, name: com.instagram.android
+08-27 17:54:30.042  3417  3567 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:30.044  3417  5453 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015589, name: com.instagram.android
+08-27 17:54:30.052  3417  3567 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:30.053  3417  3567 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015589, name: com.instagram.android
+08-27 17:54:30.061  3417  3567 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:30.061  3417  3567 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015589, name: com.instagram.android
+08-27 17:54:30.065  3417  3567 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:30.065  3417  5453 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015589, name: com.instagram.android
+08-27 17:54:30.074  3417  4972 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:30.096  3417  4972 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015589, name: com.instagram.android
+08-27 17:54:30.100  3417  3567 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:30.101  3417  3567 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015589, name: com.instagram.android
+08-27 17:54:30.104  3417  3567 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:30.104  3417  3567 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015589, name: com.instagram.android
+08-27 17:54:30.110  3417  3567 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:30.110  3417  3567 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015589, name: com.instagram.android
+08-27 17:54:30.117  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:30.117  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015589, name: com.instagram.android
+08-27 17:54:30.125  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:30.125  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015589, name: com.instagram.android
+08-27 17:54:30.133  3417  5453 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 1920, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:30.133  3417  5453 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015589, name: com.instagram.android
+08-27 17:54:30.163  3417  5359 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: -1, arg2: -1, arg3: 20790, arg4: 72146886408015520, name: com.instagram.android
+08-27 17:54:30.187  3417  3567 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2106, arg3: 20790, arg4: 72146886408015589, name: com.instagram.android
+08-27 17:54:30.933  3417  5359 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2392, arg3: 5337, arg4: 72080516278386879, name: com.android.systemui
+08-27 17:54:30.933  3417  5359 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2392, arg3: 5337, arg4: 72080516278880818, name: com.vivo.systemuiplugin
+08-27 17:54:30.998  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2392, arg3: 5337, arg4: 72080516278386879, name: com.android.systemui
+08-27 17:54:31.005  3417  5453 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2392, arg3: 5337, arg4: 72080516278386879, name: com.android.systemui
+08-27 17:54:33.067  3417  5453 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: -2, arg2: -1, arg3: 5337, arg4: 72080516278386879, name: com.android.systemui
+08-27 17:54:33.084  3417  5627 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: -2, arg2: -1, arg3: 5337, arg4: 72080516278386879, name: com.android.systemui
+08-27 17:54:33.084  3417  4971 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: -2, arg2: -1, arg3: 5337, arg4: 72080516278880818, name: com.vivo.systemuiplugin
+08-27 17:54:37.996  3417  5555 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: -1, arg2: -1, arg3: 20790, arg4: 72146886408015589, name: com.instagram.android
+08-27 17:54:41.005 24986 24986 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.stopService:2043 android.content.ContextWrapper.stopService:865 androidx.preference.y.a:1983 androidx.preference.y.handleMessage:1343 android.os.Handler.dispatchMessage:114 
+08-27 17:55:13.060  3417  5755 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 670, arg2: 556, arg3: 5781, arg4: 72082423243889349, name: com.vivo.fingerprintui
+08-27 17:55:13.096  3417  4914 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 670, arg2: 556, arg3: 5781, arg4: 72082423243889349, name: com.vivo.fingerprintui
+08-27 17:55:17.401  3417  5755 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2392, arg3: 5337, arg4: 72080516278386879, name: com.android.systemui
+08-27 17:55:17.405  3417  5755 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2392, arg3: 5337, arg4: 72080516278880818, name: com.vivo.systemuiplugin
+08-27 17:55:17.564  3417  5359 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2392, arg3: 5337, arg4: 72080516278387205, name: com.vivo.systemuiplugin
+08-27 17:55:17.576  3417  5359 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2392, arg3: 5337, arg4: 72080516278387205, name: com.vivo.systemuiplugin
+08-27 17:55:28.356  3417  5359 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: -1, arg2: -1, arg3: 5337, arg4: 72080516278387205, name: com.vivo.systemuiplugin
+08-27 17:55:28.543  3417  5362 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: -1, arg2: -1, arg3: 5337, arg4: 72080516278387205, name: com.vivo.systemuiplugin
+08-27 17:55:28.598  3417  4971 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: -2, arg2: -1, arg3: 5337, arg4: 72080516278386879, name: com.android.systemui
+08-27 17:55:28.598  3417  4971 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: -2, arg2: -1, arg3: 5337, arg4: 72080516278880818, name: com.vivo.systemuiplugin
+08-27 17:55:29.061 21091 23695 W Looper  : Slow delivery took 76680ms android.bg app=com.google.android.gms main=false group=BACKGROUND h=android.database.sqlite.SQLiteConnectionPool$IdleConnectionHandler c=null m=1
+08-27 17:55:29.422  3417  6234 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: -1, arg2: -1, arg3: 5781, arg4: 72082423243889349, name: com.vivo.fingerprintui
+08-27 17:55:51.410  3417  5375 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2392, arg3: 5337, arg4: 72080516278880818, name: com.vivo.systemuiplugin
+08-27 17:55:51.410  3417  5375 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2392, arg3: 5337, arg4: 72080516278386879, name: com.android.systemui
+08-27 17:55:51.411  3417  5453 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2392, arg3: 5337, arg4: 72080516278880818, name: com.vivo.systemuiplugin
+08-27 17:55:51.514  3417  4972 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2392, arg3: 5337, arg4: 72080516278386879, name: com.android.systemui
+08-27 17:55:51.524  3417  5375 D BatteryStatsService: noteVideoSurfaceChanged  noteWhich: 49,arg1: 1080, arg2: 2392, arg3: 5337, arg4: 72080516278386879, name: com.android.systemui
+08-27 17:55:59.359 21091 23695 W Looper  : Drained
+08-27 18:00:28.534 17574 29536 E ActivityThread: Failed to find provider info for com.facebook.stella.assistant.deviceconnectionstate
+08-27 18:00:28.536 17574 29536 E ActivityThread: Failed to find provider info for com.facebook.stella_debug.assistant.deviceconnectionstate
+08-27 18:06:42.117 31592 31592 I AconfigFlags: Using new flag storage
+08-27 18:08:33.277 17574 30013 E ActivityThread: Failed to find provider info for com.facebook.stella.assistant.deviceconnectionstate
+08-27 18:08:33.279 17574 30013 E ActivityThread: Failed to find provider info for com.facebook.stella_debug.assistant.deviceconnectionstate
+08-27 18:09:44.943 17574   651 E ActivityThread: Failed to find provider info for com.facebook.stella.assistant.deviceconnectionstate
+08-27 18:09:44.944 17574   651 E ActivityThread: Failed to find provider info for com.facebook.stella_debug.assistant.deviceconnectionstate
+08-27 18:10:40.515 17574  1867 E ActivityThread: Failed to find provider info for com.facebook.stella.assistant.deviceconnectionstate
+08-27 18:10:40.518 17574  1867 E ActivityThread: Failed to find provider info for com.facebook.stella_debug.assistant.deviceconnectionstate
+08-27 18:11:16.524 17574  2474 E ActivityThread: Failed to find provider info for com.facebook.stella.assistant.deviceconnectionstate
+08-27 18:11:16.526 17574  2474 E ActivityThread: Failed to find provider info for com.facebook.stella_debug.assistant.deviceconnectionstate
+08-27 18:11:39.276 17574  3805 E ActivityThread: Failed to find provider info for com.facebook.stella.assistant.deviceconnectionstate
+08-27 18:11:39.277 17574  3805 E ActivityThread: Failed to find provider info for com.facebook.stella_debug.assistant.deviceconnectionstate
+08-27 18:12:33.820 24879 24879 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.sendBroadcast:1290 android.content.ContextWrapper.sendBroadcast:506 com.iqoo.powersaving.BasePowerModeChangeService.h:18 com.iqoo.powersaving.PowerModeChangeService$a.handleMessage:117 android.os.Handler.dispatchMessage:114 
+08-27 18:12:38.748 17574  6046 E ActivityThread: Failed to find provider info for com.facebook.stella.assistant.deviceconnectionstate
+08-27 18:12:38.751 17574  6046 E ActivityThread: Failed to find provider info for com.facebook.stella_debug.assistant.deviceconnectionstate
+08-27 18:13:19.925 17574  4380 E ActivityThread: Failed to find provider info for com.facebook.stella.assistant.deviceconnectionstate
+08-27 18:13:19.926 17574  4380 E ActivityThread: Failed to find provider info for com.facebook.stella_debug.assistant.deviceconnectionstate
+08-27 18:13:37.736  8073  8105 I DisplayManager: Choreographer implicitly registered for the refresh rate.
+08-27 18:13:40.262  8254  8305 I DisplayManager: Choreographer implicitly registered for the refresh rate.
+08-27 18:13:40.790  8254  8254 I AconfigFlags: Using new flag storage
+--------- beginning of crash
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: FATAL EXCEPTION: main
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: Process: com.srutimetable.mobile, PID: 9173
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: java.lang.RuntimeException: Unable to get provider com.google.android.gms.ads.MobileAdsInitProvider: java.lang.IllegalStateException: 
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: ******************************************************************************
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: * Invalid application ID. Follow instructions here:                          *
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: * https://googlemobileadssdk.page.link/admob-android-update-manifest         *
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: * to find your app ID.                                                       *
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: * Google Ad Manager publishers should follow instructions here:              *
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: * https://googlemobileadssdk.page.link/ad-manager-android-update-manifest.   *
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: ******************************************************************************
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 	at android.app.ActivityThread.installProvider(ActivityThread.java:9893)
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 	at android.app.ActivityThread.installContentProviders(ActivityThread.java:9383)
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 	at android.app.ActivityThread.handleBindApplication(ActivityThread.java:8988)
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 	at android.app.ActivityThread.-$$Nest$mhandleBindApplication(ActivityThread.java:0)
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:3043)
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 	at android.os.Handler.dispatchMessage(Handler.java:114)
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 	at android.os.Looper.loopOnce(Looper.java:266)
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 	at android.os.Looper.loop(Looper.java:361)
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 	at android.app.ActivityThread.main(ActivityThread.java:10357)
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 	at java.lang.reflect.Method.invoke(Native Method)
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:675)
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1002)
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: Caused by: java.lang.IllegalStateException: 
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: ******************************************************************************
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: * Invalid application ID. Follow instructions here:                          *
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: * https://googlemobileadssdk.page.link/admob-android-update-manifest         *
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: * to find your app ID.                                                       *
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: * Google Ad Manager publishers should follow instructions here:              *
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: * https://googlemobileadssdk.page.link/ad-manager-android-update-manifest.   *
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: ******************************************************************************
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 	at a0.g(r8-map-id-156475a5606b106539176f8957badf010ae90eff16956b6269cd7809046c75af:3)
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 	at vd2.attachInfo(r8-map-id-156475a5606b106539176f8957badf010ae90eff16956b6269cd7809046c75af:139)
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 	at com.google.android.gms.ads.MobileAdsInitProvider.attachInfo(r8-map-id-156475a5606b106539176f8957badf010ae90eff16956b6269cd7809046c75af:3)
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 	at android.app.ActivityThread.installProvider(ActivityThread.java:9888)
+08-27 18:14:08.000  9173  9173 E AndroidRuntime: 	... 11 more
+08-27 18:14:09.289  9361  9531 E ActivityThread: Failed to find provider info for com.vivo.abe.unifiedconfig.provider
+08-27 18:14:08.955  3417  4201 D BatteryStatsImpl: Reading cpu stats took 153ms
+08-27 18:14:09.905  9637  9637 D VgcUtil : getFile name :theme_dir_path not exit in vgc_path_config.xml
+08-27 18:14:09.906  9637  9637 D VgcUtil : getFile name :theme_dir_path not exit in vgc_path_config.xml
+08-27 18:14:09.950  9637  9637 D VgcUtil : getFile name :theme_dir_path not exit in vgc_path_config.xml
+08-27 18:14:10.485  9247  9699 I AconfigFlags: Using new flag storage
+08-27 18:14:10.504  9247  9699 V Configuration: Updating configuration, locales updated from [] to [en_US]
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: FATAL EXCEPTION: main
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: Process: com.srutimetable.mobile, PID: 9911
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: java.lang.RuntimeException: Unable to get provider com.google.android.gms.ads.MobileAdsInitProvider: java.lang.IllegalStateException: 
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: ******************************************************************************
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: * Invalid application ID. Follow instructions here:                          *
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: * https://googlemobileadssdk.page.link/admob-android-update-manifest         *
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: * to find your app ID.                                                       *
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: * Google Ad Manager publishers should follow instructions here:              *
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: * https://googlemobileadssdk.page.link/ad-manager-android-update-manifest.   *
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: ******************************************************************************
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 	at android.app.ActivityThread.installProvider(ActivityThread.java:9893)
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 	at android.app.ActivityThread.installContentProviders(ActivityThread.java:9383)
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 	at android.app.ActivityThread.handleBindApplication(ActivityThread.java:8988)
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 	at android.app.ActivityThread.-$$Nest$mhandleBindApplication(ActivityThread.java:0)
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:3043)
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 	at android.os.Handler.dispatchMessage(Handler.java:114)
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 	at android.os.Looper.loopOnce(Looper.java:266)
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 	at android.os.Looper.loop(Looper.java:361)
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 	at android.app.ActivityThread.main(ActivityThread.java:10357)
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 	at java.lang.reflect.Method.invoke(Native Method)
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:675)
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1002)
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: Caused by: java.lang.IllegalStateException: 
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: ******************************************************************************
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: * Invalid application ID. Follow instructions here:                          *
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: * https://googlemobileadssdk.page.link/admob-android-update-manifest         *
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: * to find your app ID.                                                       *
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: * Google Ad Manager publishers should follow instructions here:              *
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: * https://googlemobileadssdk.page.link/ad-manager-android-update-manifest.   *
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: ******************************************************************************
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 	at a0.g(r8-map-id-156475a5606b106539176f8957badf010ae90eff16956b6269cd7809046c75af:3)
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 	at vd2.attachInfo(r8-map-id-156475a5606b106539176f8957badf010ae90eff16956b6269cd7809046c75af:139)
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 	at com.google.android.gms.ads.MobileAdsInitProvider.attachInfo(r8-map-id-156475a5606b106539176f8957badf010ae90eff16956b6269cd7809046c75af:3)
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 	at android.app.ActivityThread.installProvider(ActivityThread.java:9888)
+08-27 18:14:13.409  9911  9911 E AndroidRuntime: 	... 11 more
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: FATAL EXCEPTION: main
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: Process: com.srutimetable.mobile, PID: 10034
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: java.lang.RuntimeException: Unable to get provider com.google.android.gms.ads.MobileAdsInitProvider: java.lang.IllegalStateException: 
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: ******************************************************************************
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: * Invalid application ID. Follow instructions here:                          *
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: * https://googlemobileadssdk.page.link/admob-android-update-manifest         *
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: * to find your app ID.                                                       *
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: * Google Ad Manager publishers should follow instructions here:              *
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: * https://googlemobileadssdk.page.link/ad-manager-android-update-manifest.   *
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: ******************************************************************************
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 	at android.app.ActivityThread.installProvider(ActivityThread.java:9893)
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 	at android.app.ActivityThread.installContentProviders(ActivityThread.java:9383)
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 	at android.app.ActivityThread.handleBindApplication(ActivityThread.java:8988)
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 	at android.app.ActivityThread.-$$Nest$mhandleBindApplication(ActivityThread.java:0)
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:3043)
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 	at android.os.Handler.dispatchMessage(Handler.java:114)
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 	at android.os.Looper.loopOnce(Looper.java:266)
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 	at android.os.Looper.loop(Looper.java:361)
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 	at android.app.ActivityThread.main(ActivityThread.java:10357)
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 	at java.lang.reflect.Method.invoke(Native Method)
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:675)
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1002)
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: Caused by: java.lang.IllegalStateException: 
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: ******************************************************************************
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: * Invalid application ID. Follow instructions here:                          *
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: * https://googlemobileadssdk.page.link/admob-android-update-manifest         *
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: * to find your app ID.                                                       *
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: * Google Ad Manager publishers should follow instructions here:              *
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: * https://googlemobileadssdk.page.link/ad-manager-android-update-manifest.   *
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: ******************************************************************************
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 	at a0.g(r8-map-id-156475a5606b106539176f8957badf010ae90eff16956b6269cd7809046c75af:3)
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 	at vd2.attachInfo(r8-map-id-156475a5606b106539176f8957badf010ae90eff16956b6269cd7809046c75af:139)
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 	at com.google.android.gms.ads.MobileAdsInitProvider.attachInfo(r8-map-id-156475a5606b106539176f8957badf010ae90eff16956b6269cd7809046c75af:3)
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 	at android.app.ActivityThread.installProvider(ActivityThread.java:9888)
+08-27 18:14:14.742 10034 10034 E AndroidRuntime: 	... 11 more
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: FATAL EXCEPTION: main
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: Process: com.srutimetable.mobile, PID: 10077
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: java.lang.RuntimeException: Unable to get provider com.google.android.gms.ads.MobileAdsInitProvider: java.lang.IllegalStateException: 
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: ******************************************************************************
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: * Invalid application ID. Follow instructions here:                          *
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: * https://googlemobileadssdk.page.link/admob-android-update-manifest         *
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: * to find your app ID.                                                       *
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: * Google Ad Manager publishers should follow instructions here:              *
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: * https://googlemobileadssdk.page.link/ad-manager-android-update-manifest.   *
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: ******************************************************************************
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 	at android.app.ActivityThread.installProvider(ActivityThread.java:9893)
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 	at android.app.ActivityThread.installContentProviders(ActivityThread.java:9383)
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 	at android.app.ActivityThread.handleBindApplication(ActivityThread.java:8988)
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 	at android.app.ActivityThread.-$$Nest$mhandleBindApplication(ActivityThread.java:0)
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:3043)
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 	at android.os.Handler.dispatchMessage(Handler.java:114)
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 	at android.os.Looper.loopOnce(Looper.java:266)
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 	at android.os.Looper.loop(Looper.java:361)
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 	at android.app.ActivityThread.main(ActivityThread.java:10357)
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 	at java.lang.reflect.Method.invoke(Native Method)
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:675)
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1002)
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: Caused by: java.lang.IllegalStateException: 
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: ******************************************************************************
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: * Invalid application ID. Follow instructions here:                          *
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: * https://googlemobileadssdk.page.link/admob-android-update-manifest         *
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: * to find your app ID.                                                       *
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: * Google Ad Manager publishers should follow instructions here:              *
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: * https://googlemobileadssdk.page.link/ad-manager-android-update-manifest.   *
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: ******************************************************************************
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 	at a0.g(r8-map-id-156475a5606b106539176f8957badf010ae90eff16956b6269cd7809046c75af:3)
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 	at vd2.attachInfo(r8-map-id-156475a5606b106539176f8957badf010ae90eff16956b6269cd7809046c75af:139)
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 	at com.google.android.gms.ads.MobileAdsInitProvider.attachInfo(r8-map-id-156475a5606b106539176f8957badf010ae90eff16956b6269cd7809046c75af:3)
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 	at android.app.ActivityThread.installProvider(ActivityThread.java:9888)
+08-27 18:14:15.436 10077 10077 E AndroidRuntime: 	... 11 more
+08-27 18:14:18.295 10172 10239 E ActivityThread: Failed to find provider info for com.facebook.appmanager.nekodirect
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: FATAL EXCEPTION: main
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: Process: com.srutimetable.mobile, PID: 10398
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: java.lang.RuntimeException: Unable to get provider com.google.android.gms.ads.MobileAdsInitProvider: java.lang.IllegalStateException: 
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: ******************************************************************************
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: * Invalid application ID. Follow instructions here:                          *
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: * https://googlemobileadssdk.page.link/admob-android-update-manifest         *
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: * to find your app ID.                                                       *
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: * Google Ad Manager publishers should follow instructions here:              *
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: * https://googlemobileadssdk.page.link/ad-manager-android-update-manifest.   *
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: ******************************************************************************
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 	at android.app.ActivityThread.installProvider(ActivityThread.java:9893)
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 	at android.app.ActivityThread.installContentProviders(ActivityThread.java:9383)
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 	at android.app.ActivityThread.handleBindApplication(ActivityThread.java:8988)
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 	at android.app.ActivityThread.-$$Nest$mhandleBindApplication(ActivityThread.java:0)
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:3043)
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 	at android.os.Handler.dispatchMessage(Handler.java:114)
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 	at android.os.Looper.loopOnce(Looper.java:266)
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 	at android.os.Looper.loop(Looper.java:361)
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 	at android.app.ActivityThread.main(ActivityThread.java:10357)
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 	at java.lang.reflect.Method.invoke(Native Method)
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:675)
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1002)
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: Caused by: java.lang.IllegalStateException: 
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: ******************************************************************************
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: * Invalid application ID. Follow instructions here:                          *
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: * https://googlemobileadssdk.page.link/admob-android-update-manifest         *
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: * to find your app ID.                                                       *
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: * Google Ad Manager publishers should follow instructions here:              *
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: * https://googlemobileadssdk.page.link/ad-manager-android-update-manifest.   *
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: ******************************************************************************
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 	at a0.g(r8-map-id-156475a5606b106539176f8957badf010ae90eff16956b6269cd7809046c75af:3)
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 	at vd2.attachInfo(r8-map-id-156475a5606b106539176f8957badf010ae90eff16956b6269cd7809046c75af:139)
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 	at com.google.android.gms.ads.MobileAdsInitProvider.attachInfo(r8-map-id-156475a5606b106539176f8957badf010ae90eff16956b6269cd7809046c75af:3)
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 	at android.app.ActivityThread.installProvider(ActivityThread.java:9888)
+08-27 18:14:23.068 10398 10398 E AndroidRuntime: 	... 11 more
+08-27 18:14:39.522 17574  8579 E ActivityThread: Failed to find provider info for com.facebook.stella.assistant.deviceconnectionstate
+08-27 18:14:39.526 17574  8579 E ActivityThread: Failed to find provider info for com.facebook.stella_debug.assistant.deviceconnectionstate
+08-27 18:15:32.538 17574 11158 E ActivityThread: Failed to find provider info for com.facebook.stella.assistant.deviceconnectionstate
+08-27 18:15:32.539 17574 11158 E ActivityThread: Failed to find provider info for com.facebook.stella_debug.assistant.deviceconnectionstate
+08-27 18:16:38.860 11919 11919 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:2143 android.content.ContextWrapper.bindService:891 com.vivo.globalanimation.DrawingService.onCreate:31 android.app.ActivityThread.handleCreateService:6030 android.app.ActivityThread.-$$Nest$mhandleCreateService:0 
+08-27 18:16:38.919 11919 11919 I DisplayManager: Implicitly registering for refresh rate
+--------- beginning of main
+08-27 18:16:39.771 11919 12121 E qdgralloc: BufferManager::ReleaseBuffer ref_count = 1
+08-27 18:16:39.772  9575  9612 D SQLiteQueryBuilder: SELECT should_sync FROM view_settings WHERE ((account_id=3))
+08-27 18:16:39.776 11919 12121 E qdgralloc: BufferManager::ReleaseBuffer ref_count = 1
+08-27 18:16:39.776 11919 12121 E qdgralloc: BufferManager::ReleaseBuffer ref_count = 1
+08-27 18:16:39.777 11919 12121 I HWUI    : [destroy] CanvasContext will be destroyed.
+08-27 18:16:39.778 11919 11919 E qdgralloc: BufferManager::ReleaseBuffer ref_count = 1
+08-27 18:16:39.786 11919 12121 I HWUI    : [trimMemory] TrimMemory will destroy render context, mode: 80.
+08-27 18:16:39.798  9575  9612 D SQLiteQueryBuilder: SELECT _id, sourceid FROM view_groups WHERE ((account_id=3)) AND (((data_set IS NULL)))
+08-27 18:16:39.806  9575 12186 D SQLiteQueryBuilder: SELECT COUNT(*) AS _count FROM view_raw_contacts WHERE ((account_id=3)) AND (((data_set IS NULL)))
+08-27 18:16:39.821  9575 12186 D SQLiteQueryBuilder: SELECT sourceid, _id, data14, data15, data_version, data_sync4, data_sync2, data_sync1 FROM view_data data LEFT OUTER JOIN (SELECT 0 as STAT_DATA_ID,0 as x_times_used, 0 as x_last_time_used,0 as times_used, 0 as last_time_used where 0) as data_usage_stat ON (STAT_DATA_ID=data._id) WHERE ((account_id=3)) AND (((mimetype='vnd.android.cursor.item/photo' AND sourceid IS NOT NULL AND (data_sync4 IS NULL OR data_sync4!=(data_version+10)) )))
+08-27 18:16:39.829 11744 11935 I FSA2_CallingCardOp: No calling card photos to sync up.
+08-27 18:16:39.834 11744 11935 I FSA2_PhotoSyncer: After CC photo sync up, callingCardsWithOnlyMetadataCount: 0, callingCardsWithOnlyPhotoCount: 0, callingCardsWithBothMetadataAndPhotoCount: 0
+08-27 18:16:39.846  9575 12186 D SQLiteQueryBuilder: SELECT COUNT(*) AS _count FROM view_groups WHERE ((account_id=3)) AND (((data_set IS NULL AND deleted = 0)))
+08-27 18:16:39.853  9575 12186 D SQLiteQueryBuilder: SELECT COUNT(*) AS _count FROM view_raw_contacts WHERE ((account_id=3)) AND (((data_set IS NULL AND deleted = 0)))
+08-27 18:16:39.858 11744 11935 I FSA2_RawContactSyncer: contact count. before sweep: 241, before sync: 241, after sync down: -1, after sync up: 241
+08-27 18:16:39.858 11744 11935 W FSA2_ContactsSyncAdapter: @onPerformSync Sync finished successfully
+08-27 18:16:39.892 11744 11935 W ChimeraUtils: Module com.google.android.gms.people missing resource null(0)
+08-27 18:16:39.898 11744 11935 W ChimeraUtils: Module com.google.android.gms.people missing resource null(0)
+08-27 18:16:39.981 12049 12049 W ProviderHelper: Unknown dynamite feature providerinstaller.dynamite
+08-27 18:16:39.981 12049 12049 I DynamiteModule: Considering local module com.google.android.gms.providerinstaller.dynamite:1 and remote module com.google.android.gms.providerinstaller.dynamite:0
+08-27 18:16:39.981 12049 12049 I DynamiteModule: Selected local version of com.google.android.gms.providerinstaller.dynamite
+08-27 18:16:39.993 12049 12049 I ProviderInstaller: Installed default security provider AndroidOpenSSL (via CompatProvider)
+08-27 18:16:40.012 12049 12190 I Watchcat: Started
+08-27 18:16:40.018 12049 12190 I GMS_MM_Logger: (REDACTED) Start time: %s
+08-27 18:16:40.019 12049 12190 I GMS_MM_Logger: Started.
+08-27 18:16:40.039  3209  8973 I artd    : GetBestInfo: odex in dalvik-cache (/data/dalvik-cache/arm64/system@app@VivoGallery@VivoGallery.apk@classes.dex) is kOatUpToDate with filter 'speed-profile' executable 'false'
+08-27 18:16:40.043 12049 12049 E ANDR-VIVO-PERF: V1_0::IVPerf::tryGetService failed!
+08-27 18:16:40.043 12049 12049 E ANDR-VIVO-PERF: error no aidl or hidl 
+08-27 18:16:40.052 12202 12202 I libc    : SetHeapTaggingLevel: tag level set to 0
+08-27 18:16:40.070 24559 24816 I PAL: API: pal_stream_stop: 453: Enter. Stream handle :0xb4000076a12554d0K
+08-27 18:16:40.070 24559 24816 E PAL: ResourceManager: checkandEnableECForRXStream_l: 4721: EC is disabled for usecase 10 of device 28
+08-27 18:16:40.071 24559 24816 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001007 token 0x7ae2a000
+08-27 18:16:40.071 24559 24816 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001007 token 0x7ae2b000
+08-27 18:16:40.072 24559 24816 I PAL: vivoPalExtn: vivoGetAdspPcmInfo: 1154: AudioId 0x2, DeviceId 3, streamType 1, pcm_node 152e-0x1, SizePerInt 384, totcal_count 2108, num_channels 2, mute_count 1197 1203 0 0, zero_count 1045 1046 0 0, ts_process 0 0, q6load 313, cpp 23, adsp_clk 595200, spr_underrun 0, spr_overrun 0, e_underrun 0, e_overrun 0, signal_miss 0 0, mailbox_drop 0, vptx_drop 0, pal_underrun 0 0, pal_oeverrun 0 0, adsp_pcm_info: 0,00-4 1,00-4
+08-27 18:16:40.072 24559 24816 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001007 token 0x7ae2c000
+08-27 18:16:40.072 24559 24816 I PAL: vivoPalExtn: vivoGetAdspPcmInfo: 1154: AudioId 0x2, DeviceId 3, streamType 1, pcm_node 1586-0xd10, SizePerInt 192, totcal_count 2112, num_channels 2, mute_count 2112 1196 0 0, zero_count 2112 1011 0 0, ts_process 0 30, q6load 314, cpp 24, adsp_clk 595200, spr_underrun 0, spr_overrun 0, e_underrun 0, e_overrun 0, signal_miss 0 0, mailbox_drop 0, vptx_drop 0, pal_underrun 0 0, pal_oeverrun 0 0, adsp_pcm_info: 0,00-c 1
+08-27 18:16:40.072 24559 24816 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001003 token 0x7ae2d000
+08-27 18:16:40.077 24559 24816 I PAL: ResourceManager: voteSleepMonitor: 2482: Unvoting done for nlpi use case, lpi votes 0, nlpi votes : 2
+08-27 18:16:40.077 24559 24816 I PAL: Device: stop_l: 674: Enter. deviceCount 1 deviceStartStopCount 1 for device id 3 (PAL_DEVICE_OUT_SPEAKER)
+08-27 18:16:40.077 24559 24816 I PAL: API: pal_stream_stop: 491: Exit. status 0
+08-27 18:16:40.077 24559 24816 I PAL: API: pal_stream_close: 323: Enter. Stream handle :0xb4000076a12554d0K
+08-27 18:16:40.077 24559 24816 I AGM: API: agm_session_aif_connect: 625 disconnecting aifid:1 with session id=126
+08-27 18:16:40.077 24559 24816 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001004 token 0x7ae2e000
+08-27 18:16:40.078 12202 12202 I om.vivo.gallery: Using generational CollectorTypeCC GC.
+08-27 18:16:40.111 24559 24816 I AGM: device: device_set_metadata: 712 Setting device metadata for CODEC_DMA-LPAIF_RXTX-RX-1
+08-27 18:16:40.111 24559 24816 I AGM: session: session_obj_set_sess_aif_metadata: 1933 Setting metadata for sess_id 126, aif id 1
+08-27 18:16:40.111 24559 24816 I AGM: session: session_obj_set_sess_aif_metadata: 1938 Exit
+08-27 18:16:40.111 24559 24816 E audio_route: unable to find path 'PM_QOS_Vote'
+08-27 18:16:40.111 24559 24816 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001004 token 0x7ae31000
+08-27 18:16:40.112 24559 24816 I PAL: ResourceManager: freeFrontEndIds: 7865: stream type 1, freeing 126
+08-27 18:16:40.113 24559 24816 I PAL: Device: close: 556: Enter. deviceCount 1 for device id 3 (PAL_DEVICE_OUT_SPEAKER)
+08-27 18:16:40.113 24559 24816 I PAL: Device: close: 568: Disabling device 3 with snd dev speaker
+08-27 18:16:40.113 24559 24816 I PAL: Device: close: 579: Exit. deviceCount 0 for device id 3 (PAL_DEVICE_OUT_SPEAKER), exit status 0
+08-27 18:16:40.114 24559 24816 I PAL: API: notify_concurrent_stream: 136: Notify concurrent stream type 1, direction 1, active 0
+08-27 18:16:40.114 24559 24816 I PAL: ResourceManager: HandleConcurrencyForSoundTriggerStreams: 6128: use_lpi = 1, concEnableCount = 0, concDisableCount = 1, active_streams_st.size = 0, acd.size = 0, sensor_pcm_data.size = 0
+08-27 18:16:40.114 24559 24816 I PAL: ResourceManager: GetConcurrencyInfo: 5877: stream type 1 Tx conc 0, Rx conc 0, concurrency allowed
+08-27 18:16:40.114 24559 24816 I PAL: ResourceManager: GetConcurrencyInfo: 5877: stream type 1 Tx conc 0, Rx conc 0, concurrency allowed
+08-27 18:16:40.114 24559 24816 I PAL: ResourceManager: GetConcurrencyInfo: 5877: stream type 1 Tx conc 0, Rx conc 0, concurrency allowed
+08-27 18:16:40.114 24559 24816 I PAL: StreamPCM: ~StreamPCM: 380: Enter. session handle - 0xb40000783123a1f0K device count - 1 state 0
+08-27 18:16:40.114 24559 24816 I PAL: ResourceManager: deregisterStream: 4051: stream type 1
+08-27 18:16:40.114 24559 24816 I PAL: Device: removeStreamDeviceAttr: 983: dev: 3 attr removed are: priority: 0x3, stream type: 1, ch: 2, sr: 48000, bit_width: 32, fmt: 23, sndDev: speaker, custom_key: 
+08-27 18:16:40.114 24559 24816 I PAL: API: pal_stream_close: 362: Exit. status 0
+08-27 18:16:40.128 12202 12202 E om.vivo.gallery: BBinder_init Processname  com.vivo.gallery  
+08-27 18:16:40.128 12202 12202 E om.vivo.gallery: BBinder_init hasGetProcessName  com.vivo.gallery
+08-27 18:16:40.170 24557 24710 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:40.174 24557 24710 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:40.269 12202 12202 I om.vivo.gallery: AssetManager2(0x77721335d8) locale list changing from [] to [en-US]
+08-27 18:16:40.280 24557 32374 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:40.426 24557 32374 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:40.528 24557 24731 I APM_AudioPolicyManager: startOutput portId 17850
+08-27 18:16:40.529 24557 24731 I APM_AudioPolicyManager: startOutput() output 13, stream 1, session 6116905, stubMode 0 on module primary HAL
+08-27 18:16:40.529 24557 24731 I APM_AudioPolicyManager: startSource @@@
+08-27 18:16:40.529 24557 24731 I APM_AudioPolicyManager: getNewOutputDevices selected devices {AUDIO_DEVICE_OUT_SPEAKER, @:}, mPhoneState 0, iohandle 13
+08-27 18:16:40.530 24557 24731 W AudioPolicyService: AudioCommandThread() sendCommand cmd[10], delay[30]
+08-27 18:16:40.535 11366 26226 W ratelimit: Single process limit 50/s drop 33 lines.
+08-27 18:16:40.559 10660 11877 I adbd    : UsbFfs: connection terminated: read 6 failed with error Cannot send after transport endpoint shutdown
+08-27 18:16:40.561 10660 10680 E adbd    : failed to send interruption signal to worker: No such process
+08-27 18:16:40.562 24559 24866 I AHAL: AudioDevice: OutGetStream: 1325: Found existing stream associated with iohandle 13
+08-27 18:16:40.562 24559 24866 I AHAL: AudioDevice: GetPalDeviceIds: 2667: Found Android haldeviceId: 0x2 and PAL Device ID 3, PAL Device PAL_DEVICE_OUT_SPEAKER
+08-27 18:16:40.562 24559 24866 I AHAL: AudioDevice: GetPalDeviceIds: 2667: Found Android haldeviceId: 0x80000080 and PAL Device ID 29, PAL Device PAL_DEVICE_IN_SPEAKER_MIC
+08-27 18:16:40.562 24559 24866 I AHAL: AudioStream: RouteStream: 2630: enter: usecase(1: low-latency-playback) devices 0x2, num devices 1
+08-27 18:16:40.562 24559 24866 I AHAL: AudioDevice: GetPalDeviceIds: 2667: Found Android haldeviceId: 0x2 and PAL Device ID 3, PAL Device PAL_DEVICE_OUT_SPEAKER
+08-27 18:16:40.572 24559 26200 I AHAL: AudioStream: Open: 3335: Enter: OutPrimary usecase(1: low-latency-playback)
+08-27 18:16:40.572 24559 26200 I AHAL: AudioStream: Open: 3362: audio_output_flags: 0x6, palStreamType 1, palStream PAL_STREAM_LOW_LATENCY
+08-27 18:16:40.572 24559 26200 I PAL: ResourceManager: setParameter: 13175: custom type 1 state: 1
+08-27 18:16:40.572 24559 26200 I AHAL: AudioExtnVivo: vivo_extn_set_custom_config: 246: Setting ckv Vivo_Spk_Mode 1, ret 0
+08-27 18:16:40.572 24559 26200 I AHAL: AudioStream: Open: 3499: channels 2 samplerate 48000 format id 23, stream type 1  stream bitwidth 32, usecase low-latency-playback
+08-27 18:16:40.572 24559 26200 I PAL: API: pal_stream_open: 263: Enter, stream type:1
+08-27 18:16:40.572 24559 26200 I PAL: Stream: create: 161: no custom key found
+08-27 18:16:40.572 24559 26200 I PAL: ResourceManager: getDeviceConfig: 3550: device id 0x3 channels 2 samplerate 48000, bitwidth 32 format 23 SndDev speaker priority 0x3
+08-27 18:16:40.572 24559 26200 I PAL: StreamPCM: isBitWidthSupported: 1702: bitWidth 32
+08-27 18:16:40.572 24559 26200 I PAL: StreamPCM: isSampleRateSupported: 1649: sampleRate 48000
+08-27 18:16:40.572 24559 26200 I PAL: StreamPCM: isChannelSupported: 1674: numChannels 2
+08-27 18:16:40.572 24559 26200 I PAL: StreamPCM: StreamPCM: 127: Create new Devices with no_of_devices - 1
+08-27 18:16:40.572 24559 26200 I PAL: Device: insertStreamDeviceAttr: 866: insert the first device attribute
+08-27 18:16:40.572 24559 26200 I PAL: Device: insertStreamDeviceAttr: 928: dev: 3 attr inserted are: priority: 0x3, stream type: 1, ch: 2, sr: 48000, bit_width: 32, fmt: 23, sndDev: speaker, custom_key: 
+08-27 18:16:40.572 24559 26200 I PAL: Device: setDeviceAttributes: 416: DeviceAttributes for Device Id 3 updated
+08-27 18:16:40.572 24559 26200 I PAL: Device: open: 498: Enter. deviceCount 0 for device id 3 (PAL_DEVICE_OUT_SPEAKER)
+08-27 18:16:40.572 24559 26200 I PAL: SessionAlsaUtils: setDeviceMediaConfig: 1092: CODEC_DMA-LPAIF_RXTX-RX-1 rate ch fmt data_fmt 48000 2 10 1
+08-27 18:16:40.572 24559 26200 I PAL: Device: open: 523: audio_route 0xb400007691251a50K SND device name speaker
+08-27 18:16:40.573 24559 26200 I PAL: Device: open: 546: Exit. deviceCount 1 for device id 3 (PAL_DEVICE_OUT_SPEAKER), exit status: 0
+08-27 18:16:40.573 24559 26200 I PAL: ResourceManager: allocateFrontEndIds: 7661: allocateFrontEndIds: front end 126
+08-27 18:16:40.573 24559 26200 I PAL: PayloadBuilder: populateStreamKV: 3035: stream type 1
+08-27 18:16:40.573 24559 26200 I PAL: PayloadBuilder: getSelectorValues: 2845: Direction: 1
+08-27 18:16:40.573 24559 26200 I PAL: PayloadBuilder: getSelectorValues: 2861: Instance: 1
+08-27 18:16:40.573 24559 26200 I PAL: PayloadBuilder: findKVs: 2735: key: 0xa1000000 value: 0xa100000e
+08-27 18:16:40.573 24559 26200 I PAL: PayloadBuilder: findKVs: 2735: key: 0xab000000 value: 0x1
+08-27 18:16:40.573 24559 26200 I PAL: PayloadBuilder: findKVs: 2748: key: 0xa2000000 value: 0xa2000001
+08-27 18:16:40.573 24559 26200 I PAL: PayloadBuilder: populateDevicePPKV: 3304: Rx device id:3
+08-27 18:16:40.573 24559 26200 I PAL: PayloadBuilder: getSelectorValues: 2933: stream type: 1
+08-27 18:16:40.573 24559 26200 I PAL: PayloadBuilder: findKVs: 2735: key: 0xa2000000 value: 0xa2000001
+08-27 18:16:40.573 24559 26200 I PAL: PayloadBuilder: findKVs: 2735: key: 0xac000000 value: 0xac000002
+08-27 18:16:40.573 24559 26200 I PAL: PayloadBuilder: populateDevicePPCkv: 3528: SpeakerProt Status[0], RAS Status[0]
+08-27 18:16:40.573 24559 26200 I PAL: PayloadBuilder: populateCalKeyVector: 3953: set vivo spk mode 1
+08-27 18:16:40.573 24559 26200 I AGM: device: device_set_metadata: 712 Setting device metadata for CODEC_DMA-LPAIF_RXTX-RX-1
+08-27 18:16:40.573 24559 26200 I AGM: session: session_obj_set_sess_aif_metadata: 1933 Setting metadata for sess_id 126, aif id 1
+08-27 18:16:40.573 24559 26200 I AGM: session: session_obj_set_sess_aif_metadata: 1938 Exit
+08-27 18:16:40.573 24559 26200 I AGM: API: agm_session_aif_connect: 625 connecting aifid:1 with session id=126
+08-27 18:16:40.573 24559 26200 I PAL: API: notify_concurrent_stream: 136: Notify concurrent stream type 1, direction 1, active 1
+08-27 18:16:40.573 24559 26200 I PAL: ResourceManager: HandleConcurrencyForSoundTriggerStreams: 6128: use_lpi = 1, concEnableCount = 0, concDisableCount = 1, active_streams_st.size = 0, acd.size = 0, sensor_pcm_data.size = 0
+08-27 18:16:40.573 24559 26200 I PAL: ResourceManager: GetConcurrencyInfo: 5877: stream type 1 Tx conc 0, Rx conc 0, concurrency allowed
+08-27 18:16:40.573 24559 26200 I PAL: ResourceManager: GetConcurrencyInfo: 5877: stream type 1 Tx conc 0, Rx conc 0, concurrency allowed
+08-27 18:16:40.573 24559 26200 I PAL: ResourceManager: GetConcurrencyInfo: 5877: stream type 1 Tx conc 0, Rx conc 0, concurrency allowed
+08-27 18:16:40.573 24559 26200 I PAL: API: pal_stream_open: 307: Exit. Value of stream_handle 0xb4000076a1251790K, status 0
+08-27 18:16:40.574 24559 26200 I PAL: API: pal_stream_start: 378: Enter. Stream handle 0xb4000076a1251790K
+08-27 18:16:40.574 24559 26200 I PAL: Device: start_l: 609: Enter. deviceCount 1 deviceStartStopCount 0 for device id 3 (PAL_DEVICE_OUT_SPEAKER)
+08-27 18:16:40.574 24559 26200 I PAL: SessionAlsaUtils: setDeviceMediaConfig: 1092: CODEC_DMA-LPAIF_RXTX-RX-1 rate ch fmt data_fmt 48000 2 10 1
+08-27 18:16:40.574 24559 26200 I PAL: ResourceManager: voteSleepMonitor: 2482: Voting done for nlpi use case, lpi votes 0, nlpi votes : 3
+08-27 18:16:40.574 24559 26200 I PAL: Stream: getBufInfo: 825: In Buffer size 960, In Buffer count 4
+08-27 18:16:40.574 24559 26200 I PAL: Stream: getBufInfo: 831: Out Buffer size 1536 and Out Buffer count 2
+08-27 18:16:40.576 24559 26200 I GPR:    : vendor/qcom/proprietary/args/gpr/core/src/gpr_drv.c:__gpr_cmd_register_v2:931 GPR Register: Source Port is 8209 heap_index: 0
+08-27 18:16:40.576 24559 26200 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001000 token 0x7ae49000
+08-27 18:16:40.580 24559 26200 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x100100c token 0x7ae4a000
+08-27 18:16:40.580 24559 26200 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_shmem_mgr.c:gsl_shmem_handle_rsp:304 received spf handle 0xb11514f8 from spf
+08-27 18:16:40.580 24559 26200 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001006 token 0x7ae4b000
+08-27 18:16:40.582 24559 26200 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_shmem_mgr.c:gsl_shmem_unmap_page_from_spf:551 spf_handle 0xb11514f8
+08-27 18:16:40.582 24559 26200 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x100100d token 0x7ae4c000
+08-27 18:16:40.583 24559 26200 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_graph.c:vivo_gls_update_spk_mode_ckv:57  update spk_mode old 1 new 1
+08-27 18:16:40.583 24559 26200 E ACDB    : vendor/qcom/proprietary/args/acdb/src/acdb_command.c:AcdbCmdGetProcSubgraphCalDataPersist:8250 Error[19]: No calibration found
+08-27 18:16:40.583 24559 26200 E ACDB    : vendor/qcom/proprietary/args/acdb/src/acdb_command.c:AcdbCmdGetProcSubgraphCalDataPersist:8250 Error[19]: No calibration found
+08-27 18:16:40.583 24559 26200 E ACDB    : vendor/qcom/proprietary/args/acdb/src/acdb_command.c:AcdbCmdGetProcSubgraphCalDataPersist:8250 Error[19]: No calibration found
+08-27 18:16:40.583 24559 26200 E ACDB    : vendor/qcom/proprietary/args/acdb/src/acdb_command.c:AcdbCmdGetProcSubgraphCalDataPersist:8250 Error[19]: No calibration found
+08-27 18:16:40.583 24559 26200 I PAL: PayloadBuilder: payloadMFCConfig: 923: sample_rate:48000 bit_width:32 num_channels:2 Miid:40c8
+08-27 18:16:40.583 24559 26200 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001006 token 0x7ae4d000
+08-27 18:16:40.583 24559 26200 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001006 token 0x7ae4e000
+08-27 18:16:40.584 24559 26200 I PAL: PayloadBuilder: populateCalKeyVector: 3659: rm->isbtscovolumeEnabled:0, device_is_bt_sco = 0, sAttr.type = 1
+08-27 18:16:40.584 24559 26200 I PAL: PayloadBuilder: populateCalKeyVector: 3852: volume sent: 8192(1.000000), level: 0
+08-27 18:16:40.584 24559 26200 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001006 token 0x7ae50000
+08-27 18:16:40.584 24559 26200 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_graph.c:vivo_gls_update_spk_mode_ckv:57  update spk_mode old 1 new 1
+08-27 18:16:40.584 24559 26200 E ACDB    : vendor/qcom/proprietary/args/acdb/src/acdb_command.c:AcdbCmdGetProcSubgraphCalDataPersist:8250 Error[19]: No calibration found
+08-27 18:16:40.584 24559 26200 E ACDB    : vendor/qcom/proprietary/args/acdb/src/acdb_command.c:AcdbCmdGetProcSubgraphCalDataPersist:8250 Error[19]: No calibration found
+08-27 18:16:40.584 24559 26200 E ACDB    : vendor/qcom/proprietary/args/acdb/src/acdb_command.c:AcdbCmdGetProcSubgraphCalDataPersist:8250 Error[19]: No calibration found
+08-27 18:16:40.584 24559 26200 E ACDB    : vendor/qcom/proprietary/args/acdb/src/acdb_command.c:AcdbCmdGetProcSubgraphCalDataPersist:8250 Error[19]: No calibration found
+08-27 18:16:40.584 24559 26200 E audio_route: unable to find path 'PM_QOS_Vote'
+08-27 18:16:40.626 24557 32374 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:40.637 31944  5092 I NearbyDiscovery: (REDACTED) FastPairHandler: Received action %s
+08-27 18:16:40.640 31944  5092 I NearbyDiscovery: FastPairController: onSystemStateChanged: skip due to flag disabled [CONTEXT service_id=265 ]
+08-27 18:16:40.652 28061 28061 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1491 onStartInput(EditorInfo{EditorInfo{packageName=com.android.launcher3, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=0, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=0, fieldName=null, extras=null, hintText=null, hintLocales=[]}}, false)
+08-27 18:16:40.652 28061 28061 I LatinIMEBase: LatinIMEBase.updateInputViewCoverNavigation():318 Update input view padding, isNavbarOverInputWindow=true, bottom inset=132
+08-27 18:16:40.662 28061 30607 I DeviceLockTags: DeviceLockTags.notifyDeviceLockStatusChanged():123 notifyDeviceLockStatusChanged(): deviceLocked=false, blockPersonalData=false
+08-27 18:16:40.663 28061 30607 I Module  : DeviceLockedStatusModuleProvider$Module.updateDeviceLockedStatusInternal():129 repeatCheckTimes = 1, locked = false
+08-27 18:16:40.669 28061 28061 I AbstractOpenableExtension: AbstractOpenableExtension.createKeyboardGroupManagerListenableFuture():121 Create keyboard group manager listenable future in gep
+08-27 18:16:40.670 28061 28061 I AbstractOpenableExtension: AbstractOpenableExtension.createKeyboardGroupManagerListenableFuture():121 Create keyboard group manager listenable future in jcy
+08-27 18:16:40.672 28061 28061 I EmojifyExtensionImpl: EmojifyExtensionImpl.onCreate():602 Creating Emojify extension gds@1584a40.
+08-27 18:16:40.675 28061 30207 I KeyboardGroupDefParser: KeyboardGroupDefParser.parseKeyboardGroupDef():72 parseKeyboardGroupDef() 2132213855 -> 0_resource_name_obfuscated : WaitTime = 2 ms : RunTime = 3 ms
+08-27 18:16:40.675 28061 28061 I ClipboardDataHandler: ClipboardDataHandler.updateScreenshotsContentObserver():325 Disable the feature of handling screenshots in the clipboard.
+08-27 18:16:40.675 28061 31710 I KeyboardGroupDefParser: KeyboardGroupDefParser.parseKeyboardGroupDef():72 parseKeyboardGroupDef() 2132213856 -> 0_resource_name_obfuscated : WaitTime = 0 ms : RunTime = 3 ms
+08-27 18:16:40.675 28061 28061 W NotificationCenter: NotificationCenter.unregisterListener():480 Listener fkr@fb032b1 was not registered for notification class ppe
+08-27 18:16:40.675 28061 30193 I KeyboardGroupDefParser: KeyboardGroupDefParser.parseKeyboardGroupDef():72 parseKeyboardGroupDef() 2132213848 -> 0_resource_name_obfuscated : WaitTime = 0 ms : RunTime = 0 ms
+08-27 18:16:40.677 28061 28061 I HardKeyTracker: HardKeyTracker.unregisterKeySequence():259 Unregister key sequence qla{labelResId=2132020557, callback=gaw@6d90ee5, lastModifier=2, keyCodes=[37], actions=[0]}
+08-27 18:16:40.677 28061 28061 I HardKeyTracker: HardKeyTracker.registerKeySequence():201 Register key sequence qla{labelResId=2132020557, callback=gaw@86448ed, lastModifier=2, keyCodes=[37], actions=[0]}
+08-27 18:16:40.677 28061 28061 I HardKeyTracker: HardKeyTracker.unregisterKeySequence():259 Unregister key sequence qla{labelResId=2132020557, callback=gaw@7134dba, lastModifier=2, keyCodes=[37], actions=[0]}
+08-27 18:16:40.677 28061 28061 I HardKeyTracker: HardKeyTracker.registerKeySequence():201 Register key sequence qla{labelResId=2132020557, callback=gaw@5397322, lastModifier=2, keyCodes=[37], actions=[0]}
+08-27 18:16:40.677 28061 28061 I HardKeyTracker: HardKeyTracker.unregisterKeySequence():259 Unregister key sequence qla{labelResId=2132020554, callback=gaw@cc2f46b, lastModifier=2, keyCodes=[50], actions=[0]}
+08-27 18:16:40.677 28061 28061 I HardKeyTracker: HardKeyTracker.registerKeySequence():201 Register key sequence qla{labelResId=2132020554, callback=gaw@8d691b3, lastModifier=2, keyCodes=[50], actions=[0]}
+08-27 18:16:40.677 28061 28061 I HardKeyTracker: HardKeyTracker.unregisterKeySequence():259 Unregister key sequence qla{labelResId=2132020554, callback=gaw@b3cdbc8, lastModifier=2, keyCodes=[50], actions=[0]}
+08-27 18:16:40.677 28061 28061 I HardKeyTracker: HardKeyTracker.registerKeySequence():201 Register key sequence qla{labelResId=2132020554, callback=gaw@732c370, lastModifier=2, keyCodes=[50], actions=[0]}
+08-27 18:16:40.677 28061 28061 W AccessPointsManager: AccessPointsManager.addAccessPoint():1125 The holder controller #0x7f0b296c is not registered
+08-27 18:16:40.677 28061 28061 I HardKeyTracker: HardKeyTracker.unregisterKeySequence():259 Unregister key sequence qla{labelResId=2132020558, callback=gaw@890b461, lastModifier=65536, keyCodes=[76], actions=[0]}
+08-27 18:16:40.677 28061 28061 I HardKeyTracker: HardKeyTracker.registerKeySequence():201 Register key sequence qla{labelResId=2132020558, callback=gaw@c986e9, lastModifier=65536, keyCodes=[76], actions=[0]}
+08-27 18:16:40.677 28061 28061 I HardKeyTracker: HardKeyTracker.unregisterKeySequence():259 Unregister key sequence qla{labelResId=2132020559, callback=gaw@988b86, lastModifier=2, keyCodes=[48], actions=[0]}
+08-27 18:16:40.677 28061 28061 I HardKeyTracker: HardKeyTracker.registerKeySequence():201 Register key sequence qla{labelResId=2132020559, callback=gaw@e1f9f6e, lastModifier=2, keyCodes=[48], actions=[0]}
+08-27 18:16:40.677 28061 28061 I HardKeyTracker: HardKeyTracker.unregisterKeySequence():259 Unregister key sequence qla{labelResId=2132020559, callback=gaw@b1a6c47, lastModifier=2, keyCodes=[48], actions=[0]}
+08-27 18:16:40.677 28061 28061 I HardKeyTracker: HardKeyTracker.registerKeySequence():201 Register key sequence qla{labelResId=2132020559, callback=gaw@31e960f, lastModifier=2, keyCodes=[48], actions=[0]}
+08-27 18:16:40.678 28061 28061 W AccessPointsManager: AccessPointsManager.addAccessPoint():1125 The holder controller #0x7f0b296c is not registered
+08-27 18:16:40.679 11892 12176 E REALM_MYDEBUG: Java_io_realm_internal_OsSharedRealm_nativeCheckDBValid: /data/vivo-common/galleryThumbnail
+08-27 18:16:40.685 24559 26200 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001006 token 0x7ae56000
+08-27 18:16:40.686 24559 26200 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001006 token 0x7ae57000
+08-27 18:16:40.686 24559 26200 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001006 token 0x7ae58000
+08-27 18:16:40.686 24559 26200 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001006 token 0x7ae59000
+08-27 18:16:40.687 24559 26200 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001006 token 0x7ae5a000
+08-27 18:16:40.687 24559 26200 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001006 token 0x7ae5b000
+08-27 18:16:40.687 12202 12202 I SuperProcessSdk: SuperSdk, curretnProcessName:com.vivo.gallery
+08-27 18:16:40.687 24559 26200 E AGM: graph: configure_buffer_params: 315 Unsupported buffer mode : 0, Default to Blocking
+08-27 18:16:40.687 24559 26200 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001001 token 0x7ae5c000
+08-27 18:16:40.688 31944 12011 I NearbySharing: Screen is unlocked
+08-27 18:16:40.688 31944 12011 I NearbySharing: Uwb feature is off.
+08-27 18:16:40.688 31944 12011 I NearbySharing: Uwb feature is off.
+08-27 18:16:40.688 31944 12011 I NearbySharing: Stopping scanning because Bluetooth is disabled.
+08-27 18:16:40.690 24559 26200 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001002 token 0x7ae5d000
+08-27 18:16:40.693 24559 26200 E PAL: SessionAlsaUtils: getModuleInstanceId: 1257: No matching MIID found for tag: 0xc0000029, error:-22
+08-27 18:16:40.693 24559 26200 E PAL: ResourceManager: checkandEnableECForRXStream_l: 4721: EC is disabled for usecase 10 of device 28
+08-27 18:16:40.696 24559 26200 I PAL: ResourceManager: vivoNotifyDeviceStatusChange: 17079: dump reg vivo_device speaker
+08-27 18:16:40.696 24559 26200 I PAL: ResourceManager: VivoSendSpkCalibateDate: 16525: enter, sp type 0
+08-27 18:16:40.696 24559 26200 I PAL: ResourceManager: VivoSendSpkCalibateDate: 16531: Re[0]: 0, spk cali is not done or unvalid, return
+08-27 18:16:40.696 24559 26200 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001006 token 0x7ae5e000
+08-27 18:16:40.697 24559 26200 I PAL: API: pal_stream_start: 437: Exit. status 0
+08-27 18:16:40.697 24559 26200 I AHAL: AudioStream: configurePalOutputStream: 4014: notify GEF client of device config
+08-27 18:16:40.697 24557 24825 W AudioFlinger: loopCount 1310376 write blocked for 126 msecs, 2903 delayed writes, thread 13, all-writePeriodMs 632 jitterMs 0.000000 av-processMs 0.000000, hal write jitter ms stats: NO_INIT, process time ms stats: NO_INIT
+08-27 18:16:40.700 31944 12011 I NearbySharing: Stopping Fast Init advertisement because Bluetooth is off.
+08-27 18:16:40.700 31944 12011 I NearbySharing: Stopping advertising because Bluetooth is disabled.
+08-27 18:16:40.708 12202 12202 E ashmem  : Pinning is deprecated since Android Q. Please use trim or other methods.
+08-27 18:16:40.726 11744 11936 I SystemUpdate: [Phone,PhoneModuleInitIntentOperation] Enabling the system update activity since the user is allowed to update.
+08-27 18:16:40.727 11744 11953 I PersonalSafety: ConnectivityProtectionLockingIntentOperation: cancelled task [CONTEXT service_id=310 ]
+08-27 18:16:40.745 31944 11887 I NearbyMediums: ModuleInitializer handles incoming intent android.intent.action.USER_PRESENT
+08-27 18:16:40.758 31944 12010 I Nearby  : (REDACTED) Beginning attempt #%d out of %d for %s...
+08-27 18:16:40.764 12202 12259 D SQLiteQueryBuilder: SELECT folder_item_hashcode FROM foldercreate ORDER BY folder_item_dateadded DESC
+08-27 18:16:40.768 31944 12010 I NearbyMediums: BluetoothAdapter's name was not set by Nearby Connections, ignoring call to restore default scan mode.
+08-27 18:16:40.768 31944 12010 I NearbyMediums: BluetoothAdapter's name was not set by Nearby Connections, ignoring call to restore device name
+08-27 18:16:40.768 12202 12259 D SQLiteQueryBuilder: SELECT folder_item_hashcode, folder_item_move_action FROM foldermove ORDER BY folder_item_dateadded DESC
+08-27 18:16:40.771 31944 12011 I NearbySharing: Starting scanning for Fast Initiation.
+08-27 18:16:40.774 31944 31944 I RCNIntentOperation: RCN is disabled on this network.
+08-27 18:16:40.777 12202 12259 D SQLiteQueryBuilder: SELECT folder_item_hashcode, folder_item_version FROM folderfilter ORDER BY folder_item_dateadded DESC LIMIT 10000 OFFSET 0
+08-27 18:16:40.791 31944 12011 I NearbySharing: Started scanning for FastInitiation with mode: SCAN_MODE_BALANCED
+08-27 18:16:40.802 24557 32374 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:40.802 24557 32374 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:40.805 31944 12024 I PersonalSafety: (REDACTED) New count is %d compared to %d
+08-27 18:16:40.805 31944 12024 I PersonalSafety: (REDACTED) Updating physical SIM count from %d to %d (%d ms after callback)
+08-27 18:16:40.806 31944 12011 I NearbySharing: Fast Initiation Scanning has started
+08-27 18:16:40.806 31944 12011 I NearbySharing: Dismissing HUN as there's no device nearby.
+08-27 18:16:40.808 11856 11856 I DeviceAsWebcamReceiver: UVC support isn't enabled. Returning early.
+08-27 18:16:40.811 24557 24710 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:40.818 12202 12216 D SQLiteQueryBuilder: SELECT folder_item_hashcode FROM foldercreate ORDER BY folder_item_dateadded DESC
+08-27 18:16:40.828 24557 24710 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:40.828 12202 12261 W HWUI    : Image decoding logging dropped!
+08-27 18:16:40.836 12202 12259 D SQLiteQueryBuilder: SELECT folder_item_hashcode FROM foldermove WHERE (folder_item_move_action = 0) ORDER BY folder_item_dateadded DESC
+08-27 18:16:40.838 12202 12261 W HWUI    : Image decoding logging dropped!
+08-27 18:16:40.890 12202 12202 I Choreographer: Skipped 48 frames!  The application may be doing too much work on its main thread.
+08-27 18:16:40.942 12202 12277 D SQLiteQueryBuilder: SELECT folder_item_hashcode, folder_item_move_action FROM foldermove ORDER BY folder_item_dateadded DESC
+08-27 18:16:40.980 12202 12269 E REALM_MYDEBUG: Java_io_realm_internal_OsSharedRealm_nativeCheckDBValid: /data/vivo-common/galleryThumbnail
+08-27 18:16:40.981 12202 12225 D SQLiteQueryBuilder: SELECT folder_item_hashcode, folder_item_version FROM folderfilter ORDER BY folder_item_dateadded DESC LIMIT 10000 OFFSET 0
+08-27 18:16:41.044 24557 24731 I APM_AudioPolicyManager: stopOutput portId 17850
+08-27 18:16:41.044 24557 24731 I APM_AudioPolicyManager: stopOutput() output 13, stream 1, session 6116905
+08-27 18:16:41.045 24557 24731 I APM_AudioPolicyManager: getNewOutputDevices selected devices AUDIO_DEVICE_NONE, mPhoneState 0, iohandle 13
+08-27 18:16:41.078 24557 24710 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:41.078 24557 24710 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:41.083 11856 11856 I DeviceAsWebcamReceiver: UVC support isn't enabled. Returning early.
+08-27 18:16:41.084 24557 24710 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:41.085 24557 24710 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:41.058 12049 12233 I GmsCoreXrpcWrapper: (REDACTED) Creating a custom channel provider with trafficStatsTag=%d trafficStatsUid=%d
+08-27 18:16:41.111 12049 12235 I SystemUpdate: [Control,UpdateReminderDialogControl] System update management not enabled in this context. Ignoring intent: Intent { act=android.intent.action.ACTION_POWER_CONNECTED flg=0x4000010 xflg=0x4 pkg=com.google.android.gms cmp=com.google.android.gms/.chimera.GmsIntentOperationService (has extras) }
+08-27 18:16:41.126 12049 12233 W MDM     : [GrpcFmdApiClient] No accounts found for FMD API [CONTEXT service_id=247 ]
+08-27 18:16:41.133 12049 12300 I TracingHelper: (REDACTED) Mismatched RequestContext found for module %s. Module id from RequestContext is %s
+08-27 18:16:41.155 12202 12261 W HWUI    : Image decoding logging dropped!
+08-27 18:16:41.155  8734  9996 I MediaProvider: CrossUser allowed. Users: 999 and 999
+08-27 18:16:41.159  8734  9997 I MediaProvider: CrossUser allowed. Users: 999 and 999
+08-27 18:16:41.161  8734 23000 I MediaProvider: CrossUser allowed. Users: 999 and 999
+08-27 18:16:41.185 24557 24710 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:41.186 24557 24710 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:41.195 24557 24710 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:41.198 24557 24710 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:41.199 11856 11856 I DeviceAsWebcamReceiver: UVC support isn't enabled. Returning early.
+08-27 18:16:41.207  8734  9996 I MediaProvider: CrossUser allowed. Users: 999 and 999
+08-27 18:16:41.208  8734  9997 I MediaProvider: CrossUser allowed. Users: 999 and 999
+08-27 18:16:41.209  8734 23000 I MediaProvider: CrossUser allowed. Users: 999 and 999
+08-27 18:16:41.224 12049 12300 I SystemUpdate: [Phone,PhoneModuleInitIntentOperation] Disabling the system update activity since the user is not allowed to update.
+08-27 18:16:41.227 12049 12300 I SystemUpdate: [Control,UpdateReminderDialogControl] System update management not enabled in this context. Ignoring intent: Intent { act=android.intent.action.USER_PRESENT flg=0x4200010 xflg=0x4 pkg=com.google.android.gms }
+08-27 18:16:41.241 12049 12235 E ashmem  : Pinning is deprecated since Android Q. Please use trim or other methods.
+08-27 18:16:41.244 12202 12292 D SQLiteQueryBuilder: SELECT folder_item_hashcode FROM foldermove WHERE (folder_item_move_action = 0) ORDER BY folder_item_dateadded DESC
+08-27 18:16:41.267 13998 14009 I o3rdalgoservice: Background young concurrent copying GC freed 2815KB AllocSpace bytes, 160(3200KB) LOS objects, 71% free, 2356KB/8187KB, paused 134us,46us total 488.162ms
+08-27 18:16:41.287 12202 12261 W HWUI    : Image decoding logging dropped!
+08-27 18:16:41.364 12202 12261 W HWUI    : Image decoding logging dropped!
+08-27 18:16:41.383 24557 24710 D APM_AudioPolicyManager: getOutputForAttrInt() device {AUDIO_DEVICE_OUT_SPEAKER, @:}, sampling rate 48000, format 0x1, channel mask 0x3, flags 0x2 stream AUDIO_STREAM_NOTIFICATION
+08-27 18:16:41.384 24557 24710 D APM_AudioPolicyManager: getOutputForDevices forced deep-buffer (no) flags (2)
+08-27 18:16:41.384 24557 24710 I AudioFlinger: createTrack() sessionId: 6117377 setPortsVolume: 0.398108 muted 0
+08-27 18:16:41.384 24557 24710 I AF::PthrPatchRecord: creating track with enforcement level 0
+08-27 18:16:41.384 24557 24928 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:41.393 24557 24731 I APM_AudioPolicyManager: startOutput portId 17945
+08-27 18:16:41.393 24557 24731 I APM_AudioPolicyManager: startOutput() output 13, stream 5, session 6117377, stubMode 0 on module primary HAL
+08-27 18:16:41.393 24557 24731 I APM_AudioPolicyManager: startSource @@@
+08-27 18:16:41.393 24557 24731 I APM_AudioPolicyManager: getNewOutputDevices selected devices {AUDIO_DEVICE_OUT_SPEAKER, @:}, mPhoneState 0, iohandle 13
+08-27 18:16:41.394 24557 24731 W AudioPolicyService: AudioCommandThread() sendCommand cmd[10], delay[30]
+08-27 18:16:41.400 12202 12261 W HWUI    : Image decoding logging dropped!
+08-27 18:16:41.425 24559 24989 I AHAL: AudioDevice: OutGetStream: 1325: Found existing stream associated with iohandle 13
+08-27 18:16:41.425 24559 24989 I AHAL: AudioDevice: GetPalDeviceIds: 2667: Found Android haldeviceId: 0x2 and PAL Device ID 3, PAL Device PAL_DEVICE_OUT_SPEAKER
+08-27 18:16:41.425 24559 24989 I AHAL: AudioDevice: GetPalDeviceIds: 2667: Found Android haldeviceId: 0x80000080 and PAL Device ID 29, PAL Device PAL_DEVICE_IN_SPEAKER_MIC
+08-27 18:16:41.426 24559 24989 I AHAL: AudioStream: RouteStream: 2630: enter: usecase(1: low-latency-playback) devices 0x2, num devices 1
+08-27 18:16:41.426 24559 24989 I AHAL: AudioDevice: GetPalDeviceIds: 2667: Found Android haldeviceId: 0x2 and PAL Device ID 3, PAL Device PAL_DEVICE_OUT_SPEAKER
+08-27 18:16:41.426 24559 24989 I PAL: ResourceManager: setParameter: 13175: custom type 1 state: 1
+08-27 18:16:41.426 24559 24989 I AHAL: AudioExtnVivo: vivo_extn_set_custom_config: 246: Setting ckv Vivo_Spk_Mode 1, ret 0
+08-27 18:16:41.426 24559 24989 I PAL: API: pal_stream_set_device: 1086: Enter. Stream handle :0xb4000076a1251790K
+08-27 18:16:41.426 24559 24989 I PAL: API: pal_stream_set_device: 1202: devices are same, no need to switch
+08-27 18:16:41.426 24559 24989 I PAL: API: pal_stream_set_device: 1287: Exit. status 0
+08-27 18:16:41.432 24557 24731 I AudioPolicyService: audio_common_aps[info] AudioCommandThread() adding set parameter string vivo_playback_volume_level=15;vivo_playback_volume_stream_type=5;vivo_playback_volume_value=0.3981079757, io 0 ,delay 0
+08-27 18:16:41.433 24557 24729 W AudioSystem: setParameters: vivo_playback_volume_level=15;vivo_playback_volume_stream_type=5;vivo_playback_volume_value=0.3981079757
+08-27 18:16:41.438 24557 24731 I AudioPolicyService: audio_common_aps[info] AudioCommandThread() adding set parameter string vivo_playback_volume_level=15;vivo_playback_volume_stream_type=5;vivo_playback_volume_value=0.3981079757, io 0 ,delay 0
+08-27 18:16:41.438 24557 24729 W AudioSystem: setParameters: vivo_playback_volume_level=15;vivo_playback_volume_stream_type=5;vivo_playback_volume_value=0.3981079757
+08-27 18:16:41.442 24559 24816 I AHAL: AudioExtnVivo: audio_extn_vivo_set_parameters: 691: vafx_stereospkr_set_idx=3
+08-27 18:16:41.574 11892 12176 W HWUI    : Image decoding logging dropped!
+08-27 18:16:41.578 24557 24825 I AF::PthrPatchRecord: processMuteEvent(14765): processed mute state for port ID 17945 from 0 to 0
+08-27 18:16:41.726 11892 12176 W HWUI    : Image decoding logging dropped!
+08-27 18:16:41.731 11892 12176 W HWUI    : Image decoding logging dropped!
+08-27 18:16:41.856  8734 24541 D SQLiteQueryBuilder: SELECT count(_id) FROM files WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (volume_name IN ( 'external_primary' ))) AND ((( _id > 1000065154) AND (media_type == 1 OR media_type == 3) AND (width > 0 AND height > 0)))
+08-27 18:16:41.958 24557 24711 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:41.974 24557 24711 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:41.986  3209  8973 I artd    : GetBestInfo: odex next to the dex file (/system/app/AIService/oat/arm64/AIService.odex) is kOatCannotOpen: In oat file '/system/app/AIService/oat/arm64/AIService.odex': invalid oat header: Invalid oat version, expected 0x32373500, got 0x32363500.
+08-27 18:16:41.991  3209  8973 I artd    : GetBestInfo: vdex next to the dex file (/system/app/AIService/oat/arm64/AIService.vdex) is kOatUpToDate with filter 'verify' executable 'false'
+08-27 18:16:42.000 12202 12202 W ratelimit: Single process limit 50/s drop 196 lines.
+08-27 18:16:42.002 11892 12196 W ratelimit: Single process limit 50/s drop 54 lines.
+08-27 18:16:42.007 12370 12370 I .ai.intellicore: Using generational CollectorTypeCC GC.
+08-27 18:16:42.011 24557 24711 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:42.016 24557 24711 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:42.023 12370 12370 E .ai.intellicore: BBinder_init Processname  com.vivo.ai.intellicore  
+08-27 18:16:42.023 12370 12370 E .ai.intellicore: BBinder_init hasGetProcessName  com.vivo.ai.intellicore
+08-27 18:16:42.044 24557 24711 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:42.079 25508 25622 W System.err: java.lang.RuntimeException: you can't invoke this in other context but Application, in case memory leak
+08-27 18:16:42.079 25508 25622 W System.err: 	at j6.n.<init>(LocationUtil.java:13)
+08-27 18:16:42.079 25508 25622 W System.err: 	at l5.b.r(MonitorIndex.java:5)
+08-27 18:16:42.079 25508 25622 W System.err: 	at l5.b.d(MonitorIndex.java:25)
+08-27 18:16:42.079 25508 25622 W System.err: 	at l5.b.h(MonitorIndex.java:68)
+08-27 18:16:42.079 25508 25622 W System.err: 	at p5.i.g(MonitorServerConnectTime.java:39)
+08-27 18:16:42.079 25508 25622 W System.err: 	at p5.b.f(MonitorBaseEvent.java:18)
+08-27 18:16:42.079 25508 25622 W System.err: 	at p5.i.k(MonitorServerConnectTime.java:57)
+08-27 18:16:42.079 25508 25622 W System.err: 	at p5.i.l(MonitorServerConnectTime.java:15)
+08-27 18:16:42.079 25508 25622 W System.err: 	at p5.i.a(MonitorServerConnectTime.java:21)
+08-27 18:16:42.079 25508 25622 W System.err: 	at t5.c$a.run(ReportTaskSyncWorker.java:5)
+08-27 18:16:42.079 25508 25622 W System.err: 	at android.os.Handler.handleCallback(Handler.java:1051)
+08-27 18:16:42.079 25508 25622 W System.err: 	at android.os.Handler.dispatchMessage(Handler.java:107)
+08-27 18:16:42.079 25508 25622 W System.err: 	at android.os.Looper.loopOnce(Looper.java:266)
+08-27 18:16:42.079 25508 25622 W System.err: 	at android.os.Looper.loop(Looper.java:361)
+08-27 18:16:42.079 25508 25622 W System.err: 	at android.os.HandlerThread.run(HandlerThread.java:103)
+08-27 18:16:42.085 12370 12370 I .ai.intellicore: AssetManager2(0xb40000777212a618) locale list changing from [] to [en-US]
+08-27 18:16:42.122 12370 12370 I MMKV    : Disable checkProcessMode()
+08-27 18:16:42.126 12370 12370 I MMKV    : <native-bridge.cpp:104::JNI_OnLoad> current API level = 36, libc++_shared=0
+08-27 18:16:42.127 12370 12370 I MMKV    : <MMKV.cpp:165::initialize> version v1.2.14, page size 4096, arch arm64-v8a
+08-27 18:16:42.127 12370 12370 I MMKV    : <MMKV.cpp:176::initialize> armv8 AES instructions is supported
+08-27 18:16:42.127 12370 12370 I MMKV    : <MMKV.cpp:184::initialize> armv8 CRC32 instructions is supported
+08-27 18:16:42.127 12370 12370 I MMKV    : <MMKV.cpp:207::initializeMMKV> root dir: /data/user/0/com.vivo.ai.intellicore/files/mmkv
+08-27 18:16:42.129 31944 11589 I FrewleTileCacheManagerV: (REDACTED) Fetched %d AP models from cache
+08-27 18:16:42.133 31944 31947 W .gms.persistent: Missing inline cache for void ilpp.o(java.util.List, ilnx)
+08-27 18:16:42.148 24557 24711 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:42.166 24557 10811 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:42.190 31944 32043 I FusedLocation: (REDACTED) location delivery to %s blocked - too close
+08-27 18:16:42.194 31944 32061 I ActivityScheduler: nextTriggerTime: 1841842953, in 57544ms, detectorType: 39, FULL_TYPE alarmWindowMillis: 7500
+08-27 18:16:42.198 31944 32043 I FusedLocation: (REDACTED) location delivery to %s blocked - too close
+08-27 18:16:42.201 31944 32043 I FusedLocation: (REDACTED) location delivery to %s blocked - too close
+08-27 18:16:42.227 31944 32061 I ActivityScheduler: nextTriggerTime: 1841842953, in 57511ms, detectorType: 39, FULL_TYPE alarmWindowMillis: 7500
+08-27 18:16:42.343  8734 24541 D SQLiteQueryBuilder: SELECT _id FROM images WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (is_trashed=0) AND (volume_name IN ( 'external_primary' ))) AND (((bucket_id IN () OR owner_package_name IN ('com.kwai.kuaishou.video.live','com.tencent.mm','com.instagram.android','com.ss.android.ugc.trill','com.whatsapp','org.telegram.messenger','com.viber.voip','jp.naver.line.android','com.facebook.katana','com.twitter.android')) AND _id IN (1000003482, 1000004252, 1000025235, 1000003472, 1000003223, 1000003735, 1000005268, 1000009865, 1000003469, 1000005261, 1000003971, 1000040578, 1000040576, 1000053951, 1000059071, 1000053949, 1000053939, 1000053937, 1000057006, 1000031650, 1000031653, 1000023003, 1000038619, 1000053979, 1000064987, 1000003801, 1000023006, 1000064990, 1000018909, 1000038620, 1000053968, 1000022996, 1000003530, 1000053963, 1000022985, 1000053967, 1000005836, 1000053964, 1000053955, 1000004033, 1000053959, 1000003783, 1000038086, 1000053957, 1000054009, 1000054008, 1000035324, 1000004082, 1000054002, 1000054001, 1000004342, 1000038634, 1000039914, 1000053994, 1000053992, 1000018925, 1000053996, 1000053987, 1000064993, 1000053991, 1000003812, 1000053989, 1000018916, 1000059876, 1000011034, 1000004379, 1000011035, 1000011032, 1000011038, 1000039187, 1000011027, 1000039184, 1000011030, 1000032277, 1000023817, 1000052493, 1000038402, 1000023815, 1000054023, 1000054021, 1000038404, 1000065028, 1000052536, 1000053822, 1000038717, 1000053821, 1000036924, 1000038707, 1000003889, 1000004150, 1000052535, 1000052533, 1000038698, 1000052522, 1000003369, 1000022056, 1000052525, 1000052524, 1000011042, 1000022051, 1000011043, 1000011040, 1000022049, 1000038689, 1000003364, 1000011044, 1000022053, 1000032293, 1000021854, 1000033374, 1000053845, 1000003402, 1000053833, 1000053832, 1000003395, 1000004160, 1000053824, 1000003654, 1000024442, 1000040570, 1000004216, 1000060281, 1000040574, 1000033148, 1000040572, 1000035446, 1000054902, 1000053877, 1000003189, 1000040299, 1000060267, 1000060266, 1000040296, 1000040302, 1000003180, 1000014701, 1000014700, 1000060268, 1000040290, 1000060002, 1000021857, 1000060263, 1000040293) AND (width > 0 AND height > 0)))
+08-27 18:16:42.383 12202 12225 D SQLiteQueryBuilder: SELECT group_id, image_id FROM facegroup WHERE (group_id > 2)
+08-27 18:16:42.434  8734 24541 D SQLiteQueryBuilder: SELECT bucket_id FROM images WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (is_trashed=0) AND (volume_name IN ( 'external_primary' ))) AND ((_data like '/storage/emulated/0/Download/互传/folder/%' AND (width > 0 AND height > 0)))
+08-27 18:16:42.476  8734 24541 D SQLiteQueryBuilder: SELECT _id, _data, datetaken, mime_type, width, height, date_modified FROM images WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (is_trashed=0) AND (volume_name IN ( 'external_primary' ))) AND ((width > 50 AND height > 50 AND _size < 209715200 AND (bucket_id IN (-1949793892, 13311172, -1739773001, 1216519567, -1535937100, 1028125135, -1524047660, 1040014575, -1526850504, 1037211731, 139421402, 1136101865, 2126348076, -452826217, -519179321, -519178918, 1711169606, -884178653, -884178250, -1421703830, 232691476, -1949680778, -1033632703, 1052743401) OR owner_package_name IN ('com.kwai.kuaishou.video.live','com.tencent.mm','com.instagram.android','com.ss.android.ugc.trill','com.whatsapp','org.telegram.messenger','com.viber.voip','jp.naver.line.android','com.facebook.katana','com.twitter.android','com.vsco.cam','com.niksoftware.snapseed','com.darinsoft.vimo','com.cam001.selfie','com.linecorp.b612.android','com.magicv.airbrush','com.xt.retouchoversea','com.lemon.lvoverseas','com.blink.academy.nomopro')) AND (group_id = 0 OR group_id is null OR _id IN ()) AND _id IN (1000003472, 1000053949, 1000053939, 1000053937, 1000003801, 1000023006, 1000053963, 1000053967, 1000053964, 1000053955, 1000054009, 1000054008, 1000054002, 1000054001, 1000053994, 1000053992, 1000053996, 1000053987, 1000053991, 1000053989, 1000054023, 1000054021, 1000036924, 1000003889, 1000052522, 1000003369, 1000003364, 1000053845, 1000053833, 1000053824, 1000003654, 1000053877, 1000003189, 1000060268, 1000060263) AND (width > 0 AND height > 0)))
+08-27 18:16:42.524  8734 24541 D SQLiteQueryBuilder: SELECT _id, width, height FROM video WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (is_trashed=0) AND (volume_name IN ( 'external_primary' ))) AND ((_id IN (1000035353, 1000035354, 1000035355, 1000035356) AND (width > 0 AND height > 0)))
+08-27 18:16:42.532  8734 24541 D SQLiteQueryBuilder: SELECT _id FROM video WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (is_trashed=0) AND (volume_name IN ( 'external_primary' ))) AND (((bucket_id IN () OR owner_package_name IN ('com.kwai.kuaishou.video.live','com.tencent.mm','com.instagram.android','com.ss.android.ugc.trill','com.whatsapp','org.telegram.messenger','com.viber.voip','jp.naver.line.android','com.facebook.katana','com.twitter.android')) AND _id IN () AND (width > 0 AND height > 0)))
+08-27 18:16:42.587 11143 11143 E vui_dmgr_server: setUpServerSocket: setsockopt failed -1:Operation not supported on transport endpoint
+08-27 18:16:42.643 12202 12292 D SQLiteQueryBuilder: SELECT image_path, feature, rect, score, yaw, id, group_id, image_id, feaType, upBodyFeature, dateTaken, srcApp, babyFlag, clusterChildLabel, similarGroup, indexFrameOfVideo, mediaType FROM facegroup WHERE (face_status = 1 AND group_id IN ( 0 ) )
+08-27 18:16:42.656 12202 12292 D SQLiteQueryBuilder: SELECT count(image_id) AS TESTCOUNT FROM facegroup WHERE (( group_id > 2 OR ( group_id = 0 AND face_status = 1 )) )
+08-27 18:16:42.668 31944 11589 I TFLite-in-PlayServices: Created interpreter.
+08-27 18:16:42.724 24557 24731 I APM_AudioPolicyManager: stopOutput portId 17945
+08-27 18:16:42.724 24557 24731 I APM_AudioPolicyManager: stopOutput() output 13, stream 5, session 6117377
+08-27 18:16:42.724 24557 24731 I APM_AudioPolicyManager: getNewOutputDevices selected devices AUDIO_DEVICE_NONE, mPhoneState 0, iohandle 13
+08-27 18:16:42.755 12202 12214 W System  : A resource failed to call ZipFile.close. 
+08-27 18:16:42.779 31944 11589 I TFLite-in-PlayServices: Created interpreter.
+08-27 18:16:42.861 31944 11589 I SemanticLocation: (REDACTED) [Inferrer] %s%s
+08-27 18:16:43.083 11892 11966 W ratelimit: Single process limit 50/s drop 32 lines.
+08-27 18:16:43.083 11892 11966 W System  : A resource failed to call ZipFile.close. 
+08-27 18:16:43.112 24559 24816 I PAL: ResourceManager: setParameter: 11820: Screen State:1
+08-27 18:16:43.191 12202 12290 E SQLiteLog: (1) table keyword has no column named cnr_me in "INSERT INTO keyword(cnr_me,fil_ph,tag_id,type_id,zgh_ma,ar_eg,as_in,bg_bg,bh_ma,bn_bd,bo_cn,ca_es,cs_cz,da_dk,de_de,el_gr,en_au,en_gb,en_us,es_es,es_us,eu_es,fi_fi,
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: Error inserting cnr_me=Danas fil_ph=Ngayon tag_id=200085 type_id=2 zgh_ma=ⵖⴰⵙⵙⴰ ar_eg=اليوم as_in=আজি bg_bg=Днес bh_ma=आई bn_bd=আজ bo_cn=དེ་རིང་། ca_es=Avui cs_cz=Dnes da_dk=I dag de_de=Heute el_gr=Σήμερα en_au=Today en_gb=Today en_us=Today es_es=Hoy es_us=Hoy eu_es=Gaur fi_fi=Tänään fr_fr=Aujourd. gl_es=Hoxe gu_in=આજે hi_in=आज hr_hr=Danas hu_hu=Ma in_id=Hari ini it_it=Oggi ja_jp=今日 kk_kz=Бүгін km_kh=ថ្ងៃនេះ kn_in=ಇಂದು ko_kr=오늘 lo_la=ມື້ນີ້ mk_mk=Денес ml_in=ഇന്ന് mn_mn=Өнөөдөр mr_in=आज ms_my=Hari Ini my_mm=ယနေ့ my_zg=ယေန႔ ne_np=आज nl_nl=Vandaag or_in=ଆଜି pa_in=ਅੱਜ pl_pl=Dzisiaj pt_br=Hoje pt_pt=Hoje ro_ro=Astăzi ru_ru=Сегодня sa_in=अद्य si_lk=අද sk_sk=Dnes sq_al=Sot sv_se=Idag sw_ke=Leo ta_in=இன்று te_in=ఈ రోజు th_th=วันนี้ tr_tr=Bugün ug_cn=بۈگۈن uk_ua=Сьогодні ur_pk=آج uz_uz=Bugun vi_vn=Hôm nay zh_cn=今天 zh_hk=今天 zh_tw=今天
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: android.database.sqlite.SQLiteException: table keyword has no column named cnr_me (code 1 SQLITE_ERROR): , while compiling: INSERT INTO keyword(cnr_me,fil_ph,tag_id,type_id,zgh_ma,ar_eg,as_in,bg_bg,bh_ma,bn_bd,bo_cn,ca_es,cs_cz,da_dk,de_de,el_gr,en_au,en_gb,en_us,es_es,es_us,eu_es,fi_fi,fr_fr,gl_es,gu_in,hi_in,hr_hr,hu_hu,in_id,it_it,ja_jp,kk_kz,km_kh,kn_in,ko_kr,lo_la,mk_mk,ml_in,mn_mn,mr_in,ms_my,my_mm,my_zg,ne_np,nl_nl,or_in,pa_in,pl_pl,pt_br,pt_pt,ro_ro,ru_ru,sa_in,si_lk,sk_sk,sq_al,sv_se,sw_ke,ta_in,te_in,th_th,tr_tr,ug_cn,uk_ua,ur_pk,uz_uz,vi_vn,zh_cn,zh_hk,zh_tw) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at android.database.sqlite.SQLiteConnection.nativePrepareStatement(Native Method)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at android.database.sqlite.SQLiteConnection.-$$Nest$smnativePrepareStatement(SQLiteConnection.java:0)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at android.database.sqlite.SQLiteConnection$PreparedStatementCache.createStatement(SQLiteConnection.java:1572)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatementLI(SQLiteConnection.java:1109)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at android.database.sqlite.SQLiteConnection.acquirePreparedStatement(SQLiteConnection.java:1137)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at android.database.sqlite.SQLiteConnection.prepare(SQLiteConnection.java:697)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at android.database.sqlite.SQLiteSession.prepare(SQLiteSession.java:625)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at android.database.sqlite.SQLiteProgram.<init>(SQLiteProgram.java:62)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at android.database.sqlite.SQLiteStatement.<init>(SQLiteStatement.java:34)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at android.database.sqlite.SQLiteDatabase.insertWithOnConflict(SQLiteDatabase.java:2007)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at android.database.sqlite.SQLiteDatabase.insert(SQLiteDatabase.java:1877)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at com.android.gallery3d.vivo.provider.TranslationProvider.bulkInsert(SourceFile:268)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at android.content.ContentProvider$Transport.bulkInsert(ContentProvider.java:508)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at android.content.ContentResolver.bulkInsert(ContentResolver.java:2406)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at com.android.gallery3d.vivo.search.mode.o0.C(SourceFile:138)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at com.android.gallery3d.vivo.search.mode.o0.v(SourceFile:42)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at com.android.gallery3d.vivo.search.mode.o0.o(SourceFile:0)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at com.android.gallery3d.vivo.search.mode.o0$a.run(SourceFile:167)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at com.android.gallery3d.vivo.search.mode.o0.t(SourceFile:7)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at com.android.gallery3d.app.BaseGalleryAppImpl.l1(SourceFile:566)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at com.android.gallery3d.app.BaseGalleryAppImpl.A0(SourceFile:0)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at com.android.gallery3d.app.BaseGalleryAppImpl$g0$a.run(SourceFile:4)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at android.os.Handler.handleCallback(Handler.java:1051)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at android.os.Handler.dispatchMessage(Handler.java:107)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at android.os.Looper.loopOnce(Looper.java:266)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at android.os.Looper.loop(Looper.java:361)
+08-27 18:16:43.192 12202 12290 E SQLiteDatabase: 	at android.os.HandlerThread.run(HandlerThread.java:103)
+08-27 18:16:43.304 24559 24816 I PAL: ResourceManager: setParameter: 11820: Screen State:1
+08-27 18:16:43.490 24557 24710 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:43.492 24557 24710 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:43.597  8734 16607 D SQLiteQueryBuilder: SELECT _data FROM files WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (is_trashed=0) AND (volume_name IN ( 'external_primary' ))) AND ((((height is null and width is null) or (height = ? and width = ?) or (height < ? and width < ?)) and (media_type = ? or media_type = ?)))
+08-27 18:16:43.636  8734 16607 D SQLiteQueryBuilder: SELECT count(_id) FROM images WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (is_trashed=0) AND (volume_name IN ( 'external_primary' ))) AND (((width > 0 AND height > 0)))
+08-27 18:16:43.641 24559 24816 I PAL: API: pal_stream_stop: 453: Enter. Stream handle :0xb4000076a1251790K
+08-27 18:16:43.641 24559 24816 E PAL: ResourceManager: checkandEnableECForRXStream_l: 4721: EC is disabled for usecase 10 of device 28
+08-27 18:16:43.641 24559 24816 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001007 token 0x7b1d4000
+08-27 18:16:43.642 24559 24816 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001007 token 0x7b1d5000
+08-27 18:16:43.642 24559 24816 I PAL: vivoPalExtn: vivoGetAdspPcmInfo: 1154: AudioId 0x2, DeviceId 3, streamType 1, pcm_node 152e-0x1, SizePerInt 384, totcal_count 2948, num_channels 2, mute_count 1845 1851 0 0, zero_count 1627 1630 0 0, ts_process 0 0, q6load 304, cpp 22, adsp_clk 595200, spr_underrun 0, spr_overrun 0, e_underrun 0, e_overrun 0, signal_miss 0 0, mailbox_drop 0, vptx_drop 0, pal_underrun 0 0, pal_oeverrun 0 0, adsp_pcm_info: 0 1
+08-27 18:16:43.643 24559 24816 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001007 token 0x7b1d6000
+08-27 18:16:43.643 24559 24816 I PAL: vivoPalExtn: vivoGetAdspPcmInfo: 1154: AudioId 0x2, DeviceId 3, streamType 1, pcm_node 1586-0xd10, SizePerInt 192, totcal_count 2951, num_channels 2, mute_count 2951 1818 0 0, zero_count 2951 1561 0 0, ts_process 0 32, q6load 306, cpp 23, adsp_clk 595200, spr_underrun 0, spr_overrun 0, e_underrun 0, e_overrun 0, signal_miss 0 0, mailbox_drop 0, vptx_drop 0, pal_underrun 0 0, pal_oeverrun 0 0, adsp_pcm_info: 0,00-c 1
+08-27 18:16:43.643 24559 24816 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001003 token 0x7b1d7000
+08-27 18:16:43.647 24559 24816 I PAL: ResourceManager: voteSleepMonitor: 2482: Unvoting done for nlpi use case, lpi votes 0, nlpi votes : 2
+08-27 18:16:43.647 24559 24816 I PAL: Device: stop_l: 674: Enter. deviceCount 1 deviceStartStopCount 1 for device id 3 (PAL_DEVICE_OUT_SPEAKER)
+08-27 18:16:43.647 24559 24816 I PAL: API: pal_stream_stop: 491: Exit. status 0
+08-27 18:16:43.647 24559 24816 I PAL: API: pal_stream_close: 323: Enter. Stream handle :0xb4000076a1251790K
+08-27 18:16:43.647 24559 24816 I AGM: API: agm_session_aif_connect: 625 disconnecting aifid:1 with session id=126
+08-27 18:16:43.647 24559 24816 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001004 token 0x7b1d8000
+08-27 18:16:43.681 24559 24816 I AGM: device: device_set_metadata: 712 Setting device metadata for CODEC_DMA-LPAIF_RXTX-RX-1
+08-27 18:16:43.681 24559 24816 I AGM: session: session_obj_set_sess_aif_metadata: 1933 Setting metadata for sess_id 126, aif id 1
+08-27 18:16:43.681 24559 24816 I AGM: session: session_obj_set_sess_aif_metadata: 1938 Exit
+08-27 18:16:43.681 24559 24816 E audio_route: unable to find path 'PM_QOS_Vote'
+08-27 18:16:43.681 24559 24816 I gsl     : vendor/qcom/proprietary/args/gsl/src/gsl_common.c:gsl_send_spf_cmd:190 sending pkt opcode 0x1001004 token 0x7b1db000
+08-27 18:16:43.682 24559 24816 I PAL: ResourceManager: freeFrontEndIds: 7865: stream type 1, freeing 126
+08-27 18:16:43.682 24559 24816 I PAL: Device: close: 556: Enter. deviceCount 1 for device id 3 (PAL_DEVICE_OUT_SPEAKER)
+08-27 18:16:43.682 24559 24816 I PAL: Device: close: 568: Disabling device 3 with snd dev speaker
+08-27 18:16:43.683 24559 24816 I PAL: Device: close: 579: Exit. deviceCount 0 for device id 3 (PAL_DEVICE_OUT_SPEAKER), exit status 0
+08-27 18:16:43.683 24559 24816 I PAL: API: notify_concurrent_stream: 136: Notify concurrent stream type 1, direction 1, active 0
+08-27 18:16:43.683 24559 24816 I PAL: ResourceManager: HandleConcurrencyForSoundTriggerStreams: 6128: use_lpi = 1, concEnableCount = 0, concDisableCount = 1, active_streams_st.size = 0, acd.size = 0, sensor_pcm_data.size = 0
+08-27 18:16:43.683 24559 24816 I PAL: ResourceManager: GetConcurrencyInfo: 5877: stream type 1 Tx conc 0, Rx conc 0, concurrency allowed
+08-27 18:16:43.683 24559 24816 I PAL: ResourceManager: GetConcurrencyInfo: 5877: stream type 1 Tx conc 0, Rx conc 0, concurrency allowed
+08-27 18:16:43.683 24559 24816 I PAL: ResourceManager: GetConcurrencyInfo: 5877: stream type 1 Tx conc 0, Rx conc 0, concurrency allowed
+08-27 18:16:43.683 24559 24816 I PAL: StreamPCM: ~StreamPCM: 380: Enter. session handle - 0xb40000783123a1f0K device count - 1 state 0
+08-27 18:16:43.683 24559 24816 I PAL: ResourceManager: deregisterStream: 4051: stream type 1
+08-27 18:16:43.683 24559 24816 I PAL: Device: removeStreamDeviceAttr: 983: dev: 3 attr removed are: priority: 0x3, stream type: 1, ch: 2, sr: 48000, bit_width: 32, fmt: 23, sndDev: speaker, custom_key: 
+08-27 18:16:43.683 24559 24816 I PAL: API: pal_stream_close: 362: Exit. status 0
+08-27 18:16:43.717  8734 16607 D SQLiteQueryBuilder: SELECT _id FROM images WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (is_trashed=0) AND (volume_name IN ( 'external_primary' ))) AND (((width > 0 AND height > 0))) LIMIT 100000 OFFSET 0
+08-27 18:16:43.729  8734  8744 W FuseDaemon: Reducing the number of considered missed Gc histogram windows from 154 to 100
+08-27 18:16:43.732  8734 16607 D SQLiteQueryBuilder: SELECT count(_id) FROM video WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (is_trashed=0) AND (volume_name IN ( 'external_primary' ))) AND (((width > 0 AND height > 0)))
+08-27 18:16:43.754  8734 16607 D SQLiteQueryBuilder: SELECT _id FROM video WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (is_trashed=0) AND (volume_name IN ( 'external_primary' ))) AND (((width > 0 AND height > 0))) LIMIT 100000 OFFSET 0
+08-27 18:16:43.780  8734 16607 D SQLiteQueryBuilder: SELECT _id FROM files WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (volume_name IN ( 'external_primary' ))) AND ((((media_type = 1) OR (media_type = 3)) AND (is_trashed = 1) AND (width > 0 AND height > 0))) LIMIT 100000 OFFSET 0
+08-27 18:16:43.879  8734 16607 D SQLiteQueryBuilder: SELECT _data, _id FROM images WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (is_trashed=0) AND (volume_name IN ( 'external_primary' ))) AND ((_data COLLATE NOCASE IN ('/storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/IMG-20260625-WA0039.jpg','/storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/IMG-20260625-WA0035.jpg','/storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/IMG-20260625-WA0045.jpg','/storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/IMG-20260616-WA0001.jpg','/storage/emulated/0/Pictures/WhatsApp/IMG-20260615-WA0029.jpg','/storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/IMG-20260616-WA0000.jpg','/storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/IMG-20260625-WA0038.jpg')))
+08-27 18:16:43.907  8734 16607 D SQLiteQueryBuilder: SELECT _data, _id FROM video WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (is_trashed=0) AND (volume_name IN ( 'external_primary' ))) AND ((_data COLLATE NOCASE IN ('/storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/IMG-20260625-WA0039.jpg','/storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/IMG-20260625-WA0035.jpg','/storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/IMG-20260625-WA0045.jpg','/storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/IMG-20260616-WA0001.jpg','/storage/emulated/0/Pictures/WhatsApp/IMG-20260615-WA0029.jpg','/storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/IMG-20260616-WA0000.jpg','/storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images/IMG-20260625-WA0038.jpg')))
+08-27 18:16:43.924 12202 12214 W System  : A resource failed to call ContentProviderClient.close. 
+08-27 18:16:43.925 12202 12214 W System  : A resource failed to call ContentProviderClient.close. 
+08-27 18:16:43.946  8734 16607 D SQLiteQueryBuilder: UPDATE files SET inferred_date=?,is_favorite=?,generation_modified=(SELECT generation FROM local_metadata) WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (is_trashed=0) AND (volume_name IN ( 'external_primary' ))) AND (( _id = ? ))
+08-27 18:16:43.947  8734 16607 D SQLiteQueryBuilder: UPDATE files SET inferred_date=?,is_favorite=?,generation_modified=(SELECT generation FROM local_metadata) WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (is_trashed=0) AND (volume_name IN ( 'external_primary' ))) AND (( _id = ? ))
+08-27 18:16:43.956  8734 16607 D SQLiteQueryBuilder: UPDATE files SET inferred_date=?,is_favorite=?,generation_modified=(SELECT generation FROM local_metadata) WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (is_trashed=0) AND (volume_name IN ( 'external_primary' ))) AND (( _id = ? ))
+08-27 18:16:43.957  8734 16607 D SQLiteQueryBuilder: UPDATE files SET inferred_date=?,is_favorite=?,generation_modified=(SELECT generation FROM local_metadata) WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (is_trashed=0) AND (volume_name IN ( 'external_primary' ))) AND (( _id = ? ))
+08-27 18:16:43.958  8734 16607 D SQLiteQueryBuilder: UPDATE files SET inferred_date=?,is_favorite=?,generation_modified=(SELECT generation FROM local_metadata) WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (is_trashed=0) AND (volume_name IN ( 'external_primary' ))) AND (( _id = ? ))
+08-27 18:16:43.960  8734 16607 D SQLiteQueryBuilder: UPDATE files SET inferred_date=?,is_favorite=?,generation_modified=(SELECT generation FROM local_metadata) WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (is_trashed=0) AND (volume_name IN ( 'external_primary' ))) AND (( _id = ? ))
+08-27 18:16:43.963  8734 16607 D SQLiteQueryBuilder: UPDATE files SET inferred_date=?,is_favorite=?,generation_modified=(SELECT generation FROM local_metadata) WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (is_trashed=0) AND (volume_name IN ( 'external_primary' ))) AND (( _id = ? ))
+08-27 18:16:43.963  8734 16607 D SQLiteQueryBuilder: UPDATE files SET inferred_date=?,is_favorite=?,generation_modified=(SELECT generation FROM local_metadata) WHERE ((((is_pending=0 AND NOT _modifier=4) OR (is_pending=1 AND lower(_data) NOT REGEXP '.*/\.pending-(\d+)-([^/]+)$' AND owner_package_name IN ( 'com.vivo.gallery' , 'com.vivo.widget.gallery' )))) AND (is_trashed=0) AND (volume_name IN ( 'external_primary' ))) AND (( _id = ? ))
+08-27 18:16:43.983  8734  8983 D SQLiteQueryBuilder: SELECT _data FROM files WHERE ((_id='1000053824') AND (volume_name IN ( 'external_primary' )))
+08-27 18:16:44.014  8734 16607 E DatabaseUtils: Writing exception to parcel
+08-27 18:16:44.014  8734 16607 E DatabaseUtils: java.lang.IllegalArgumentException: Invalid column live_photo
+08-27 18:16:44.014  8734 16607 E DatabaseUtils: 	at com.google.common.collect.HashBiMap$$ExternalSyntheticBUOutline0.m(R8$$SyntheticClass:0)
+08-27 18:16:44.014  8734 16607 E DatabaseUtils: 	at com.android.providers.media.util.SQLiteQueryBuilder.computeSingleProjectionOrThrow(SQLiteQueryBuilder.java:1097)
+08-27 18:16:44.014  8734 16607 E DatabaseUtils: 	at com.android.providers.media.util.SQLiteQueryBuilder.computeProjection(SQLiteQueryBuilder.java:1061)
+08-27 18:16:44.014  8734 16607 E DatabaseUtils: 	at com.android.providers.media.util.SQLiteQueryBuilder.buildQuery(SQLiteQueryBuilder.java:911)
+08-27 18:16:44.014  8734 16607 E DatabaseUtils: 	at com.android.providers.media.util.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:552)
+08-27 18:16:44.014  8734 16607 E DatabaseUtils: 	at com.android.providers.media.util.SQLiteQueryBuilder.lambda$query$0(SQLiteQueryBuilder.java:504)
+08-27 18:16:44.014  8734 16607 E DatabaseUtils: 	at com.android.providers.media.util.SQLiteQueryBuilder.$r8$lambda$9MQ4yjDzhVjWoNO11Ps7rhm4czc(SQLiteQueryBuilder.java:0)
+08-27 18:16:44.014  8734 16607 E DatabaseUtils: 	at com.android.providers.media.util.SQLiteQueryBuilder$$ExternalSyntheticLambda0.apply(R8$$SyntheticClass:0)
+08-27 18:16:44.014  8734 16607 E DatabaseUtils: 	at com.android.providers.media.DatabaseHelper.runWithoutTransaction(DatabaseHelper.java:1046)
+08-27 18:16:44.014  8734 16607 E DatabaseUtils: 	at com.android.providers.media.util.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:503)
+08-27 18:16:44.014  8734 16607 E DatabaseUtils: 	at com.android.providers.media.util.SQLiteQueryBuilder.query(SQLiteQueryBuilder.java:496)
+08-27 18:16:44.014  8734 16607 E DatabaseUtils: 	at com.android.providers.media.MediaProvider.queryInternal(MediaProvider.java:4554)
+08-27 18:16:44.014  8734 16607 E DatabaseUtils: 	at com.android.providers.media.MediaProvider.query(MediaProvider.java:4342)
+08-27 18:16:44.014  8734 16607 E DatabaseUtils: 	at com.android.providers.media.MediaProvider.query(MediaProvider.java:4335)
+08-27 18:16:44.014  8734 16607 E DatabaseUtils: 	at android.content.ContentProvider$Transport.query(ContentProvider.java:330)
+08-27 18:16:44.014  8734 16607 E DatabaseUtils: 	at android.content.ContentProviderNative.onTransact(ContentProviderNative.java:110)
+08-27 18:16:44.014  8734 16607 E DatabaseUtils: 	at android.os.Binder.execTransactInternal(Binder.java:1436)
+08-27 18:16:44.014  8734 16607 E DatabaseUtils: 	at android.os.Binder.execTransact(Binder.java:1380)
+08-27 18:16:44.016  8734  8983 D SQLiteQueryBuilder: SELECT _data FROM files WHERE ((_id='1000053833') AND (volume_name IN ( 'external_primary' )))
+08-27 18:16:44.022  8734  8983 D SQLiteQueryBuilder: SELECT _data FROM files WHERE ((_id='1000053845') AND (volume_name IN ( 'external_primary' )))
+08-27 18:16:44.038  8734  8983 D SQLiteQueryBuilder: SELECT _data FROM files WHERE ((_id='1000052533') AND (volume_name IN ( 'external_primary' )))
+08-27 18:16:44.042  8734  8983 D SQLiteQueryBuilder: SELECT _data FROM files WHERE ((_id='1000052493') AND (volume_name IN ( 'external_primary' )))
+08-27 18:16:44.048  8734  8983 D SQLiteQueryBuilder: SELECT _data FROM files WHERE ((_id='1000052536') AND (volume_name IN ( 'external_primary' )))
+08-27 18:16:44.049 12202 12375 D SQLiteQueryBuilder: SELECT count(distinct image_id) AS count_t FROM facegroup
+08-27 18:16:44.056  8734  8983 D SQLiteQueryBuilder: SELECT _data FROM files WHERE ((_id='1000053832') AND (volume_name IN ( 'external_primary' )))
+08-27 18:16:44.057 12202 12375 D SQLiteQueryBuilder: SELECT image_id FROM facegroup WHERE (1)GROUP BY (image_id) ORDER BY image_id ASC LIMIT 100000 OFFSET 0
+08-27 18:16:44.263   806   845 E qdgralloc: BufferManager::ReleaseBuffer ref_count = 1
+08-27 18:16:44.264   806   845 I HWUI    : [destroy] CanvasContext will be destroyed.
+08-27 18:16:44.268   806   826 E qdgralloc: BufferManager::ReleaseBuffer ref_count = 1
+08-27 18:16:44.282   806   826 E qdgralloc: BufferManager::ReleaseBuffer ref_count = 1
+08-27 18:16:44.283   806   826 E qdgralloc: BufferManager::ReleaseBuffer ref_count = 1
+08-27 18:16:44.457 25553 25562 W .widget.gallery: Reducing the number of considered missed Gc histogram windows from 135 to 100
+08-27 18:16:44.584 24557 32374 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:44.584 24557 24710 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:44.597 24557 24731 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:45.255   806   845 I HWUI    : [trimMemory] TrimMemory will destroy render context, mode: 130.
+08-27 18:16:45.917 24557 24711 I AudioPolicyService: AudioServerOrRootUid allowCapture!
+08-27 18:16:46.838 31944 12011 I NearbySharing: Started scanning for FastInitiation with mode: SCAN_MODE_AMBIENT_DISCOVERY
+08-27 18:16:46.838 31944 12011 I NearbySharing: FastInitiation warming period has ended
+08-27 18:16:46.936  3209  8973 I artd    : GetBestInfo: odex next to the dex file (/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/oat/arm64/base.odex) is kOatUpToDate with filter 'speed-profile' executable 'false'
+08-27 18:16:46.936 12482 12482 I .gms.persistent: Using generational CollectorTypeCC GC.
+08-27 18:16:46.943  3209  8973 I artd    : GetBestInfo: dm (/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/split_AdsDynamite_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+08-27 18:16:46.947 12482 12482 E .gms.persistent: BBinder_init Processname  com.google.android.gms.persistent  
+08-27 18:16:46.947 12482 12482 E .gms.persistent: BBinder_init hasGetProcessName  com.google.android.gms.persistent
+08-27 18:16:46.950  3209  8973 I artd    : GetBestInfo: dm (/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/split_CronetDynamite_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+08-27 18:16:46.953  3209  8973 I artd    : GetBestInfo: dm (/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/split_DynamiteLoader_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+08-27 18:16:46.955  3209  8973 I artd    : GetBestInfo: dm (/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/split_DynamiteModulesA_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+08-27 18:16:46.957  3209  8973 I artd    : GetBestInfo: dm (/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/split_DynamiteModulesC_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+08-27 18:16:46.957 12486 12486 I .gms.persistent: Using generational CollectorTypeCC GC.
+08-27 18:16:46.958  3209  8973 I artd    : GetBestInfo: dm (/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/split_GoogleCertificates_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+08-27 18:16:46.960  3209  8973 I artd    : GetBestInfo: dm (/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/split_MapsDynamite_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+08-27 18:16:46.962  3209  8973 I artd    : GetBestInfo: dm (/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/split_MeasurementDynamite_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+08-27 18:16:46.965  3209  8973 I artd    : GetBestInfo: dm (/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/split_maps_core_dynamite_ondemand.dm) is kOatUpToDate with filter 'verify' executable 'false'
+08-27 18:16:46.967 12486 12486 D nativeloader: Load libframework-connectivity-tiramisu-jni.so using APEX ns com_android_tethering for caller /apex/com.android.tethering/javalib/framework-connectivity-t.jar: ok
+08-27 18:16:46.969 12486 12486 E .gms.persistent: BBinder_init Processname  com.google.android.gms.persistent  
+08-27 18:16:46.969 12486 12486 E .gms.persistent: BBinder_init hasGetProcessName  com.google.android.gms.persistent
+08-27 18:16:46.970  3209  8973 I artd    : GetBestInfo: odex next to the dex file (/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/oat/arm64/base.odex) is kOatUpToDate with filter 'speed-profile' executable 'false'
+08-27 18:16:46.972  3209  8973 I artd    : GetBestInfo: dm (/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/split_AdsDynamite_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+08-27 18:16:46.973 13998 14013 D VASJNI-PAPManager: set data inst 0x0 metadata 0x77198055a0 cmd BackgroundStatusChangedInform provider 0xb4000077f213c770 has set cb 1
+08-27 18:16:46.974  3209  8973 I artd    : GetBestInfo: dm (/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/split_CronetDynamite_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+08-27 18:16:46.975  3209  8973 I artd    : GetBestInfo: dm (/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/split_DynamiteLoader_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+08-27 18:16:46.977  3209  8973 I artd    : GetBestInfo: dm (/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/split_DynamiteModulesA_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+08-27 18:16:46.978  3209  8973 I artd    : GetBestInfo: dm (/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/split_DynamiteModulesC_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+08-27 18:16:46.979  3209  8973 I artd    : GetBestInfo: dm (/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/split_GoogleCertificates_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+08-27 18:16:46.980 12482 12482 D ApplicationLoaders: Returning zygote-cached class loader: /system/framework/org.apache.http.legacy.jar
+08-27 18:16:46.980 12482 12482 D ApplicationLoaders: Returning zygote-cached class loader: /system/framework/com.android.location.provider.jar
+08-27 18:16:46.980 12482 12482 D ApplicationLoaders: Returning zygote-cached class loader: /system/framework/com.android.media.remotedisplay.jar
+08-27 18:16:46.981  3209  8973 I artd    : GetBestInfo: dm (/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/split_MapsDynamite_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+08-27 18:16:46.982 12482 12482 D nativeloader: Configuring clns-9 for other apk /system_ext/framework/com.android.extensions.appfunctions.jar. target_sdk_version=37, uses_libraries=ALL, library_path=/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/lib/arm64:/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/999/com.google.android.gms
+08-27 18:16:46.982 12482 12482 D nativeloader: Extending system_exposed_libraries: libbinauralrenderer_wrapper.qti.so:libhoaeffects.qti.so:librealm-jni.vivo.so:libupdateprof.qti.so:libthermalclient.qti.so:libdiag_system.qti.so:libqape.qti.so:liblistenjni.qti.so
+08-27 18:16:46.982  3209  8973 I artd    : GetBestInfo: dm (/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/split_MeasurementDynamite_installtime.dm) is kOatUpToDate with filter 'verify' executable 'false'
+08-27 18:16:46.982 12482 12482 D ApplicationLoaders: Returning zygote-cached class loader: /system_ext/framework/androidx.window.extensions.jar
+08-27 18:16:46.982 12482 12482 D ApplicationLoaders: Returning zygote-cached class loader: /system_ext/framework/androidx.window.sidecar.jar
+08-27 18:16:46.984  3209  8973 I artd    : GetBestInfo: dm (/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/split_maps_core_dynamite_ondemand.dm) is kOatUpToDate with filter 'verify' executable 'false'
+08-27 18:16:46.988 13998 14013 D VASJNI-PAPManager: set data inst 0x0 metadata 0x77198055a0 cmd BackgroundStatusChangedInform provider 0xb4000077f213c770 has set cb 1
+08-27 18:16:46.998 12486 12486 D ApplicationLoaders: Returning zygote-cached class loader: /system/framework/org.apache.http.legacy.jar
+08-27 18:16:46.998 12486 12486 D ApplicationLoaders: Returning zygote-cached class loader: /system/framework/com.android.location.provider.jar
+08-27 18:16:46.998 12486 12486 D ApplicationLoaders: Returning zygote-cached class loader: /system/framework/com.android.media.remotedisplay.jar
+08-27 18:16:46.999 12486 12486 D nativeloader: Configuring clns-9 for other apk /system_ext/framework/com.android.extensions.appfunctions.jar. target_sdk_version=37, uses_libraries=ALL, library_path=/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/lib/arm64:/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/10/com.google.android.gms
+08-27 18:16:46.999 12486 12486 D nativeloader: Extending system_exposed_libraries: libbinauralrenderer_wrapper.qti.so:libhoaeffects.qti.so:librealm-jni.vivo.so:libupdateprof.qti.so:libthermalclient.qti.so:libdiag_system.qti.so:libqape.qti.so:liblistenjni.qti.so
+08-27 18:16:47.000 12486 12486 D ApplicationLoaders: Returning zygote-cached class loader: /system_ext/framework/androidx.window.extensions.jar
+08-27 18:16:47.000 12486 12486 D ApplicationLoaders: Returning zygote-cached class loader: /system_ext/framework/androidx.window.sidecar.jar
+08-27 18:16:47.013 12482 12482 D nativeloader: Configuring clns-10 for other apk /data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/base.apk. target_sdk_version=37, uses_libraries=, library_path=/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/lib/arm64:/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/999/com.google.android.gms
+08-27 18:16:47.019 12482 12482 I .gms.persistent: AssetManager2(0xb4000077721319b8) locale list changing from [] to [en-US]
+08-27 18:16:47.022 12482 12482 W .gms.persistent: type=1400 audit(0.0:50768410): avc:  denied  { search } for  name="fas" dev="proc" ino=4026532541 scontext=u:r:gmscore_app:s0:c743,c771 tcontext=u:object_r:proc_fas:s0 tclass=dir permissive=0
+08-27 18:16:47.032 12482 12482 V GraphicsEnvironment: Currently set values for:
+08-27 18:16:47.032 12482 12482 V GraphicsEnvironment:   angle_gl_driver_selection_pkgs=[com.android.angle, com.linecorp.b612.android, com.campmobile.snow, com.google.android.apps.tachyon]
+08-27 18:16:47.032 12482 12482 V GraphicsEnvironment:   angle_gl_driver_selection_values=[angle, native, native, native]
+08-27 18:16:47.032 12482 12482 V GraphicsEnvironment: com.google.android.gms is not listed in per-application setting
+08-27 18:16:47.032 12482 12482 V GraphicsEnvironment: ANGLE allowlist from config: 
+08-27 18:16:47.032 12482 12482 V GraphicsEnvironment: com.google.android.gms is not listed in ANGLE allowlist or settings, returning default
+08-27 18:16:47.032 12482 12482 V GraphicsEnvironment: Neither updatable production driver nor prerelease driver is supported.
+08-27 18:16:47.039 12486 12486 D nativeloader: Configuring clns-10 for other apk /data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/base.apk. target_sdk_version=37, uses_libraries=, library_path=/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/lib/arm64:/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/10/com.google.android.gms
+08-27 18:16:47.044 12486 12486 I .gms.persistent: AssetManager2(0xb4000077721319b8) locale list changing from [] to [en-US]
+08-27 18:16:47.046 12486 12486 W .gms.persistent: type=1400 audit(0.0:50768411): avc:  denied  { search } for  name="fas" dev="proc" ino=4026532541 scontext=u:r:gmscore_app:s0:c522,c768 tcontext=u:object_r:proc_fas:s0 tclass=dir permissive=0
+08-27 18:16:47.053 12482 12482 I Safeboot: Checking safeboot...
+08-27 18:16:47.054 12486 12486 V GraphicsEnvironment: Currently set values for:
+08-27 18:16:47.054 12486 12486 V GraphicsEnvironment:   angle_gl_driver_selection_pkgs=[com.android.angle, com.linecorp.b612.android, com.campmobile.snow, com.google.android.apps.tachyon]
+08-27 18:16:47.054 12486 12486 V GraphicsEnvironment:   angle_gl_driver_selection_values=[angle, native, native, native]
+08-27 18:16:47.054 12486 12486 V GraphicsEnvironment: com.google.android.gms is not listed in per-application setting
+08-27 18:16:47.054 12486 12486 V GraphicsEnvironment: ANGLE allowlist from config: 
+08-27 18:16:47.054 12486 12486 V GraphicsEnvironment: com.google.android.gms is not listed in ANGLE allowlist or settings, returning default
+08-27 18:16:47.054 12486 12486 V GraphicsEnvironment: Neither updatable production driver nor prerelease driver is supported.
+08-27 18:16:47.070 12482 12482 W ProviderHelper: Unknown dynamite feature providerinstaller.dynamite
+08-27 18:16:47.070 12482 12482 I DynamiteModule: Considering local module com.google.android.gms.providerinstaller.dynamite:1 and remote module com.google.android.gms.providerinstaller.dynamite:0
+08-27 18:16:47.070 12482 12482 I DynamiteModule: Selected local version of com.google.android.gms.providerinstaller.dynamite
+08-27 18:16:47.074 12482 12482 I ProviderInstaller: Installed default security provider AndroidOpenSSL (via CompatProvider)
+08-27 18:16:47.074 12486 12486 I Safeboot: Checking safeboot...
+08-27 18:16:47.082 12482 12553 I GmsApplication: Registering the BackgroundBroadcastReceiverSupport receiver.
+08-27 18:16:47.084 12482 12551 E ashmem  : Pinning is deprecated since Android Q. Please use trim or other methods.
+08-27 18:16:47.088 12486 12486 W ProviderHelper: Unknown dynamite feature providerinstaller.dynamite
+08-27 18:16:47.088 12486 12486 I DynamiteModule: Considering local module com.google.android.gms.providerinstaller.dynamite:1 and remote module com.google.android.gms.providerinstaller.dynamite:0
+08-27 18:16:47.088 12486 12486 I DynamiteModule: Selected local version of com.google.android.gms.providerinstaller.dynamite
+08-27 18:16:47.094 12482 12482 E ANDR-VIVO-PERF: V1_0::IVPerf::tryGetService failed!
+08-27 18:16:47.094 12482 12482 E ANDR-VIVO-PERF: error no aidl or hidl 
+08-27 18:16:47.099 12486 12486 D nativeloader: Load /data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/base.apk!/lib/arm64-v8a/libconscrypt_gmscore_jni.so using class loader ns clns-10 (caller=/data/app/~~VNbVLWh8jCQDkQiCISa5Iw==/com.google.android.gms-NqjM0NIxInMKieInQfyFsg==/base.apk): ok
+08-27 18:16:47.100 12486 12486 V NativeCrypto: Registering com/google/android/gms/org/conscrypt/NativeCrypto's 336 native methods...
+08-27 18:16:47.108 12486 12486 I ProviderInstaller: Installed default security provider GmsCore_OpenSSL
+08-27 18:16:47.108 12482 12553 I GmsReceiverSupport: Registered Receiver for 16+1 IntentFilters
+08-27 18:16:47.112 12486 12575 I GmsApplication: Registering the BackgroundBroadcastReceiverSupport receiver.
+08-27 18:16:47.114 12486 12574 E ashmem  : Pinning is deprecated since Android Q. Please use trim or other methods.
+08-27 18:16:47.116 12482 12553 I Watchcat: Started
+08-27 18:16:47.116 12486 12486 E ANDR-VIVO-PERF: V1_0::IVPerf::tryGetService failed!
+08-27 18:16:47.116 12486 12486 E ANDR-VIVO-PERF: error no aidl or hidl 
+08-27 18:16:47.129 12482 12553 I GMS_MM_Logger: (REDACTED) Start time: %s
+08-27 18:16:47.129 12482 12553 I GMS_MM_Logger: Started.
+08-27 18:16:47.133 12486 12486 D BoundBrokerSvc: onBind: Intent { act=com.google.android.gms.usagereporting.service.START dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.PersistentDirectBootAwareApiService }
+08-27 18:16:47.133 12486 12486 D BoundBrokerSvc: Loading bound service for intent: Intent { act=com.google.android.gms.usagereporting.service.START dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.PersistentDirectBootAwareApiService }
+08-27 18:16:47.134 12486 12575 I GmsReceiverSupport: Registered Receiver for 16+1 IntentFilters

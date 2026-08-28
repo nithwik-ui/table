@@ -76,9 +76,32 @@ class NotificationService {
     print('Diagnostic: current Asia/Kolkata time = ${nowTz}');
     print('Diagnostic: configured reminder minutes = 15');
 
+    // --- INJECT NEAR-FUTURE DIAGNOSTIC TEST (1-minute reminder, 5-minute class) ---
+    final testClassTime = nowTz.add(const Duration(minutes: 5));
+    final testReminderTime = testClassTime.subtract(const Duration(minutes: 1)); // 1 min reminder -> triggers in 4 mins
+    final testClassString = '${testClassTime.hour.toString().padLeft(2, '0')}:${testClassTime.minute.toString().padLeft(2, '0')}';
+    final weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    final todayName = weekdays[nowTz.weekday];
 
+    final fakeDayData = {
+      'day': todayName,
+      'classes': [
+        {
+          'start_time': testClassString,
+          'subject': 'TEST CLASS (Diag)',
+          'room': 'Diagnostic Room',
+          'type': 'Test'
+        }
+      ]
+    };
+    
+    // Create a mutable copy of the weekTimetable so we can inject our fake class
+    final mutableTimetable = List<dynamic>.from(weekTimetable);
+    mutableTimetable.add(fakeDayData);
+    print('Diagnostic: Injected near-future TEST CLASS for ${todayName} at ${testClassString} with 1 min reminder');
+    // -----------------------------------------------------------------------------
 
-    for (final dayData in weekTimetable) {
+    for (final dayData in mutableTimetable) {
       final dayName = dayData['day'] as String;
       final classes = dayData['classes'] as List<dynamic>? ?? [];
 
@@ -104,12 +127,16 @@ class NotificationService {
           targetDate = targetDate.add(const Duration(days: 1));
         }
 
-        var reminderTime = targetDate.subtract(const Duration(minutes: 15));
+        // Special case for diagnostic test
+        final isDiagnosticTest = subject.contains('(Diag)');
+        final int reminderOffset = isDiagnosticTest ? 1 : 15;
+
+        var reminderTime = targetDate.subtract(Duration(minutes: reminderOffset));
         
         // If the reminder time is already passed for this week, schedule for next week
         if (reminderTime.isBefore(nowTz)) {
           targetDate = targetDate.add(const Duration(days: 7));
-          reminderTime = targetDate.subtract(const Duration(minutes: 15));
+          reminderTime = targetDate.subtract(Duration(minutes: reminderOffset));
         }
 
         print('Diagnostic: Parsed class [${subject}] on [${dayName}] at [${startTimeStr}]');

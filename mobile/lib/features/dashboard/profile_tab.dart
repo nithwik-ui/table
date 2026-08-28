@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
 import '../../core/api.dart';
+import '../../core/updater.dart';
 import '../../core/notifications.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../onboarding/degree_screen.dart';
@@ -391,7 +392,7 @@ class _ProfileTabState extends State<ProfileTab> {
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _isCheckingUpdates = true);
     
-    final release = await ApiService.fetchLatestGithubRelease();
+    final release = await UpdateService.checkForUpdates();
     setState(() => _isCheckingUpdates = false);
 
     if (release['status'] == 'timeout') {
@@ -410,10 +411,10 @@ class _ProfileTabState extends State<ProfileTab> {
       }
       return;
     }
-    if (release['status'] == 'no_release') {
+    if (release['status'] == 'no_release' || release['status'] == 'up_to_date') {
       if (showToast && mounted) {
         messenger.showSnackBar(
-          const SnackBar(content: Text('You\'re up to date.')),
+          const SnackBar(content: Text('App is up to date!')),
         );
       }
       return;
@@ -427,58 +428,14 @@ class _ProfileTabState extends State<ProfileTab> {
       return;
     }
 
-    final String latestTag = release['tag_name'] as String? ?? '1.0.1';
-    final String htmlUrl = release['html_url'] as String? ?? 'https://github.com/${AppConstants.githubRepo}';
-    
-    // Find apk asset url if present
-    String? downloadUrl;
-    final assets = release['assets'] as List<dynamic>?;
-    if (assets != null && assets.isNotEmpty) {
-      for (final asset in assets) {
-        final name = asset['name'] as String? ?? '';
-        if (name.endsWith('.apk')) {
-          downloadUrl = asset['browser_download_url'] as String?;
-          break;
-        }
-      }
-    }
-    
-    final targetUrl = downloadUrl ?? htmlUrl;
-
-    if (_isNewerVersion(_currentVersion, latestTag)) {
+    if (release['status'] == 'update_available') {
       if (mounted) {
-        _showUpdateDialog(latestTag, targetUrl);
-      }
-    } else {
-      if (showToast && mounted) {
-        messenger.showSnackBar(
-          const SnackBar(content: Text('App is up to date!')),
-        );
+        _showUpdateDialog(release['latestTag'], release['downloadUrl']);
       }
     }
   }
 
-  bool _isNewerVersion(String current, String latest) {
-    try {
-      final cleanCurrent = current.replaceAll('v', '').replaceAll('+', '.');
-      final cleanLatest = latest.replaceAll('v', '').replaceAll('+', '.');
-      
-      final currentParts = cleanCurrent.split('.').map(int.parse).toList();
-      final latestParts = cleanLatest.split('.').map(int.parse).toList();
-      
-      for (int i = 0; i < latestParts.length; i++) {
-        if (i >= currentParts.length) {
-          return true;
-        }
-        if (latestParts[i] > currentParts[i]) {
-          return true;
-        } else if (latestParts[i] < currentParts[i]) {
-          return false;
-        }
-      }
-    } catch (_) {}
-    return false;
-  }
+
 
   void _showUpdateDialog(String latestTag, String downloadUrl) {
     final messenger = ScaffoldMessenger.of(context);
