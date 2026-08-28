@@ -137,10 +137,12 @@ class ApiService {
         return {'status': 'error', 'message': 'GitHub API error: ${response.statusCode}'};
       }
     } catch (e) {
-      if (e.toString().contains('TimeoutException') || e.toString().contains('SocketException') || e.toString().contains('ClientException')) {
+      if (e.toString().contains('TimeoutException')) {
+        return {'status': 'timeout'};
+      } else if (e.toString().contains('SocketException')) {
         return {'status': 'no_internet'};
       }
-      return {'status': 'error', 'message': 'Unknown error occurred.'};
+      return {'status': 'error', 'message': 'Unable to check for updates right now.'};
     }
   }
 }

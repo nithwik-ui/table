@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
+import '../../core/utils.dart';
 import 'ad_banner.dart';
 import '../../core/api.dart';
 import '../notifications/notifications_screen.dart';
@@ -334,7 +335,7 @@ class _WeekTabState extends State<WeekTab> {
                                       ),
                                     ),
                                     Text(
-                                      '${c['start_time']} - ${c['end_time']}',
+                                      '${TimeUtils.format12Hour(c['start_time'])} - ${TimeUtils.format12Hour(c['end_time'])}',
                                       style: AppConstants.getLabelSmall(color: AppConstants.primary).copyWith(fontWeight: FontWeight.w600),
                                     ),
                                   ],

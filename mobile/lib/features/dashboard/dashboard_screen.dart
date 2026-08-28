@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
@@ -28,13 +29,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _currentIndex = widget.initialTab;
+    _checkAndRefreshTimetable();
     _checkForChanges();
     _startReminderTimer();
     
     // Check for updates silently on startup (after 3 seconds politeness delay)
-    Future.delayed(const Duration(seconds: 3), () {
+    Future.delayed(const Duration(seconds: 3), () async {
       if (mounted) {
         _checkForUpdatesSilently();
+        try {
+          await FirebaseMessaging.instance.requestPermission(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
+        } catch (_) {}
       }
     });
   }
@@ -43,6 +52,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void dispose() {
     _reminderTimer?.cancel();
     super.dispose();
+  }
+
+  void _checkAndRefreshTimetable() async {
+    final selection = StorageService.getSelection();
+    if (selection == null) return;
+    
+    final lastSynced = StorageService.getLastSyncedAt();
+    if (lastSynced != null) {
+      final diff = DateTime.now().difference(lastSynced);
+      if (diff.inMinutes < 60) return;
+    }
+
+    try {
+      final batchId = selection['batchId']!;
+      final newTimetable = await ApiService.fetchTimetable(batchId);
+      await StorageService.saveTimetableCache(newTimetable);
+      await StorageService.saveLastSyncedAt(DateTime.now());
+      _checkForChanges();
+    } catch (_) {}
   }
 
   void _checkForChanges() async {
@@ -226,7 +254,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _checkForUpdatesSilently() async {
     final release = await ApiService.fetchLatestGithubRelease();
-    if (release == null) return;
 
     final String latestTag = release['tag_name'] as String? ?? '1.0.1';
     final String htmlUrl = release['html_url'] as String? ?? 'https://github.com/${AppConstants.githubRepo}';

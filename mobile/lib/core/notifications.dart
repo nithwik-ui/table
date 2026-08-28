@@ -1,7 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:intl/intl.dart';
+import 'storage.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -12,7 +12,7 @@ class NotificationService {
     tz.setLocalLocation(tz.getLocation('Asia/Kolkata'));
 
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@drawable/ic_notification');
 
     const InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
@@ -21,9 +21,29 @@ class NotificationService {
     await _notificationsPlugin.initialize(initializationSettings);
   }
 
+  static Future<void> showForegroundNotification(String? title, String? body) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      'fcm_foreground_channel',
+      'Important Updates',
+      importance: Importance.max,
+      priority: Priority.high,
+      icon: '@drawable/ic_notification',
+    );
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
+    
+    await _notificationsPlugin.show(
+      DateTime.now().millisecond, // random id
+      title ?? 'SRU Update',
+      body,
+      platformChannelSpecifics,
+    );
+  }
+
   static Future<void> scheduleClassReminders(List<dynamic> weekTimetable) async {
     // 1. Cancel all existing notifications first
     await _notificationsPlugin.cancelAll();
+
+    if (!StorageService.isClassRemindersEnabled()) return;
 
     // 2. Parse week timetable and schedule
     int idCounter = 0;
@@ -85,10 +105,10 @@ class NotificationService {
                 channelDescription: 'Notifications for upcoming classes',
                 importance: Importance.high,
                 priority: Priority.high,
-                icon: '@mipmap/ic_launcher',
+                icon: '@drawable/ic_notification',
               ),
             ),
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
             uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
           );
         }

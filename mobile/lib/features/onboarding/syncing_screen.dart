@@ -54,17 +54,18 @@ class _SyncingScreenState extends State<SyncingScreen> {
         await NotificationService.scheduleClassReminders(entries);
       }
 
-      // 3. Register device token
-      String fcmToken = 'MOCK_DEVICE_TOKEN_PHASE_6';
+      // Try to register device token with fallback (never blocks)
+      String fcmToken = 'local_device';
       try {
         final token = await FirebaseMessaging.instance.getToken();
         if (token != null) {
           fcmToken = token;
         }
-      } catch (_) {
-        // FCM not configured or initialized
-      }
+      } catch (_) {}
       await ApiService.registerDevice(fcmToken, widget.batchId);
+      
+      // Delay briefly for animation effect
+      await Future.delayed(const Duration(seconds: 2));
 
       // 4. Save batch variables to local storage (marks onboarding as complete)
       await StorageService.saveSelection(

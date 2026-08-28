@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
+import '../../core/utils.dart';
 import 'ad_banner.dart';
 import '../../core/api.dart';
 import '../notifications/notifications_screen.dart';
@@ -372,7 +373,7 @@ class _HomeTabState extends State<HomeTab> {
                                 const Icon(Icons.access_time, size: 16, color: AppConstants.textSecondary),
                                 const SizedBox(width: 6),
                                 Text(
-                                  '${_upNextClass!['start_time']} - ${_upNextClass!['end_time']}',
+                                  '${TimeUtils.format12Hour(_upNextClass!['start_time'])} - ${TimeUtils.format12Hour(_upNextClass!['end_time'])}',
                                   style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
                                 ),
                                 const SizedBox(width: 16),
@@ -487,7 +488,7 @@ class _HomeTabState extends State<HomeTab> {
                                       Row(
                                         children: [
                                           Text(
-                                            '${c['start_time']} - ${c['end_time']}',
+                                            '${TimeUtils.format12Hour(c['start_time'])} - ${TimeUtils.format12Hour(c['end_time'])}',
                                             style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
                                           ),
                                           const SizedBox(width: 12),

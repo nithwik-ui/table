@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -5,6 +6,7 @@ import '../../core/constants.dart';
 import '../../core/storage.dart';
 import '../../core/api.dart';
 import '../../core/notifications.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../onboarding/degree_screen.dart';
 
 class ProfileTab extends StatefulWidget {
@@ -24,6 +26,7 @@ class _ProfileTabState extends State<ProfileTab> {
   bool _notificationsEnabled = true;
   bool _remindersEnabled = true;
   bool _isRefreshing = false;
+  String _currentVersion = AppConstants.currentVersion;
 
   @override
   void initState() {
@@ -32,6 +35,10 @@ class _ProfileTabState extends State<ProfileTab> {
   }
 
   void _loadProfileData() {
+    PackageInfo.fromPlatform().then((info) {
+      if (mounted) setState(() => _currentVersion = info.version);
+    }).catchError((_) {});
+
     final name = StorageService.getUserName();
     final selection = StorageService.getSelection();
     
@@ -106,8 +113,14 @@ class _ProfileTabState extends State<ProfileTab> {
     // Attempt to update preferences on server if selection exists
     final selection = StorageService.getSelection();
     if (selection != null) {
-      // Mock FCM token (Phase 7 will use real tokens)
-      await ApiService.updatePreferences('MOCK_DEVICE_TOKEN_PHASE_6', val);
+      try {
+        final fcmToken = await FirebaseMessaging.instance.getToken();
+        if (fcmToken != null) {
+          await ApiService.updatePreferences(fcmToken, val);
+        }
+      } catch (e) {
+        debugPrint('Failed to update FCM preferences: $e');
+      }
     }
   }
 
@@ -116,7 +129,7 @@ class _ProfileTabState extends State<ProfileTab> {
     await StorageService.setClassRemindersEnabled(val);
     if (val) {
       final list = StorageService.getTimetableCache();
-      if (list != null && list.isNotEmpty) {
+      if (list.isNotEmpty) {
         await NotificationService.scheduleClassReminders(list);
       }
     } else {
@@ -351,7 +364,7 @@ class _ProfileTabState extends State<ProfileTab> {
                     child: Column(
                       children: [
                         Text(
-                          'SRU Timetable v${AppConstants.currentVersion}',
+                          'SRU Timetable v$_currentVersion',
                           style: AppConstants.getLabelSmall(color: AppConstants.textSecondary),
                         ),
                         const SizedBox(height: 4),
@@ -381,10 +394,18 @@ class _ProfileTabState extends State<ProfileTab> {
     final release = await ApiService.fetchLatestGithubRelease();
     setState(() => _isCheckingUpdates = false);
 
+    if (release['status'] == 'timeout') {
+      if (showToast && mounted) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Update check timed out.')),
+        );
+      }
+      return;
+    }
     if (release['status'] == 'no_internet') {
       if (showToast && mounted) {
         messenger.showSnackBar(
-          const SnackBar(content: Text('Could not check for updates. Please check your internet connection.')),
+          const SnackBar(content: Text('You\'re offline.')),
         );
       }
       return;
@@ -392,7 +413,7 @@ class _ProfileTabState extends State<ProfileTab> {
     if (release['status'] == 'no_release') {
       if (showToast && mounted) {
         messenger.showSnackBar(
-          const SnackBar(content: Text('App is up to date!')),
+          const SnackBar(content: Text('You\'re up to date.')),
         );
       }
       return;
@@ -400,7 +421,7 @@ class _ProfileTabState extends State<ProfileTab> {
     if (release['status'] == 'error') {
       if (showToast && mounted) {
         messenger.showSnackBar(
-          SnackBar(content: Text(release['message'] ?? 'Could not check for updates.')),
+          SnackBar(content: Text(release['message'] ?? 'Unable to check for updates right now.')),
         );
       }
       return;
@@ -424,7 +445,7 @@ class _ProfileTabState extends State<ProfileTab> {
     
     final targetUrl = downloadUrl ?? htmlUrl;
 
-    if (_isNewerVersion(AppConstants.currentVersion, latestTag)) {
+    if (_isNewerVersion(_currentVersion, latestTag)) {
       if (mounted) {
         _showUpdateDialog(latestTag, targetUrl);
       }
@@ -495,3 +516,4 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 }
+

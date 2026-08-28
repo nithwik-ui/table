@@ -54,14 +54,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               // Mini Header
               Row(
                 children: [
-                  Text(
-                    'sru',
-                    style: AppConstants.getDisplay(color: AppConstants.primary).copyWith(fontSize: 22),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Timetable',
-                    style: AppConstants.getHeadline().copyWith(fontSize: 16),
+                  Image.asset(
+                    'assets/logo.png',
+                    height: 28,
+                    fit: BoxFit.contain,
                   ),
                 ],
               ),

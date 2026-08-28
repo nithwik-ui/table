@@ -1,8 +1,8 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
 class StorageService {
-  static late Box _prefsBox;
-  static late Box _cacheBox;
+  static Box? _prefsBox;
+  static Box? _cacheBox;
 
   // Initialize Hive and open boxes
   static Future<void> init() async {
@@ -13,11 +13,11 @@ class StorageService {
 
   // PROFILE / REGISTRATION INFO
   static Future<void> saveUserName(String? name) async {
-    await _prefsBox.put('user_name', name);
+    await _prefsBox?.put('user_name', name);
   }
 
   static String? getUserName() {
-    return _prefsBox.get('user_name') as String?;
+    return _prefsBox?.get('user_name') as String?;
   }
 
   static Future<void> saveSelection({
@@ -26,17 +26,17 @@ class StorageService {
     required String batchId,
     required String batchCode,
   }) async {
-    await _prefsBox.put('degree_code', degree);
-    await _prefsBox.put('year_name', year);
-    await _prefsBox.put('batch_id', batchId);
-    await _prefsBox.put('batch_code', batchCode);
+    await _prefsBox?.put('degree_code', degree);
+    await _prefsBox?.put('year_name', year);
+    await _prefsBox?.put('batch_id', batchId);
+    await _prefsBox?.put('batch_code', batchCode);
   }
 
   static Map<String, String>? getSelection() {
-    final degree = _prefsBox.get('degree_code') as String?;
-    final year = _prefsBox.get('year_name') as String?;
-    final batchId = _prefsBox.get('batch_id') as String?;
-    final batchCode = _prefsBox.get('batch_code') as String?;
+    final degree = _prefsBox?.get('degree_code') as String?;
+    final year = _prefsBox?.get('year_name') as String?;
+    final batchId = _prefsBox?.get('batch_id') as String?;
+    final batchCode = _prefsBox?.get('batch_code') as String?;
 
     if (degree == null || year == null || batchId == null || batchCode == null) {
       return null;
@@ -51,15 +51,15 @@ class StorageService {
   }
 
   static Future<void> clearSelection() async {
-    await _prefsBox.delete('degree_code');
-    await _prefsBox.delete('year_name');
-    await _prefsBox.delete('batch_id');
-    await _prefsBox.delete('batch_code');
-    await _prefsBox.delete('last_synced_at');
+    await _prefsBox?.delete('degree_code');
+    await _prefsBox?.delete('year_name');
+    await _prefsBox?.delete('batch_id');
+    await _prefsBox?.delete('batch_code');
+    await _prefsBox?.delete('last_synced_at');
     
     // Clear caches
-    await _cacheBox.delete('timetable');
-    await _cacheBox.delete('changes');
+    await _cacheBox?.delete('timetable');
+    await _cacheBox?.delete('changes');
   }
 
   static bool hasSelection() {
@@ -68,72 +68,72 @@ class StorageService {
 
   // NOTIFICATION SETTINGS
   static Future<void> setNotificationsEnabled(bool enabled) async {
-    await _prefsBox.put('notifications_enabled', enabled);
+    await _prefsBox?.put('notifications_enabled', enabled);
   }
 
   static bool isNotificationsEnabled() {
-    return _prefsBox.get('notifications_enabled', defaultValue: true) as bool;
+    return _prefsBox?.get('notifications_enabled', defaultValue: true) as bool? ?? true;
   }
 
   static Future<void> setClassRemindersEnabled(bool enabled) async {
-    await _prefsBox.put('class_reminders_enabled', enabled);
+    await _prefsBox?.put('class_reminders_enabled', enabled);
   }
 
   static bool isClassRemindersEnabled() {
-    return _prefsBox.get('class_reminders_enabled', defaultValue: true) as bool;
+    return _prefsBox?.get('class_reminders_enabled', defaultValue: true) as bool? ?? true;
   }
 
   // DATA FRESHNESS
   static Future<void> saveLastSyncedAt(DateTime dateTime) async {
-    await _prefsBox.put('last_synced_at', dateTime.toIso8601String());
+    await _prefsBox?.put('last_synced_at', dateTime.toIso8601String());
   }
 
   static DateTime? getLastSyncedAt() {
-    final str = _prefsBox.get('last_synced_at') as String?;
+    final str = _prefsBox?.get('last_synced_at') as String?;
     if (str == null) return null;
     return DateTime.parse(str);
   }
 
   // TIMETABLE CACHE
   static Future<void> saveTimetableCache(List<dynamic> entries) async {
-    await _cacheBox.put('timetable', entries);
+    await _cacheBox?.put('timetable', entries);
   }
 
   static List<dynamic> getTimetableCache() {
-    return _cacheBox.get('timetable', defaultValue: []) as List<dynamic>;
+    return _cacheBox?.get('timetable', defaultValue: []) as List<dynamic>? ?? [];
   }
 
   // TIMETABLE CHANGES CACHE
   static Future<void> saveChangesCache(List<dynamic> changes) async {
-    await _cacheBox.put('changes', changes);
+    await _cacheBox?.put('changes', changes);
   }
 
   static List<dynamic> getChangesCache() {
-    return _cacheBox.get('changes', defaultValue: []) as List<dynamic>;
+    return _cacheBox?.get('changes', defaultValue: []) as List<dynamic>? ?? [];
   }
 
   // METADATA DISCOVERY CACHE (offline onboarding recovery)
   static Future<void> saveDegreesCache(List<dynamic> degrees) async {
-    await _cacheBox.put('degrees', degrees);
+    await _cacheBox?.put('degrees', degrees);
   }
 
   static List<dynamic>? getDegreesCache() {
-    return _cacheBox.get('degrees') as List<dynamic>?;
+    return _cacheBox?.get('degrees') as List<dynamic>?;
   }
 
   static Future<void> saveYearsCache(String degree, List<dynamic> years) async {
-    await _cacheBox.put('years_$degree', years);
+    await _cacheBox?.put('years_$degree', years);
   }
 
   static List<dynamic>? getYearsCache(String degree) {
-    return _cacheBox.get('years_$degree') as List<dynamic>?;
+    return _cacheBox?.get('years_$degree') as List<dynamic>?;
   }
 
   static Future<void> saveBatchesCache(String degree, String year, List<dynamic> batches) async {
-    await _cacheBox.put('batches_${degree}_$year', batches);
+    await _cacheBox?.put('batches_${degree}_$year', batches);
   }
 
   static List<dynamic>? getBatchesCache(String degree, String year) {
-    return _cacheBox.get('batches_${degree}_$year') as List<dynamic>?;
+    return _cacheBox?.get('batches_${degree}_$year') as List<dynamic>?;
   }
 }

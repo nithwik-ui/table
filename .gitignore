@@ -1,4 +1,4 @@
-.env
+﻿.env
 **/key.properties
 **/*.jks
 **/google-services.json
@@ -16,3 +16,4 @@ dist/
 *.ntvs*
 *.njsproj
 *.sln
+*.json
