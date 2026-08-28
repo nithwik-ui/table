@@ -2,13 +2,13 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'storage.dart';
+import 'dart:math';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
 
   static Future<void> init() async {
     tz.initializeTimeZones();
-    // Assuming SRU is in India time zone
     tz.setLocalLocation(tz.getLocation('Asia/Kolkata'));
 
     const AndroidInitializationSettings initializationSettingsAndroid =
@@ -19,6 +19,27 @@ class NotificationService {
     );
 
     await _notificationsPlugin.initialize(initializationSettings);
+
+    final androidPlugin = _notificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    if (androidPlugin != null) {
+      await androidPlugin.createNotificationChannel(const AndroidNotificationChannel(
+        'fcm_default_channel',
+        'Timetable Updates',
+        description: 'Updates about your classes and timetable changes.',
+        importance: Importance.max,
+      ));
+      await androidPlugin.createNotificationChannel(const AndroidNotificationChannel(
+        'fcm_foreground_channel',
+        'Important Updates',
+        importance: Importance.max,
+      ));
+      await androidPlugin.createNotificationChannel(const AndroidNotificationChannel(
+        'class_reminders',
+        'Class Reminders',
+        description: 'Notifications before a class starts.',
+        importance: Importance.max,
+      ));
+    }
   }
 
   static Future<void> showForegroundNotification(String? title, String? body) async {
@@ -32,7 +53,7 @@ class NotificationService {
     const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
     
     await _notificationsPlugin.show(
-      DateTime.now().millisecond, // random id
+      DateTime.now().millisecond,
       title ?? 'SRU Update',
       body,
       platformChannelSpecifics,
@@ -40,17 +61,22 @@ class NotificationService {
   }
 
   static Future<void> scheduleClassReminders(List<dynamic> weekTimetable) async {
-    // 1. Cancel all existing notifications first
+    print('========== DIAGNOSTIC: BEGIN SCHEDULE CLASS REMINDERS ==========');
     await _notificationsPlugin.cancelAll();
 
-    if (!StorageService.isClassRemindersEnabled()) return;
+    if (!StorageService.isClassRemindersEnabled()) {
+      print('Diagnostic: Class reminders are disabled in StorageService.');
+      return;
+    }
 
-    // 2. Parse week timetable and schedule
     int idCounter = 0;
-    
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final currentWeekday = today.weekday; // 1 (Mon) to 7 (Sun)
+    final nowLocal = DateTime.now();
+    final nowTz = tz.TZDateTime.now(tz.local);
+    print('Diagnostic: current DateTime (device local) = ${nowLocal}');
+    print('Diagnostic: current Asia/Kolkata time = ${nowTz}');
+    print('Diagnostic: configured reminder minutes = 15');
+
+
 
     for (final dayData in weekTimetable) {
       final dayName = dayData['day'] as String;
@@ -58,13 +84,6 @@ class NotificationService {
 
       int targetWeekday = _getWeekdayNumber(dayName);
       if (targetWeekday == 0) continue;
-
-      int daysDifference = targetWeekday - currentWeekday;
-      DateTime targetDate = today.add(Duration(days: daysDifference));
-
-      if (daysDifference < 0) {
-        targetDate = targetDate.add(const Duration(days: 7));
-      }
 
       for (final cls in classes) {
         final startTimeStr = cls['start_time'] as String;
@@ -78,26 +97,32 @@ class NotificationService {
         final hour = int.tryParse(parts[0]) ?? 0;
         final minute = int.tryParse(parts[1]) ?? 0;
 
-        DateTime classTime = DateTime(
-          targetDate.year,
-          targetDate.month,
-          targetDate.day,
-          hour,
-          minute,
-        );
+        // Determine next instance of this weekday/time in Asia/Kolkata
+        var targetDate = tz.TZDateTime(tz.local, nowTz.year, nowTz.month, nowTz.day, hour, minute);
+        
+        while (targetDate.weekday != targetWeekday) {
+          targetDate = targetDate.add(const Duration(days: 1));
+        }
 
-        // 15 minute reminder
-        DateTime reminderTime = classTime.subtract(const Duration(minutes: 15));
+        var reminderTime = targetDate.subtract(const Duration(minutes: 15));
+        
+        // If the reminder time is already passed for this week, schedule for next week
+        if (reminderTime.isBefore(nowTz)) {
+          targetDate = targetDate.add(const Duration(days: 7));
+          reminderTime = targetDate.subtract(const Duration(minutes: 15));
+        }
 
-        // Ensure we only schedule future notifications
-        if (reminderTime.isAfter(DateTime.now())) {
-          final tz.TZDateTime scheduledDate = tz.TZDateTime.from(reminderTime, tz.local);
+        print('Diagnostic: Parsed class [${subject}] on [${dayName}] at [${startTimeStr}]');
+        print('Diagnostic: -> Class start tz.TZDateTime = ${targetDate}');
+        print('Diagnostic: -> Calculated reminder tz.TZDateTime = ${reminderTime}');
 
+        try {
+          int notifId = idCounter++;
           await _notificationsPlugin.zonedSchedule(
-            idCounter++,
+            notifId,
             subject,
-            '$type • $room',
-            scheduledDate,
+            '${type} • ${room}',
+            reminderTime,
             const NotificationDetails(
               android: AndroidNotificationDetails(
                 'class_reminders',
@@ -108,12 +133,17 @@ class NotificationService {
                 icon: '@drawable/ic_notification',
               ),
             ),
-            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
             uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+            matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
           );
+          print('Diagnostic: -> SUCCESS! Scheduled recurring reminder with notification ID: ${notifId}');
+        } catch (e) {
+          print('Diagnostic: -> FAILED to schedule reminder: ${e}');
         }
       }
     }
+    print('========== DIAGNOSTIC: END SCHEDULE CLASS REMINDERS ==========');
   }
 
   static Future<void> cancelAll() async {

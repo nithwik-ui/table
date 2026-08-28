@@ -7,7 +7,7 @@ class AppConstants {
   // When testing with local server on emulator, use 'http://10.0.2.2:3000'.
   static const String apiBaseUrl = 'https://table-ij9g.onrender.com';
   static const String currentVersion = '1.0.1';
-  static const String githubRepo = 'Nithwik/sru-timetable';
+  static const String githubRepo = 'nithwik-ui/table';
   
   // DESIGN PALETTE (Academic Precision)
   static const Color background = Color(0xFFF7F9FC);
