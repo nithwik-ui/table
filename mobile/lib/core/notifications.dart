@@ -2,6 +2,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'storage.dart';
+import 'utils.dart';
 import 'dart:math';
 
 class NotificationService {
@@ -22,6 +23,7 @@ class NotificationService {
 
     final androidPlugin = _notificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     if (androidPlugin != null) {
+      await androidPlugin.requestNotificationsPermission();
       await androidPlugin.createNotificationChannel(const AndroidNotificationChannel(
         'fcm_default_channel',
         'Timetable Updates',
@@ -53,7 +55,7 @@ class NotificationService {
     const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
     
     await _notificationsPlugin.show(
-      DateTime.now().millisecond,
+      Random().nextInt(100000),
       title ?? 'SRU Update',
       body,
       platformChannelSpecifics,
@@ -62,114 +64,118 @@ class NotificationService {
 
   static Future<void> scheduleClassReminders(List<dynamic> weekTimetable) async {
     print('========== DIAGNOSTIC: BEGIN SCHEDULE CLASS REMINDERS ==========');
-    await _notificationsPlugin.cancelAll();
+    
+    // Cancel previously scheduled class reminders. 
+    // We cancel all pending requests to clear old 15-minute reminders and prevent duplicates.
+    final pendingRequests = await _notificationsPlugin.pendingNotificationRequests();
+    for (final request in pendingRequests) {
+      await _notificationsPlugin.cancel(request.id);
+    }
 
     if (!StorageService.isClassRemindersEnabled()) {
       print('Diagnostic: Class reminders are disabled in StorageService.');
       return;
     }
 
-    int idCounter = 0;
     final nowLocal = DateTime.now();
-    final nowTz = tz.TZDateTime.now(tz.local);
-    print('Diagnostic: current DateTime (device local) = ${nowLocal}');
-    print('Diagnostic: current Asia/Kolkata time = ${nowTz}');
-    print('Diagnostic: configured reminder minutes = 15');
+    bool anyScheduled = false;
 
-    // --- INJECT NEAR-FUTURE DIAGNOSTIC TEST (1-minute reminder, 5-minute class) ---
-    final testClassTime = nowTz.add(const Duration(minutes: 5));
-    final testReminderTime = testClassTime.subtract(const Duration(minutes: 1)); // 1 min reminder -> triggers in 4 mins
-    final testClassString = '${testClassTime.hour.toString().padLeft(2, '0')}:${testClassTime.minute.toString().padLeft(2, '0')}';
-    final weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    final todayName = weekdays[nowTz.weekday];
-
-    final fakeDayData = {
-      'day': todayName,
-      'classes': [
-        {
-          'start_time': testClassString,
-          'subject': 'TEST CLASS (Diag)',
-          'room': 'Diagnostic Room',
-          'type': 'Test'
-        }
-      ]
-    };
-    
-    // Create a mutable copy of the weekTimetable so we can inject our fake class
-    final mutableTimetable = List<dynamic>.from(weekTimetable);
-    mutableTimetable.add(fakeDayData);
-    print('Diagnostic: Injected near-future TEST CLASS for ${todayName} at ${testClassString} with 1 min reminder');
-    // -----------------------------------------------------------------------------
-
-    for (final dayData in mutableTimetable) {
+    for (final dayData in weekTimetable) {
       final dayName = dayData['day'] as String;
       final classes = dayData['classes'] as List<dynamic>? ?? [];
 
       int targetWeekday = _getWeekdayNumber(dayName);
       if (targetWeekday == 0) continue;
+      
+      // ONLY schedule if the class actually exists TODAY
+      if (targetWeekday != nowLocal.weekday) continue;
 
       for (final cls in classes) {
         final startTimeStr = cls['start_time'] as String;
+        final endTimeStr = cls['end_time'] as String? ?? '';
         final subject = cls['subject'] as String? ?? 'Class';
-        final room = cls['room'] as String? ?? 'TBA';
-        final type = cls['type'] as String? ?? 'Class';
-
+        final room = cls['room'] as String? ?? '';
+        final faculty = cls['faculty'] as String? ?? '';
+        
         final parts = startTimeStr.split(':');
         if (parts.length != 2) continue;
 
         final hour = int.tryParse(parts[0]) ?? 0;
         final minute = int.tryParse(parts[1]) ?? 0;
 
-        // Determine next instance of this weekday/time in Asia/Kolkata
-        var targetDate = tz.TZDateTime(tz.local, nowTz.year, nowTz.month, nowTz.day, hour, minute);
-        
-        while (targetDate.weekday != targetWeekday) {
-          targetDate = targetDate.add(const Duration(days: 1));
+        final classStartLocal = DateTime(nowLocal.year, nowLocal.month, nowLocal.day, hour, minute);
+        final reminderTimeLocal = classStartLocal.subtract(const Duration(minutes: 5));
+
+        print('Diagnostic: [ClassReminder] Today: $dayName');
+        print('Diagnostic: [ClassReminder] Class: $subject');
+        print('Diagnostic: [ClassReminder] Start: $startTimeStr');
+
+        // Past class protection / starting in less than 5 minutes
+        if (!reminderTimeLocal.isAfter(nowLocal)) {
+          print('Diagnostic: [ClassReminder] Skipped $subject $startTimeStr');
+          print('Diagnostic: [ClassReminder] Reason: reminder time already passed');
+          continue;
         }
 
-        // Special case for diagnostic test
-        final isDiagnosticTest = subject.contains('(Diag)');
-        final int reminderOffset = isDiagnosticTest ? 1 : 15;
-
-        var reminderTime = targetDate.subtract(Duration(minutes: reminderOffset));
+        String timeDisplay = TimeUtils.format12Hour(startTimeStr);
+        if (endTimeStr.isNotEmpty) {
+          timeDisplay += ' – ${TimeUtils.format12Hour(endTimeStr)}';
+        }
         
-        // If the reminder time is already passed for this week, schedule for next week
-        if (reminderTime.isBefore(nowTz)) {
-          targetDate = targetDate.add(const Duration(days: 7));
-          reminderTime = targetDate.subtract(Duration(minutes: reminderOffset));
+        String body = timeDisplay;
+        if (room.isNotEmpty && room != 'TBA') {
+          body += ' • ${room.split('_')[0]}';
+        }
+        if (faculty.isNotEmpty) {
+          body += '\n$faculty';
         }
 
-        print('Diagnostic: Parsed class [${subject}] on [${dayName}] at [${startTimeStr}]');
-        print('Diagnostic: -> Class start tz.TZDateTime = ${targetDate}');
-        print('Diagnostic: -> Calculated reminder tz.TZDateTime = ${reminderTime}');
+        // Duplicate notification protection using deterministic ID
+        final notifId = Object.hash(
+          subject, 
+          startTimeStr, 
+          nowLocal.year, 
+          nowLocal.month, 
+          nowLocal.day
+        ).abs() % 2147483647;
+
+        print('Diagnostic: [ClassReminder] Reminder: $reminderTimeLocal');
+        print('Diagnostic: [ClassReminder] Scheduling notification ID: $notifId');
+
+        final reminderTimeTz = tz.TZDateTime.from(reminderTimeLocal, tz.local);
 
         try {
-          int notifId = idCounter++;
           await _notificationsPlugin.zonedSchedule(
             notifId,
-            subject,
-            '${type} • ${room}',
-            reminderTime,
+            'Class Reminder',
+            '$subject starts in 5 minutes\n$body',
+            reminderTimeTz,
             const NotificationDetails(
               android: AndroidNotificationDetails(
                 'class_reminders',
                 'Class Reminders',
-                channelDescription: 'Notifications for upcoming classes',
-                importance: Importance.high,
+                channelDescription: 'Notifications before a class starts.',
+                importance: Importance.max,
                 priority: Priority.high,
                 icon: '@drawable/ic_notification',
               ),
             ),
             androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
             uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-            matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
           );
-          print('Diagnostic: -> SUCCESS! Scheduled recurring reminder with notification ID: ${notifId}');
+          anyScheduled = true;
+          print('Diagnostic: [ClassReminder] Scheduled successfully');
         } catch (e) {
-          print('Diagnostic: -> FAILED to schedule reminder: ${e}');
+          print('Diagnostic: [ClassReminder] FAILED to schedule reminder: $e');
         }
       }
     }
+    
+    if (!anyScheduled) {
+      print('Diagnostic: [ClassReminder] No classes today or all classes passed');
+      print('Diagnostic: [ClassReminder] No reminders scheduled');
+    }
+    
     print('========== DIAGNOSTIC: END SCHEDULE CLASS REMINDERS ==========');
   }
 

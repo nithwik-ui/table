@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Timetable Monitor - SRU Timetable Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#bcc7de",
+                        "background": "#F6F8FB",
+                        "tertiary-fixed-dim": "#ddc39d",
+                        "secondary": "#505f76",
+                        "on-tertiary-fixed": "#271902",
+                        "on-error": "#ffffff",
+                        "surface-bright": "#fbf8fa",
+                        "primary-fixed": "#d8e3fb",
+                        "inverse-on-surface": "#f3f0f2",
+                        "on-primary-fixed": "#111c2d",
+                        "surface": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed": "#0b1c30",
+                        "secondary-fixed": "#d3e4fe",
+                        "secondary-container": "#d0e1fb",
+                        "on-surface-variant": "#45474c",
+                        "surface-tint": "#545f73",
+                        "on-primary-container": "#8590a6",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#1e1200",
+                        "primary-container": "#1e293b",
+                        "inverse-primary": "#bcc7de",
+                        "tertiary-container": "#35260c",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-container": "#a38c6a",
+                        "surface-variant": "#e4e2e3",
+                        "tertiary-fixed": "#fadfb8",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "surface-container": "#f0edef",
+                        "error-container": "#ffdad6",
+                        "on-secondary-container": "#54647a",
+                        "surface-container-highest": "#e4e2e3",
+                        "error": "#ba1a1a",
+                        "on-surface": "#1b1b1d",
+                        "on-background": "#1b1b1d",
+                        "on-primary-fixed-variant": "#3c475a",
+                        "outline": "#75777d",
+                        "primary": "#091426",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "inverse-surface": "#303032",
+                        "surface-dim": "#dcd9db",
+                        "surface-container-high": "#eae7e9",
+                        "outline-variant": "#E7EAF0",
+                        "on-tertiary-fixed-variant": "#564427",
+                        "surface-container-low": "#f5f3f4"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "14px",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "stack-md": "16px",
+                        "stack-lg": "24px",
+                        "stack-sm": "8px",
+                        "container-padding-mobile": "1rem",
+                        "gutter": "1.5rem",
+                        "container-padding-desktop": "24px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "body-sm": ["13px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased overflow-hidden">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col h-screen py-stack-lg px-stack-md bg-surface border-r border-outline-variant fixed h-full w-[250px] left-0 top-0 z-50">
+<div class="flex items-center gap-stack-sm mb-stack-lg px-unit">
+<img alt="SRU Timetable Logo" class="w-[38px] h-[38px] object-contain" data-alt="A modern, abstract geometric logo representing a fast, reliable academic timetable scheduling system. High contrast, professional academic blue and white tones. Minimalist vector style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAU8hUz3zzYWaTHbn09BOUViqBuqTqPBniZtpt5m4xaU7CzqAKg3tIqzmRsDkwg9wIsijNKUOhZrrE2vIgcSpln8teHeFlLo_g5tILZSI1xB47eBWf1dDfesG3TGqFeLC44PNfw6-rf7CnPv4sgfhlfsNl4VI6EDyL099vceq5khFmDdZQCFC_Xcz96Otc-CK7eWlz9wWSA6As4ZMMXlZcMphSPdK6DT2y5Bwawds1KsywKVtFMaoDcNht_gprs_myyio"/>
+<div>
+<h1 class="font-headline-sm text-[16px] leading-[24px] font-bold text-primary">SRU Timetable</h1>
+<p class="font-label-sm text-[11px] text-on-surface-variant">Admin Console</p>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto space-y-unit">
+<a class="flex items-center gap-stack-sm px-stack-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined font-label-md text-[18px]">dashboard</span>
+<span class="font-label-md text-[13px]">Dashboard</span>
+</a>
+<a class="flex items-center gap-stack-sm px-stack-sm py-2 rounded-lg bg-secondary-container text-on-secondary-container font-semibold cursor-pointer active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined font-label-md text-[18px]" style="font-variation-settings: 'FILL' 1;">calendar_today</span>
+<span class="font-label-md text-[13px]">Timetable</span>
+</a>
+<a class="flex items-center gap-stack-sm px-stack-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined font-label-md text-[18px]">bolt</span>
+<span class="font-label-md text-[13px]">Live Changes</span>
+</a>
+<a class="flex items-center gap-stack-sm px-stack-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined font-label-md text-[18px]">sync</span>
+<span class="font-label-md text-[13px]">Sync Monitor</span>
+</a>
+<a class="flex items-center gap-stack-sm px-stack-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined font-label-md text-[18px]">devices</span>
+<span class="font-label-md text-[13px]">Users/Devices</span>
+</a>
+<a class="flex items-center gap-stack-sm px-stack-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined font-label-md text-[18px]">notifications</span>
+<span class="font-label-md text-[13px]">Notifications</span>
+</a>
+<a class="flex items-center gap-stack-sm px-stack-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined font-label-md text-[18px]">campaign</span>
+<span class="font-label-md text-[13px]">Broadcast</span>
+</a>
+<a class="flex items-center gap-stack-sm px-stack-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined font-label-md text-[18px]">settings</span>
+<span class="font-label-md text-[13px]">Settings</span>
+</a>
+</div>
+<div class="mt-auto pt-stack-md border-t border-outline-variant space-y-unit">
+<div class="flex items-center justify-between px-stack-sm py-2 text-label-sm text-[11px] text-on-surface-variant">
+<span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-primary-container"></span> Backend Online</span>
+</div>
+<a class="flex items-center gap-stack-sm px-stack-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined font-label-md text-[18px]">help</span>
+<span class="font-label-md text-[13px]">Help Center</span>
+</a>
+</div>
+</nav>
+<!-- TopNavBar & Main Content Wrapper -->
+<div class="md:ml-[250px] flex flex-col h-screen">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center h-[64px] px-container-padding-desktop w-full bg-surface border-b border-outline-variant shadow-sm z-40 shrink-0">
+<div class="hidden">SRU Timetable</div> <!-- Hidden Brand -->
+<div class="hidden"></div> <!-- Hidden Search -->
+<div class="flex-1"></div> <!-- Spacer -->
+<div class="flex items-center gap-stack-md">
+<button class="text-on-surface-variant hover:text-primary transition-all duration-200 cursor-pointer">
+<span class="material-symbols-outlined font-headline-md text-headline-md">notifications_active</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-all duration-200 cursor-pointer">
+<span class="material-symbols-outlined font-headline-md text-headline-md">settings</span>
+</button>
+<div class="flex items-center gap-stack-sm border-l border-outline-variant pl-stack-md ml-stack-sm">
+<span class="font-label-md text-[13px] text-primary">Admin User</span>
+<img alt="User Avatar" class="w-8 h-8 rounded-full border border-outline-variant object-cover" data-alt="A professional headshot of an academic administrator in a modern office setting. Sharp focus, natural bright lighting, high quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHLO-yfnZMwjkGy1Pp54apLAuX1LpXDc7D1ofUYcTiynG7Y_F8ab4t06druBfzMCoqDe5GXlV2cMvqhNCfRv_sHE0ubgqCP46o1Mo6BLbVHDrojJLHfzVsEUuN9qpSHVGI2zcpvyQjjqjrDhW9AqBytEocqKueBgRW-92dPbr4AzNsbBfZg4niGhNiroLNU8ZKj03iItEexTu7aYkqIxMJ6I9E5ejEfgcsuXCi7YkAAzWJURILfBdHfg"/>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 overflow-y-auto p-container-padding-desktop bg-background space-y-stack-lg">
+<!-- Page Header -->
+<div class="flex flex-col gap-unit mb-[24px]">
+<h2 class="text-[24px] font-[700] text-primary">Timetable Monitor</h2>
+<p class="text-[14px] text-on-surface-variant">Monitor and manage the current academic timetable records.</p>
+</div>
+<!-- Filter Bar -->
+<div class="bg-surface rounded-[14px] border border-outline-variant p-[16px] shadow-sm flex flex-wrap gap-[10px] items-end">
+<div class="flex flex-col gap-unit flex-1 min-w-[150px]">
+<label class="text-[11px] font-[600] text-on-surface-variant uppercase tracking-wider">Degree</label>
+<select class="h-[40px] w-full rounded-[8px] border-outline-variant bg-surface text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container shadow-sm text-[13px]">
+<option>B.Tech</option>
+<option>M.Tech</option>
+<option>BCA</option>
+</select>
+</div>
+<div class="flex flex-col gap-unit flex-1 min-w-[150px]">
+<label class="text-[11px] font-[600] text-on-surface-variant uppercase tracking-wider">Year</label>
+<select class="h-[40px] w-full rounded-[8px] border-outline-variant bg-surface text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container shadow-sm text-[13px]">
+<option>2nd Year</option>
+<option>3rd Year</option>
+<option>4th Year</option>
+</select>
+</div>
+<div class="flex flex-col gap-unit flex-1 min-w-[150px]">
+<label class="text-[11px] font-[600] text-on-surface-variant uppercase tracking-wider">Batch</label>
+<select class="h-[40px] w-full rounded-[8px] border-outline-variant bg-surface text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container shadow-sm text-[13px]">
+<option>CSE-A</option>
+<option>CSE-B</option>
+<option>IT-A</option>
+</select>
+</div>
+<div class="flex flex-col gap-unit flex-1 min-w-[150px]">
+<label class="text-[11px] font-[600] text-on-surface-variant uppercase tracking-wider">Date</label>
+<input class="h-[40px] w-full rounded-[8px] border-outline-variant bg-surface text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container shadow-sm text-[13px]" type="date" value="2023-10-24"/>
+</div>
+<button class="h-[40px] px-stack-md bg-primary-container text-on-primary rounded-[8px] text-[13px] font-[500] hover:opacity-90 transition-opacity">Apply Filters</button>
+</div>
+<!-- Bento Grid Layout for Data -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-stack-lg">
+<!-- Main Timetable Table -->
+<div class="lg:col-span-2 bg-surface rounded-[14px] border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+<div class="p-stack-md border-b border-outline-variant flex justify-between items-center bg-surface">
+<h3 class="font-headline-sm text-[18px] text-primary">Master Schedule</h3>
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center gap-unit">
+<span class="material-symbols-outlined font-label-md text-[18px]">download</span>
+<span class="font-label-sm text-[13px]">Export</span>
+</button>
+</div>
+<div class="overflow-x-auto flex-1">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface border-b border-outline-variant h-[44px]">
+<th class="px-stack-md text-[11px] font-[600] text-on-surface-variant uppercase tracking-wider">Day &amp; Time</th>
+<th class="px-stack-md text-[11px] font-[600] text-on-surface-variant uppercase tracking-wider">Subject &amp; Faculty</th>
+<th class="px-stack-md text-[11px] font-[600] text-on-surface-variant uppercase tracking-wider">Room</th>
+<th class="px-stack-md text-[11px] font-[600] text-on-surface-variant uppercase tracking-wider">Status</th>
+<th class="px-stack-md text-[11px] font-[600] text-on-surface-variant uppercase tracking-wider text-right">Last Synced</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant text-[13px]">
+<tr class="hover:bg-surface-container-lowest transition-colors h-[58px] group">
+<td class="py-3 px-stack-md">
+<div class="font-[500] text-on-surface text-[13px]">Tuesday</div>
+<div class="text-on-surface-variant text-[12px]">10:00 AM</div>
+</td>
+<td class="py-3 px-stack-md">
+<div class="font-[500] text-primary text-[13px]">Algorithms</div>
+<div class="text-on-surface-variant text-[12px]">Srinivas Komakula</div>
+</td>
+<td class="py-3 px-stack-md text-on-surface-variant text-[13px]">Room 301</td>
+<td class="py-3 px-stack-md">
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-secondary-container text-on-secondary-container text-[11px] font-[600] gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+                                            Synced
+                                        </span>
+</td>
+<td class="py-3 px-stack-md text-right text-on-surface-variant text-[13px]">10:32 PM</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors h-[58px] group">
+<td class="py-3 px-stack-md">
+<div class="font-[500] text-on-surface text-[13px]">Tuesday</div>
+<div class="text-on-surface-variant text-[12px]">11:00 AM</div>
+</td>
+<td class="py-3 px-stack-md">
+<div class="font-[500] text-primary text-[13px]">Database Systems</div>
+<div class="text-on-surface-variant text-[12px]">Anusha Vajjakeshavulu</div>
+</td>
+<td class="py-3 px-stack-md text-on-surface-variant text-[13px]">Room 402</td>
+<td class="py-3 px-stack-md">
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-secondary-container text-on-secondary-container text-[11px] font-[600] gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+                                            Synced
+                                        </span>
+</td>
+<td class="py-3 px-stack-md text-right text-on-surface-variant text-[13px]">10:32 PM</td>
+</tr>
+<!-- Dummy Rows for density -->
+<tr class="hover:bg-surface-container-lowest transition-colors h-[58px] group">
+<td class="py-3 px-stack-md">
+<div class="font-[500] text-on-surface text-[13px]">Tuesday</div>
+<div class="text-on-surface-variant text-[12px]">12:00 PM</div>
+</td>
+<td class="py-3 px-stack-md">
+<div class="font-[500] text-primary text-[13px]">Software Engineering</div>
+<div class="text-on-surface-variant text-[12px]">Dr. K. Rao</div>
+</td>
+<td class="py-3 px-stack-md text-on-surface-variant text-[13px]">Room 105</td>
+<td class="py-3 px-stack-md">
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-surface-container text-on-surface-variant text-[11px] font-[600] gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                                            Pending
+                                        </span>
+</td>
+<td class="py-3 px-stack-md text-right text-on-surface-variant text-[13px]">--</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Batch Overview Section (Side Panel) -->
+<div class="flex flex-col gap-stack-lg">
+<!-- Summary Card -->
+<div class="bg-surface rounded-[14px] border border-outline-variant p-stack-md shadow-sm relative overflow-hidden">
+<!-- Subtle background decoration -->
+<div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-primary-fixed-dim opacity-20 pointer-events-none"></div>
+<h3 class="font-headline-sm text-[18px] text-primary mb-stack-md relative z-10">Batch Overview</h3>
+<div class="space-y-stack-sm relative z-10">
+<div class="flex justify-between items-center py-2 border-b border-outline-variant">
+<span class="text-[13px] text-on-surface-variant">Target</span>
+<span class="text-[13px] font-[500] text-on-surface">B.Tech / 2nd / CSE-A</span>
+</div>
+<div class="flex justify-between items-center py-2 border-b border-outline-variant">
+<span class="text-[13px] text-on-surface-variant">Active Devices</span>
+<span class="text-[13px] font-[500] text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-primary-container">important_devices</span>
+                                    142
+                                </span>
+</div>
+<div class="flex justify-between items-center py-2 border-b border-outline-variant">
+<span class="text-[13px] text-on-surface-variant">Last Global Sync</span>
+<span class="text-[13px] font-[500] text-on-surface">10:32 PM</span>
+</div>
+<div class="flex justify-between items-center py-2">
+<span class="text-[13px] text-on-surface-variant">Network Status</span>
+<span class="inline-flex items-center px-2 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed text-[11px] font-[600] gap-1 border border-secondary-container">
+                                    Healthy
+                                </span>
+</div>
+</div>
+</div>
+<!-- Quick Actions -->
+<div class="bg-surface rounded-[14px] border border-outline-variant p-stack-md shadow-sm">
+<h4 class="text-[11px] font-[600] text-primary mb-[12px] uppercase tracking-wider">Quick Actions</h4>
+<div class="flex flex-col gap-[8px]">
+<button class="w-full h-[40px] flex items-center justify-center gap-[6px] bg-surface border border-outline-variant text-on-surface rounded-[8px] hover:bg-surface-container-low transition-colors text-[13px] font-[500]">
+<span class="material-symbols-outlined text-[18px]">sync</span> Force Sync All
+                            </button>
+<button class="w-full h-[40px] flex items-center justify-center gap-[6px] bg-surface border border-outline-variant text-on-surface rounded-[8px] hover:bg-surface-container-low transition-colors text-[13px] font-[500]">
+<span class="material-symbols-outlined text-[18px]">edit_calendar</span> Edit Override
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

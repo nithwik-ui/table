@@ -27,9 +27,23 @@ class _ChangesTabState extends State<ChangesTab> {
 
   void _loadLocalData() {
     final cached = StorageService.getChangesCache();
+    final now = DateTime.now();
+    final filtered = cached.where((change) {
+      try {
+        final dt = DateTime.parse(change['detected_at'] as String).toLocal();
+        return now.difference(dt).inDays <= 7;
+      } catch (_) {
+        return true;
+      }
+    }).toList();
+    
+    if (filtered.length != cached.length) {
+      StorageService.saveChangesCache(filtered);
+    }
+    
     setState(() {
-      _changes = cached;
-      if (cached.isNotEmpty) {
+      _changes = filtered;
+      if (filtered.isNotEmpty) {
         _isLoading = false;
       }
     });
@@ -118,6 +132,56 @@ class _ChangesTabState extends State<ChangesTab> {
     } catch (_) {
       return '';
     }
+  }
+
+  Map<String, String>? _getTimetableContext(dynamic change) {
+    String subject = 'Class';
+    String day = '';
+    String time = '';
+
+    final fieldName = change['field_name'] as String? ?? '';
+    final fieldParts = fieldName.split(':');
+    if (fieldParts.length > 1) {
+      final subjectPart = fieldParts.skip(1).join(':');
+      // Check if it has our new delimiter format: Subject|Day|Time
+      final contextParts = subjectPart.split('|');
+      subject = contextParts[0];
+      if (contextParts.length == 3) {
+        day = contextParts[1];
+        time = contextParts[2];
+      }
+    }
+
+    if (day.isNotEmpty && time.isNotEmpty) {
+      return {'day': day, 'time': time, 'subject': subject};
+    }
+    
+    // Fallback for older change records where day/time was not recorded
+    final type = change['change_type'] as String? ?? '';
+    final newVal = change['new_value'] as String? ?? '';
+
+    final timetable = StorageService.getTimetableCache();
+    
+    for (final cls in timetable) {
+      bool isMatch = cls['subject'] == subject;
+      if (isMatch && type == 'FACULTY_CHANGED' && newVal.isNotEmpty) {
+        isMatch = cls['faculty'] == newVal;
+      } else if (isMatch && type == 'ROOM_CHANGED' && newVal.isNotEmpty) {
+        isMatch = cls['room'] == newVal;
+      }
+
+      if (isMatch) {
+        final startTime = cls['start_time'] as String;
+        final endTime = cls['end_time'] as String? ?? '';
+        return {
+          'day': cls['day'] as String,
+          'time': endTime.isNotEmpty ? '$startTime - $endTime' : startTime,
+          'subject': subject,
+        };
+      }
+    }
+    
+    return {'day': day, 'time': time, 'subject': subject};
   }
 
   @override
@@ -311,7 +375,64 @@ class _ChangesTabState extends State<ChangesTab> {
                                           'Added: $newVal',
                                           style: AppConstants.getBodyMedium(color: AppConstants.success).copyWith(fontWeight: FontWeight.w500),
                                         ),
-                                      ] else ...[
+                                      ] else if (type == 'FACULTY_CHANGED') ...[
+                                          // Enhanced Faculty Change UI
+                                          Builder(
+                                            builder: (context) {
+                                              final contextData = _getTimetableContext(change) ?? {};
+                                              final subject = contextData['subject'] ?? 'Class';
+                                              final day = contextData['day'] ?? '';
+                                              final time = contextData['time'] ?? '';
+                                              
+                                              return Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    subject,
+                                                    style: AppConstants.getHeadline().copyWith(fontSize: 16),
+                                                  ),
+                                                  if (day.isNotEmpty || time.isNotEmpty) ...[
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      '${day.isNotEmpty ? day : ''}${day.isNotEmpty && time.isNotEmpty ? ' • ' : ''}${time.isNotEmpty ? time : ''}',
+                                                      style: AppConstants.getBodyMedium(color: AppConstants.textSecondary).copyWith(fontWeight: FontWeight.w500),
+                                                    ),
+                                                  ],
+                                                  const SizedBox(height: 10),
+                                                  Container(
+                                                    width: double.infinity,
+                                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                                                    decoration: BoxDecoration(
+                                                      color: AppConstants.background,
+                                                      borderRadius: BorderRadius.circular(AppConstants.radiusButton),
+                                                    ),
+                                                    child: Column(
+                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                      children: [
+                                                        Text(
+                                                          oldVal,
+                                                          style: AppConstants.getBodyMedium(color: AppConstants.textSecondary).copyWith(
+                                                            decoration: TextDecoration.lineThrough,
+                                                          ),
+                                                          textAlign: TextAlign.center,
+                                                        ),
+                                                        const Padding(
+                                                          padding: EdgeInsets.symmetric(vertical: 4),
+                                                          child: Icon(Icons.arrow_downward, size: 16, color: AppConstants.textSecondary),
+                                                        ),
+                                                        Text(
+                                                          newVal,
+                                                          style: AppConstants.getHeadline(color: AppConstants.primary).copyWith(fontSize: 14),
+                                                          textAlign: TextAlign.center,
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          ),
+                                        ] else ...[
                                         // Mod
                                         // We don't have entry details linked directly, but we can print what changed:
                                         Text(

@@ -5,8 +5,10 @@ import '../../core/storage.dart';
 import '../../core/utils.dart';
 import 'ad_banner.dart';
 import '../../core/api.dart';
+import '../../core/notifications.dart';
 import '../notifications/notifications_screen.dart';
 import 'dashboard_screen.dart';
+import 'widgets/live_class_progress.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -53,9 +55,9 @@ class _HomeTabState extends State<HomeTab> {
     final name = StorageService.getUserName();
     final selection = StorageService.getSelection();
 
-    // Greeting time calculation (India timezone context)
-    final nowIST = DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30));
-    final hour = nowIST.hour;
+    // Greeting time calculation (local timezone context)
+    final nowLocal = DateTime.now();
+    final hour = nowLocal.hour;
     String greet;
     if (hour < 12) {
       greet = 'Good morning';
@@ -102,9 +104,9 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   void _calculateSchedules(List<dynamic> timetable) {
-    // Current IST Time
-    final nowIST = DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30));
-    final weekdayIndex = nowIST.weekday;
+    // Current Local Time
+    final nowLocal = DateTime.now();
+    final weekdayIndex = nowLocal.weekday;
     
     // Mappings: Flutter weekday (1 = Mon, 7 = Sun) -> DB Day values
     final weekdays = [
@@ -118,7 +120,7 @@ class _HomeTabState extends State<HomeTab> {
       'Sunday' // 7
     ];
     final currentDay = weekdays[weekdayIndex];
-    final currentMinutes = nowIST.hour * 60 + nowIST.minute;
+    final currentMinutes = nowLocal.hour * 60 + nowLocal.minute;
 
     // Filter today's classes
     final today = timetable.where((e) => e['day'] == currentDay).toList();
@@ -177,6 +179,9 @@ class _HomeTabState extends State<HomeTab> {
       final list = await ApiService.fetchTimetable(batchId);
       await StorageService.saveTimetableCache(list);
       await StorageService.saveLastSyncedAt(DateTime.now());
+      
+      // FIX: Ensure alarms are explicitly rescheduled on manual refresh
+      await NotificationService.scheduleClassReminders(list);
       
       setState(() {
         _isOffline = false;
@@ -376,7 +381,13 @@ class _HomeTabState extends State<HomeTab> {
                                   '${TimeUtils.format12Hour(_upNextClass!['start_time'])} - ${TimeUtils.format12Hour(_upNextClass!['end_time'])}',
                                   style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
                                 ),
-                                const SizedBox(width: 16),
+                                const SizedBox(width: 12),
+                                LiveClassProgressIndicator(
+                                  startTime: _upNextClass!['start_time'] as String,
+                                  endTime: _upNextClass!['end_time'] as String,
+                                  isToday: true,
+                                ),
+                                const SizedBox(width: 12),
                                 const Icon(Icons.place_outlined, size: 16, color: AppConstants.textSecondary),
                                 const SizedBox(width: 6),
                                 Text(
@@ -492,9 +503,10 @@ class _HomeTabState extends State<HomeTab> {
                                             style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
                                           ),
                                           const SizedBox(width: 12),
-                                          Text(
-                                            '•',
-                                            style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
+                                          LiveClassProgressIndicator(
+                                            startTime: c['start_time'] as String,
+                                            endTime: c['end_time'] as String,
+                                            isToday: true,
                                           ),
                                           const SizedBox(width: 12),
                                           Text(

@@ -9,11 +9,32 @@ class StorageService {
     await Hive.initFlutter();
     _prefsBox = await Hive.openBox('sru_timetable_prefs');
     _cacheBox = await Hive.openBox('sru_timetable_cache');
+
+    // Migration: Remove old format FACULTY_CHANGED records safely
+    final cachedChanges = getChangesCache();
+    if (cachedChanges.isNotEmpty) {
+      final validChanges = cachedChanges.where((change) {
+        if (change['change_type'] == 'FACULTY_CHANGED') {
+          final oldVal = change['old_value'] as String? ?? '';
+          if (oldVal.length > 40 || oldVal.contains('will be taken by') || oldVal.contains('->')) {
+            return false;
+          }
+        }
+        return true;
+      }).toList();
+      
+      if (validChanges.length != cachedChanges.length) {
+        await saveChangesCache(validChanges);
+      }
+    }
   }
 
-  // PROFILE / REGISTRATION INFO
   static Future<void> saveUserName(String? name) async {
-    await _prefsBox?.put('user_name', name);
+    if (name == null || name.isEmpty) {
+      await _prefsBox?.delete('user_name');
+    } else {
+      await _prefsBox?.put('user_name', name);
+    }
   }
 
   static String? getUserName() {

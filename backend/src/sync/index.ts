@@ -56,6 +56,21 @@ export async function runSync() {
   console.log('Initializing session with SRU Portal...');
   await client.initSession();
 
+  console.log('\nCleaning up old timetable changes (older than 7 days)...');
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  
+  const { error: cleanupErr } = await supabase
+    .from('timetable_changes')
+    .delete()
+    .lt('detected_at', sevenDaysAgo.toISOString());
+    
+  if (cleanupErr) {
+    console.error(`Failed to clean up old changes: ${cleanupErr.message}`);
+  } else {
+    console.log('Successfully cleaned up old changes.');
+  }
+
   // --- Step 1: Degrees Discovery ---
   console.log('\nDiscovering degrees...');
   const degrees = await client.getDegrees();

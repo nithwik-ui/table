@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SRU Timetable - Broadcast Notification</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-fixed-dim": "#bcc7de",
+                      "background": "#fbf8fa",
+                      "tertiary-fixed-dim": "#ddc39d",
+                      "secondary": "#505f76",
+                      "on-tertiary-fixed": "#271902",
+                      "on-error": "#ffffff",
+                      "surface-bright": "#fbf8fa",
+                      "primary-fixed": "#d8e3fb",
+                      "inverse-on-surface": "#f3f0f2",
+                      "on-primary-fixed": "#111c2d",
+                      "surface": "#fbf8fa",
+                      "on-primary": "#ffffff",
+                      "on-secondary-fixed": "#0b1c30",
+                      "secondary-fixed": "#d3e4fe",
+                      "secondary-container": "#d0e1fb",
+                      "on-surface-variant": "#45474c",
+                      "surface-tint": "#545f73",
+                      "on-primary-container": "#8590a6",
+                      "surface-container-lowest": "#ffffff",
+                      "tertiary": "#1e1200",
+                      "primary-container": "#1e293b",
+                      "inverse-primary": "#bcc7de",
+                      "tertiary-container": "#35260c",
+                      "on-secondary": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "on-tertiary-container": "#a38c6a",
+                      "surface-variant": "#e4e2e3",
+                      "tertiary-fixed": "#fadfb8",
+                      "on-secondary-fixed-variant": "#38485d",
+                      "surface-container": "#f0edef",
+                      "error-container": "#ffdad6",
+                      "on-secondary-container": "#54647a",
+                      "surface-container-highest": "#e4e2e3",
+                      "error": "#ba1a1a",
+                      "on-surface": "#1b1b1d",
+                      "on-background": "#1b1b1d",
+                      "on-primary-fixed-variant": "#3c475a",
+                      "outline": "#75777d",
+                      "primary": "#091426",
+                      "secondary-fixed-dim": "#b7c8e1",
+                      "inverse-surface": "#303032",
+                      "surface-dim": "#dcd9db",
+                      "surface-container-high": "#eae7e9",
+                      "outline-variant": "#c5c6cd",
+                      "on-tertiary-fixed-variant": "#564427",
+                      "surface-container-low": "#f5f3f4"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "stack-md": "1rem",
+                      "stack-lg": "1.5rem",
+                      "stack-sm": "0.5rem",
+                      "container-padding-mobile": "1rem",
+                      "gutter": "1.5rem",
+                      "container-padding-desktop": "2rem"
+              },
+              "fontFamily": {
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "headline-sm": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.01em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-sm": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+</head>
+<body class="bg-[#F6F8FB] text-on-background min-h-screen flex font-body-md overflow-x-hidden relative">
+<!-- SideNavBar -->
+<aside class="fixed h-full w-[250px] left-0 top-0 bg-surface dark:bg-surface-container-lowest border-r border-outline-variant dark:border-on-surface-variant flex flex-col py-stack-lg px-stack-md z-20">
+<div class="mb-stack-lg flex items-center gap-stack-sm cursor-pointer transition-transform active:scale-95">
+<div class="w-10 h-10 rounded-lg overflow-hidden bg-primary-container flex items-center justify-center shrink-0 text-on-primary-container">
+<span class="material-symbols-outlined font-headline-sm" style="font-variation-settings: 'FILL' 1;">admin_panel_settings</span>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed">SRU Timetable</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Admin Console</p>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-unit">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors font-label-md text-label-md cursor-pointer active:scale-95 transition-transform" data-icon="dashboard" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors font-label-md text-label-md cursor-pointer active:scale-95 transition-transform" data-icon="calendar_today" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+                Timetable
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors font-label-md text-label-md cursor-pointer active:scale-95 transition-transform" data-icon="bolt" href="#">
+<span class="material-symbols-outlined">bolt</span>
+                Live Changes
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors font-label-md text-label-md cursor-pointer active:scale-95 transition-transform" data-icon="sync" href="#">
+<span class="material-symbols-outlined">sync</span>
+                Sync Monitor
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors font-label-md text-label-md cursor-pointer active:scale-95 transition-transform" data-icon="devices" href="#">
+<span class="material-symbols-outlined">devices</span>
+                Users/Devices
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors font-label-md text-label-md cursor-pointer active:scale-95 transition-transform" data-icon="notifications" href="#">
+<span class="material-symbols-outlined">notifications</span>
+                Notifications
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary font-semibold font-label-md text-label-md cursor-pointer active:scale-95 transition-transform" data-icon="campaign" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">campaign</span>
+                Broadcast
+            </a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors font-label-md text-label-md cursor-pointer active:scale-95 transition-transform" data-icon="settings" href="#">
+<span class="material-symbols-outlined">settings</span>
+                Settings
+            </a>
+</nav>
+<div class="mt-auto flex flex-col gap-unit">
+<div class="flex items-center gap-2 px-3 py-2 mb-2 bg-surface-container-low rounded-lg text-primary text-[12px] font-semibold">
+<span class="w-2 h-2 rounded-full bg-[#10B981]"></span> Backend Online
+            </div>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors font-label-md text-label-md cursor-pointer active:scale-95 transition-transform" data-icon="help" href="#">
+<span class="material-symbols-outlined">help</span>
+                Help Center
+            </a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="flex-1 ml-[250px] flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center h-16 px-container-padding-desktop w-full bg-surface dark:bg-surface-container-lowest border-b border-outline-variant dark:border-on-surface-variant shadow-sm z-10 sticky top-0">
+<div class="flex items-center">
+<h2 class="font-headline-md text-headline-md text-primary dark:text-primary-fixed hidden">SRU Timetable</h2>
+</div>
+<div class="flex items-center gap-stack-md">
+<button aria-label="Notifications" class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors" data-icon="notifications_active">
+<span class="material-symbols-outlined">notifications_active</span>
+</button>
+<button aria-label="Settings" class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors" data-icon="settings">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="flex items-center gap-3 pl-3 border-l border-outline-variant">
+<div class="text-right hidden sm:block">
+<p class="font-label-md text-label-md text-primary font-medium">Admin User</p>
+</div>
+<div class="w-8 h-8 rounded-full bg-primary-fixed-dim text-on-primary-fixed flex items-center justify-center font-bold text-sm cursor-pointer hover:ring-2 ring-primary transition-all">
+                         AU
+                     </div>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<main class="flex-1 p-container-padding-desktop flex flex-col gap-stack-lg max-w-7xl mx-auto w-full relative z-0">
+<!-- Page Header -->
+<div class="flex flex-col gap-2">
+<h1 class="font-headline-lg text-headline-lg text-primary">Broadcast Notification</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Send a custom notification to users who have installed the SRU Timetable app.</p>
+</div>
+<!-- Bento Layout -->
+<div class="flex flex-col lg:flex-row gap-6">
+<!-- Composer Section (Left Column) -->
+<div class="lg:w-[55%] w-full flex flex-col gap-stack-md">
+<div class="bg-surface rounded-xl border border-outline-variant p-6 shadow-sm flex flex-col gap-stack-md">
+<!-- Inputs -->
+<div class="flex flex-col gap-2">
+<label class="text-[12px] font-semibold text-on-surface" for="notif-title">Notification Title</label>
+<input class="h-[44px] px-3 rounded-lg border border-outline-variant bg-surface text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-shadow" id="notif-title" placeholder="SRU Timetable" type="text" value="SRU Timetable"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-[12px] font-semibold text-on-surface flex justify-between" for="notif-message">
+<span>Notification Message</span>
+<span class="text-on-surface-variant text-[12px] font-normal"><span id="char-count">0</span>/250</span>
+</label>
+<textarea class="min-h-[130px] p-3 rounded-lg border border-outline-variant bg-surface text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition-shadow resize-none" id="notif-message" placeholder="Enter your message here..." rows="4"></textarea>
+</div>
+<!-- Target Audience -->
+<div class="flex flex-col gap-2 mt-2">
+<label class="text-[12px] font-semibold text-on-surface mb-1">Target Audience</label>
+<div class="grid grid-cols-2 gap-3">
+<label class="relative flex cursor-pointer rounded-lg border bg-surface-container-low p-4 shadow-sm focus:outline-none border-primary-container ring-1 ring-primary-container">
+<input checked="" class="sr-only" name="audience" type="radio" value="all"/>
+<span class="flex flex-1">
+<span class="flex flex-col">
+<span class="block font-label-md text-label-md text-primary font-medium">All Users</span>
+<span class="mt-1 flex items-center font-label-sm text-label-sm text-on-surface-variant">sru_all_users</span>
+</span>
+</span>
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</label>
+<label class="relative flex cursor-not-allowed rounded-lg border border-outline-variant bg-surface p-4 shadow-sm focus:outline-none opacity-60">
+<input class="sr-only" disabled="" name="audience" type="radio" value="specific"/>
+<span class="flex flex-1">
+<span class="flex flex-col">
+<span class="block font-label-md text-label-md text-on-surface-variant font-medium">Specific Groups</span>
+<span class="mt-1 flex items-center font-label-sm text-label-sm text-on-surface-variant">Degree, Year, Batch</span>
+</span>
+</span>
+</label>
+</div>
+</div>
+<!-- Action -->
+<button class="mt-4 h-[44px] min-w-[160px] w-full bg-primary-container text-on-primary rounded-lg font-label-md text-label-md font-medium hover:bg-primary transition-colors flex items-center justify-center gap-2" id="btn-send">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">send</span>
+                            SEND TO ALL USERS
+                        </button>
+</div>
+</div>
+<!-- Live Preview (Right Column) -->
+<div class="lg:w-[45%] w-full">
+<div class="bg-surface rounded-xl border border-outline-variant p-6 shadow-sm h-full flex flex-col">
+<h3 class="font-headline-sm text-headline-sm text-primary mb-stack-md flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant">preview</span> Live Preview
+                        </h3>
+<div class="flex-1 bg-surface-container-high rounded-xl flex items-center justify-center p-stack-lg border border-outline-variant overflow-hidden relative min-h-[500px]">
+<!-- Faux Phone Background -->
+<div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: url('data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23091426\' fill-opacity=\'1\' fill-rule=\'evenodd\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'3\'/%3E%3Ccircle cx=\'13\' cy=\'13\' r=\'3\'/%3E%3C/g%3E%3C/svg%3E');"></div>
+<!-- Android Lockscreen Mock -->
+<div class="w-[390px] h-[780px] bg-[#000000] rounded-[32px] p-3 shadow-2xl relative border-[6px] border-[#303032] flex flex-col transform scale-75 xl:scale-90 origin-top">
+<!-- Top Bar -->
+<div class="flex justify-between items-center text-white px-3 py-1 mb-16">
+<span class="text-[13px] font-medium opacity-80">10:00</span>
+<div class="flex gap-1.5 opacity-80">
+<span class="material-symbols-outlined text-[14px]">signal_cellular_4_bar</span>
+<span class="material-symbols-outlined text-[14px]">wifi</span>
+<span class="material-symbols-outlined text-[14px]">battery_full</span>
+</div>
+</div>
+<!-- Time -->
+<div class="text-center text-white mb-8">
+<h4 class="text-6xl font-light tracking-tight">10:00</h4>
+<p class="text-base opacity-80 mt-2">Mon, Aug 29</p>
+</div>
+<!-- Notification Card -->
+<div class="w-[350px] mx-auto bg-[#1C1C1E]/90 backdrop-blur-md rounded-[16px] p-4 shadow-lg text-white border border-[#ffffff]/10">
+<div class="flex items-center gap-2 mb-2">
+<img alt="Logo" class="w-[32px] h-[32px] object-contain rounded-md bg-white p-0.5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9EKlQ-_gs5zP0O0hVDj8ejhgVyozUtmYglPtIeWGHxjhy0Sw13boRv1LjYbIylGIfyeqXDCIwCI0Cbs29VVPpYX0wuWdX2_w4jdpT3XVZXR_oFDUjvdVmGkzDW1rsHCpd4bfmEJ2ze7ZpBuq4at0NLEoqZQ2yiMilsUWz8y5y6vCyFLcZEV6zET-GysE7AxPk-qHwx-HVzZ0StIkJGjOXBlEG3HvGn8Hax6a23eD_Nw9Nj1NjmJIqkAbukqVUd_Igauk"/>
+<span class="text-[12px] font-medium opacity-80">SRU Timetable</span>
+<span class="text-[12px] opacity-60 ml-auto flex items-center gap-1">now <span class="material-symbols-outlined text-[14px]">expand_more</span></span>
+</div>
+<h5 class="font-medium text-sm mb-1 line-clamp-1" id="preview-title">SRU Timetable</h5>
+<p class="text-[13px] opacity-80 line-clamp-2 leading-tight" id="preview-message">Enter your message here...</p>
+</div>
+<!-- Home Indicator -->
+<div class="w-1/3 h-1 bg-white/40 rounded-full mx-auto mt-auto mb-2"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Broadcast History -->
+<div class="bg-surface rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+<div class="p-stack-md border-b border-outline-variant flex justify-between items-center bg-surface-bright">
+<h3 class="font-headline-sm text-headline-sm text-primary">Broadcast History</h3>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="h-9 pl-9 pr-3 rounded-lg border border-outline-variant bg-surface text-sm focus:outline-none focus:border-primary-container w-64" placeholder="Search history..." type="text"/>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low font-label-sm text-label-sm text-on-surface-variant border-b border-outline-variant">
+<th class="py-3 px-stack-md font-semibold">Date</th>
+<th class="py-3 px-stack-md font-semibold">Title</th>
+<th class="py-3 px-stack-md font-semibold">Message</th>
+<th class="py-3 px-stack-md font-semibold">Target</th>
+<th class="py-3 px-stack-md font-semibold text-right">Status</th>
+</tr>
+</thead>
+<tbody class="font-body-sm text-body-sm text-on-surface divide-y divide-outline-variant/50">
+<!-- Mock Row 1 -->
+<tr class="hover:bg-surface-container-lowest transition-colors h-14">
+<td class="py-3 px-stack-md whitespace-nowrap text-on-surface-variant">29 Aug 2026</td>
+<td class="py-3 px-stack-md font-medium">New Update Available 🚀</td>
+<td class="py-3 px-stack-md truncate max-w-xs text-on-surface-variant">A new update is available in the app store. Please update to get the latest features.</td>
+<td class="py-3 px-stack-md">
+<span class="inline-flex items-center gap-1.5 py-1 px-2 rounded-md bg-surface-container text-xs font-medium">
+<span class="material-symbols-outlined text-[14px]">groups</span> All Users
+                                    </span>
+</td>
+<td class="py-3 px-stack-md text-right">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#10B981]/10 text-[#059669]">
+                                        Sent
+                                    </span>
+</td>
+</tr>
+<!-- Mock Row 2 -->
+<tr class="hover:bg-surface-container-lowest transition-colors h-14">
+<td class="py-3 px-stack-md whitespace-nowrap text-on-surface-variant">28 Aug 2026</td>
+<td class="py-3 px-stack-md font-medium">Server Maintenance</td>
+<td class="py-3 px-stack-md truncate max-w-xs text-on-surface-variant">Timetable sync will be down for 10 minutes tonight at 2AM for scheduled maintenance.</td>
+<td class="py-3 px-stack-md">
+<span class="inline-flex items-center gap-1.5 py-1 px-2 rounded-md bg-surface-container text-xs font-medium">
+<span class="material-symbols-outlined text-[14px]">groups</span> All Users
+                                    </span>
+</td>
+<td class="py-3 px-stack-md text-right">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#10B981]/10 text-[#059669]">
+                                        Sent
+                                    </span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+</div>
+<!-- Confirmation Modal -->
+<div class="fixed inset-0 bg-primary/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4" id="confirmation-modal">
+<div class="bg-surface rounded-xl shadow-xl border border-outline-variant max-w-md w-full overflow-hidden flex flex-col">
+<div class="p-stack-lg border-b border-outline-variant flex items-start gap-4 bg-surface-bright">
+<div class="w-12 h-12 rounded-full bg-error-container text-on-error-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined font-headline-md">warning</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-primary mb-1">Send notification?</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">You are about to send this notification to: <strong>ALL REGISTERED APP USERS</strong></p>
+</div>
+</div>
+<div class="p-stack-lg flex flex-col gap-stack-sm bg-surface-container-low border-b border-outline-variant">
+<div class="flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Title</span>
+<p class="font-body-md text-body-md text-primary font-medium" id="modal-title">SRU Timetable</p>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Message</span>
+<p class="font-body-md text-body-md text-on-surface" id="modal-message">-</p>
+</div>
+</div>
+<div class="p-stack-md bg-surface flex justify-end gap-3">
+<button class="px-4 h-10 rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container transition-colors border border-outline-variant" id="btn-cancel">
+                Cancel
+            </button>
+<button class="px-4 h-10 rounded-lg font-label-md text-label-md text-on-primary bg-primary hover:bg-primary/90 transition-colors flex items-center gap-2" id="btn-confirm">
+<span class="material-symbols-outlined text-[18px]">send</span> Confirm Send
+            </button>
+</div>
+</div>
+</div>
+<!-- Success Toast -->
+<div class="fixed bottom-container-padding-desktop right-container-padding-desktop z-50 flex items-center gap-3 bg-inverse-surface text-inverse-on-surface px-4 py-3 rounded-lg shadow-lg border border-outline/20 translate-y-24 opacity-0 transition-all duration-300 ease-out" id="success-toast">
+<span class="material-symbols-outlined text-[#10B981]">check_circle</span>
+<span class="font-label-md text-label-md font-medium">Notification queued successfully</span>
+</div>
+<script>
+        // Form elements
+        const titleInput = document.getElementById('notif-title');
+        const messageInput = document.getElementById('notif-message');
+        const charCount = document.getElementById('char-count');
+        
+        // Preview elements
+        const previewTitle = document.getElementById('preview-title');
+        const previewMessage = document.getElementById('preview-message');
+        
+        // Modal elements
+        const modal = document.getElementById('confirmation-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        
+        // Buttons
+        const btnSend = document.getElementById('btn-send');
+        const btnCancel = document.getElementById('btn-cancel');
+        const btnConfirm = document.getElementById('btn-confirm');
+        
+        // Toast
+        const successToast = document.getElementById('success-toast');
+
+        // Character limit
+        const MAX_CHARS = 250;
+
+        function updatePreview() {
+            const tVal = titleInput.value.trim() || 'SRU Timetable';
+            const mVal = messageInput.value;
+            const mLen = mVal.length;
+            
+            // Update char count
+            charCount.textContent = mLen;
+            if(mLen > MAX_CHARS) {
+                 charCount.classList.add('text-error');
+                 messageInput.classList.add('border-error', 'focus:border-error', 'focus:ring-error');
+                 messageInput.classList.remove('focus:border-primary-container', 'focus:ring-primary-container');
+                 btnSend.disabled = true;
+                 btnSend.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                 charCount.classList.remove('text-error');
+                 messageInput.classList.remove('border-error', 'focus:border-error', 'focus:ring-error');
+                 messageInput.classList.add('focus:border-primary-container', 'focus:ring-primary-container');
+                 btnSend.disabled = false;
+                 btnSend.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            // Update preview
+            previewTitle.textContent = tVal;
+            previewMessage.textContent = mVal.trim() || 'Enter your message here...';
+        }
+
+        // Event Listeners for inputs
+        titleInput.addEventListener('input', updatePreview);
+        messageInput.addEventListener('input', updatePreview);
+
+        // Modal Logic
+        btnSend.addEventListener('click', () => {
+            if (messageInput.value.length > MAX_CHARS) return;
+            
+            modalTitle.textContent = titleInput.value.trim() || 'SRU Timetable';
+            modalMessage.textContent = messageInput.value.trim() || 'No message provided.';
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+        });
+
+        btnCancel.addEventListener('click', () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = '';
+        });
+
+        btnConfirm.addEventListener('click', () => {
+            // Close modal
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = '';
+            
+            // Clear inputs (optional, simulating successful send)
+            messageInput.value = '';
+            updatePreview();
+            
+            // Show toast
+            successToast.classList.remove('translate-y-24', 'opacity-0');
+            
+            // Hide toast after 3 seconds
+            setTimeout(() => {
+                successToast.classList.add('translate-y-24', 'opacity-0');
+            }, 3000);
+        });
+        
+        // Initial setup
+        updatePreview();
+    </script>
+</body></html>

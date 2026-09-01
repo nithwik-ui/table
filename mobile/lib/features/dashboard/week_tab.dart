@@ -5,7 +5,9 @@ import '../../core/storage.dart';
 import '../../core/utils.dart';
 import 'ad_banner.dart';
 import '../../core/api.dart';
+import '../../core/notifications.dart';
 import '../notifications/notifications_screen.dart';
+import 'widgets/live_class_progress.dart';
 
 class WeekTab extends StatefulWidget {
   const WeekTab({super.key});
@@ -31,12 +33,12 @@ class _WeekTabState extends State<WeekTab> {
   }
 
   void _calculateCurrentWeek() {
-    // Current IST Time
-    final nowIST = DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30));
+    // Current Local Time
+    final nowLocal = DateTime.now();
     
     // Find the Monday of the current week
-    final weekday = nowIST.weekday; // 1 = Mon, 7 = Sun
-    _startOfWeek = nowIST.subtract(Duration(days: weekday - 1));
+    final weekday = nowLocal.weekday; // 1 = Mon, 7 = Sun
+    _startOfWeek = nowLocal.subtract(Duration(days: weekday - 1));
     
     // Select current day index by default (0-6)
     _selectedDayIndex = weekday - 1;
@@ -53,8 +55,8 @@ class _WeekTabState extends State<WeekTab> {
   void _calculateNextClassHighlight() {
     if (_timetable.isEmpty) return;
 
-    final nowIST = DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30));
-    final currentDayIndex = nowIST.weekday - 1;
+    final nowLocal = DateTime.now();
+    final currentDayIndex = nowLocal.weekday - 1;
     
     // Highlight is only computed if the selected day index matches today
     if (_selectedDayIndex != currentDayIndex) {
@@ -64,7 +66,7 @@ class _WeekTabState extends State<WeekTab> {
 
     final weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     final currentDay = weekdays[currentDayIndex];
-    final currentMinutes = nowIST.hour * 60 + nowIST.minute;
+    final currentMinutes = nowLocal.hour * 60 + nowLocal.minute;
 
     final todayClasses = _timetable.where((e) => e['day'] == currentDay).toList();
     todayClasses.sort((a, b) => (a['start_time'] as String).compareTo(b['start_time'] as String));
@@ -94,6 +96,10 @@ class _WeekTabState extends State<WeekTab> {
       final list = await ApiService.fetchTimetable(batchId);
       await StorageService.saveTimetableCache(list);
       await StorageService.saveLastSyncedAt(DateTime.now());
+      
+      // FIX: Ensure alarms are explicitly rescheduled on manual refresh
+      await NotificationService.scheduleClassReminders(list);
+      
       if (mounted) {
         setState(() {
           _timetable = list;
@@ -334,9 +340,19 @@ class _WeekTabState extends State<WeekTab> {
                                         style: AppConstants.getHeadline().copyWith(fontSize: 18),
                                       ),
                                     ),
-                                    Text(
-                                      '${TimeUtils.format12Hour(c['start_time'])} - ${TimeUtils.format12Hour(c['end_time'])}',
-                                      style: AppConstants.getLabelSmall(color: AppConstants.primary).copyWith(fontWeight: FontWeight.w600),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          '${TimeUtils.format12Hour(c['start_time'])} - ${TimeUtils.format12Hour(c['end_time'])}',
+                                          style: AppConstants.getLabelSmall(color: AppConstants.primary).copyWith(fontWeight: FontWeight.w600),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        LiveClassProgressIndicator(
+                                          startTime: c['start_time'] as String,
+                                          endTime: c['end_time'] as String,
+                                          isToday: _selectedDayIndex == DateTime.now().weekday - 1,
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),

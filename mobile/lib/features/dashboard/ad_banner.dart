@@ -22,7 +22,7 @@ class _AdBannerState extends State<AdBanner> {
 
   final String _prodAdUnitId = 'ca-app-pub-4600395533739943/8970984870';
 
-  String get _currentAdUnitId => kReleaseMode ? _prodAdUnitId : _testAdUnitId;
+  String get _currentAdUnitId => _prodAdUnitId;
 
   @override
   void didChangeDependencies() {

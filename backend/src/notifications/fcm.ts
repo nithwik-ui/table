@@ -4,31 +4,31 @@ import { TimetableChangeInsert } from '../sync/diff';
 
 let fcmInitialized = false;
 
-try {
-  // Initialize Firebase Admin SDK safely
-  // Production environments locate credentials from applicationDefault()
-  admin.initializeApp({
-    credential: admin.credential.applicationDefault()
-  });
-  fcmInitialized = true;
-  console.log('Firebase Admin SDK initialized successfully.');
-} catch (err: any) {
-  console.warn('Firebase Admin SDK could not initialize (Application Default Credentials missing):', err.message);
-  
-  // Fallback: Check if service account JSON configuration is stored in environment variables
-  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  let serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
   if (serviceAccountJson) {
     try {
+      if (serviceAccountJson.startsWith("'") && serviceAccountJson.endsWith("'")) {
+        serviceAccountJson = serviceAccountJson.slice(1, -1);
+      }
       admin.initializeApp({
         credential: admin.credential.cert(JSON.parse(serviceAccountJson))
       });
       fcmInitialized = true;
-      console.log('Firebase Admin SDK initialized successfully via FIREBASE_SERVICE_ACCOUNT_JSON env var.');
+      console.log('Firebase Admin SDK initialized successfully via FIREBASE_SERVICE_ACCOUNT_JSON.');
     } catch (subErr: any) {
       console.error('Failed to initialize Firebase Admin SDK with service account JSON:', subErr.message);
     }
+  } else {
+    try {
+      admin.initializeApp({
+        credential: admin.credential.applicationDefault()
+      });
+      fcmInitialized = true;
+      console.log('Firebase Admin SDK initialized successfully (Application Default Credentials).');
+    } catch (err: any) {
+      console.warn('Firebase Admin SDK could not initialize:', err.message);
+    }
   }
-}
 
 export async function sendBatchNotifications(batchId: string, changes: TimetableChangeInsert[]) {
   if (!fcmInitialized) {
@@ -168,3 +168,133 @@ export async function sendBatchNotifications(batchId: string, changes: Timetable
     console.error('Error dispatching notifications:', err.message || err);
   }
 }
+
+export async function sendGenericBroadcast(title: string, message: string) {
+  if (!fcmInitialized) {
+    console.warn('Skipping broadcast: Firebase Admin SDK is not initialized.');
+    return { success: false, error: 'FCM not initialized' };
+  }
+
+  try {
+    const payload = {
+      topic: 'sru_all_users',
+      notification: {
+        title,
+        body: message,
+      },
+      data: {
+        click_action: 'FLUTTER_NOTIFICATION_CLICK',
+        type: 'broadcast'
+      },
+      android: {
+        notification: {
+          clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+          sound: 'default',
+        }
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: 'default',
+          }
+        }
+      }
+    };
+
+    const response = await admin.messaging().send(payload);
+    console.log(`Dispatched Broadcast "${title}" to topic sru_all_users. MessageId: ${response}`);
+    
+    // For topic messages, we don't get success/failure counts per device, just a single success.
+    return { success: true, count: 1 };
+  } catch (err: any) {
+    console.error('Error dispatching topic broadcast:', err.message || err);
+    return { success: false, error: err.message || err };
+  }
+}
+
+export async function sendClassReminderPush(batchId: string, subject: string, room: string) {
+  if (!fcmInitialized) {
+    console.warn('Skipping class reminder push: Firebase Admin SDK is not initialized.');
+    return;
+  }
+
+  try {
+    // 1. Fetch device tokens registered for this batch that have reminders enabled (using notifications_enabled flag for now)
+    const { data: tokens, error: tokensErr } = await supabase
+      .from('device_tokens')
+      .select('fcm_token')
+      .eq('batch_id', batchId)
+      .eq('notifications_enabled', true);
+
+    if (tokensErr) {
+      console.error(`Failed to retrieve device tokens for reminder (batch: ${batchId}):`, tokensErr.message);
+      return;
+    }
+
+    if (!tokens || tokens.length === 0) {
+      return; // Silently skip if no active users
+    }
+
+    const fcmTokens = tokens.map(t => t.fcm_token);
+    const roomStr = (room && room !== 'N/A' && room.trim() !== '') ? ` in ${room.split('_')[0]}` : '';
+
+    const payload = {
+      tokens: fcmTokens,
+      notification: {
+        title: 'Class starting in 5 min',
+        body: `${subject}${roomStr}`,
+      },
+      data: {
+        click_action: 'FLUTTER_NOTIFICATION_CLICK',
+        type: 'reminder',
+        batch_id: batchId,
+      },
+      android: {
+        notification: {
+          clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+          sound: 'default',
+          channelId: 'class_reminders', // Map to high-importance channel if created in app
+          priority: 'high' as any,
+        }
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: 'default',
+            contentAvailable: true,
+          }
+        }
+      }
+    };
+
+    const response = await admin.messaging().sendEachForMulticast(payload);
+    console.log(`Dispatched FCM Reminder for "${subject}": ${response.successCount} succeeded, ${response.failureCount} failed.`);
+    
+    // Cleanup failed or unregistered registration tokens
+    if (response.failureCount > 0) {
+      const tokensToDelete: string[] = [];
+      response.responses.forEach((resp, idx) => {
+        if (!resp.success && resp.error) {
+          const code = resp.error.code;
+          if (
+            code === 'messaging/invalid-registration-token' ||
+            code === 'messaging/registration-token-not-registered'
+          ) {
+            tokensToDelete.push(fcmTokens[idx]);
+          }
+        }
+      });
+
+      if (tokensToDelete.length > 0) {
+        await supabase
+          .from('device_tokens')
+          .delete()
+          .in('fcm_token', tokensToDelete);
+        console.log(`Pruned ${tokensToDelete.length} stale/invalid FCM tokens during reminder dispatch.`);
+      }
+    }
+  } catch (err: any) {
+    console.error('Error dispatching class reminder push:', err.message || err);
+  }
+}
+

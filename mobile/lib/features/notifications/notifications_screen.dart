@@ -45,6 +45,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         final newVal = change['new_value'] as String? ?? '';
         final detectedAt = change['detected_at'] as String;
 
+        try {
+          final dt = DateTime.parse(detectedAt).toLocal();
+          if (DateTime.now().difference(dt).inDays > 4) {
+            continue;
+          }
+        } catch (_) {}
+
         String title = '';
         String body = '';
 
@@ -60,7 +67,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           body = '$subject ($batchCode) moved to $newVal.';
         } else if (type == 'FACULTY_CHANGED') {
           title = 'Faculty Changed';
-          body = '$subject will be taken by $newVal today.';
+          final contextData = _getTimetableContext(change);
+          final day = contextData['day'] ?? '';
+          final time = contextData['time'] ?? '';
+          final subj = contextData['subject'] ?? subject;
+          
+          String contextString = '';
+          if (day.isNotEmpty || time.isNotEmpty) {
+            contextString = '${day.isNotEmpty ? day : ''}${day.isNotEmpty && time.isNotEmpty ? ' • ' : ''}${time.isNotEmpty ? time : ''}';
+          }
+          
+          if (contextString.isNotEmpty) {
+            body = '$subj\n$contextString\n\n$oldVal → $newVal';
+          } else {
+            body = '$subj\n\n$oldVal → $newVal';
+          }
         } else if (type == 'CLASS_REMOVED') {
           title = 'Class Cancelled';
           final oldSubject = oldVal.split(' (')[0];
@@ -87,22 +108,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         });
       }
 
-      // Add a simulated local class reminder notification if reminders are enabled, to showcase it visually
-      if (StorageService.isClassRemindersEnabled() && parsedList.isNotEmpty) {
-        final timetable = StorageService.getTimetableCache();
-        if (timetable.isNotEmpty) {
-          final firstClass = timetable.first;
-          final room = (firstClass['room'] as String? ?? 'No Room').split('_')[0];
-          parsedList.insert(0, {
-            'id': 'simulated_reminder',
-            'title': 'Class Reminder',
-            'body': '${firstClass['subject']} starting in 15 mins ($room).',
-            'type': 'CLASS_REMINDER',
-            'timestamp': DateTime.now().subtract(const Duration(minutes: 5)).toIso8601String(),
-            'read': false,
-          });
-        }
-      }
+
 
       if (mounted) {
         setState(() {
@@ -127,6 +133,40 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         n['read'] = true;
       }
     });
+  }
+
+  Map<String, String> _getTimetableContext(Map<String, dynamic> change) {
+    final entryId = change['timetable_entry_id'] as String?;
+    
+    String subject = 'Class';
+    final fieldParts = (change['field_name'] as String? ?? '').split(':');
+    if (fieldParts.length > 1) {
+      subject = fieldParts.skip(1).join(':');
+    }
+    
+    final timetable = StorageService.getTimetableCache();
+    for (final dayData in timetable) {
+      final classes = dayData['classes'] as List<dynamic>? ?? [];
+      for (final cls in classes) {
+        if (entryId != null && cls['id'] == entryId) {
+          return {
+            'day': dayData['day'] as String,
+            'time': cls['start_time'] as String,
+            'subject': cls['subject'] as String? ?? subject,
+          };
+        }
+        
+        if (entryId == null && cls['subject'] == subject) {
+          return {
+            'day': dayData['day'] as String,
+            'time': cls['start_time'] as String,
+            'subject': subject,
+          };
+        }
+      }
+    }
+    
+    return {'day': '', 'time': '', 'subject': subject};
   }
 
   IconData _getIconData(String type) {

@@ -1,8 +1,14 @@
 import express, { Request, Response } from 'express';
+import cors from 'cors';
 import { supabase } from './db/supabase';
 import { runSync } from './sync';
+import { sendGenericBroadcast } from './notifications/fcm';
+import { runReminderWorker } from './notifications/reminderWorker';
+
+
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
@@ -260,56 +266,140 @@ app.post('/api/devices/preferences', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/admin/metrics
-app.get('/api/admin/metrics', async (req: Request, res: Response) => {
+// POST /api/admin/broadcast
+app.post('/api/admin/broadcast', async (req: Request, res: Response) => {
+  try {
+    const { password, title, message, isTest } = req.body;
+    if (password !== process.env.ADMIN_PASSWORD && password !== 'SRUAdminPass2026') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    if (!title || !message) {
+      return res.status(400).json({ error: 'Missing title or message' });
+    }
+
+    const target = 'All Users (Topic)';
+    let result = { success: false, count: 0, error: '' };
+    
+    if (isTest) {
+      console.log(`[TEST MODE] Would have sent "${title}" to ${target}`);
+      result = { success: true, count: 1, error: '' };
+    } else {
+      // Dispatch to FCM topic
+      result = await sendGenericBroadcast(title, message) as any;
+    }
+
+    // Log the announcement history to the database
+    const status = result.success ? (isTest ? 'Test' : 'Sent') : 'Failed';
+    const { error: dbErr } = await supabase.from('announcement_history').insert({
+      template_id: 'CUSTOM', // using a generic marker
+      title: title,
+      target: target,
+      admin: 'System Admin',
+      status: status
+    });
+
+    if (dbErr) {
+      console.error('Failed to log announcement history:', dbErr.message);
+    }
+
+    if (!result.success) {
+      throw new Error(result.error);
+    }
+
+    res.json({ success: true, count: result.count, isTest });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/admin/announcements
+app.get('/api/admin/announcements', async (req: Request, res: Response) => {
   try {
     const password = req.query.password as string;
     if (password !== process.env.ADMIN_PASSWORD && password !== 'SRUAdminPass2026') {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { data: degrees, error: degErr } = await supabase.from('degrees').select('*').order('name');
-    if (degErr) throw degErr;
-
-    const { data: years, error: yrErr } = await supabase.from('years').select('*');
-    if (yrErr) throw yrErr;
-
-    const { data: batches, error: batErr } = await supabase.from('batches').select('id, batch_code, active, degree_id, year_id').order('batch_code');
-    if (batErr) throw batErr;
-
-    const { data: recentChanges } = await supabase
-      .from('timetable_changes')
+    const { data, error } = await supabase
+      .from('announcement_history')
       .select('*')
-      .order('detected_at', { ascending: false })
-      .limit(10);
-
-    res.json({
-      counts: {
-        degrees: degrees?.length || 0,
-        years: years?.length || 0,
-        batches: batches?.length || 0,
-      },
-      degrees: degrees || [],
-      batches: batches || [],
-      recentChanges: recentChanges || []
-    });
+      .order('created_at', { ascending: false })
+      .limit(100);
+      
+    // If the table doesn't exist yet, we will gracefully return an empty array
+    // so the UI doesn't break while waiting for the user to run the SQL command.
+    if (error) {
+      console.warn('Could not fetch announcement history (table might be missing):', error.message);
+      return res.json([]);
+    }
+    
+    res.json(data || []);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// POST /api/sync/trigger
-app.post('/api/sync/trigger', async (req: Request, res: Response) => {
+// POST /api/admin/test-class
+app.post('/api/admin/test-class', async (req: Request, res: Response) => {
   try {
-    const { password } = req.body;
+    const { password, batchId, subject, startTime, endTime } = req.body;
     if (password !== process.env.ADMIN_PASSWORD && password !== 'SRUAdminPass2026') {
       return res.status(401).json({ error: 'Unauthorized' });
     }
+    
+    if (!batchId || !subject || !startTime || !endTime) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
 
-    console.log('Manual sync crawl triggered via admin dashboard.');
-    runSync().catch(err => console.error('Manual sync crawl failed:', err));
+    const { day } = getISTDateTime();
 
-    res.json({ success: true, message: 'Sync crawl triggered successfully.' });
+    const { error: dbErr } = await supabase.from('timetable_entries').insert({
+      batch_id: batchId,
+      day: day,
+      start_time: startTime,
+      end_time: endTime,
+      subject: subject,
+      faculty: 'Admin Injector',
+      room: 'Test Room',
+      semester: 'N/A',
+      ltp: 'L',
+      source_hash: 'TEST_CLASS_INJECTOR'
+    });
+
+    if (dbErr) {
+      throw new Error(dbErr.message);
+    }
+
+    res.json({ success: true, day, startTime, endTime });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/admin/test-class
+app.delete('/api/admin/test-class', async (req: Request, res: Response) => {
+  try {
+    const { password, batchId } = req.body;
+    if (password !== process.env.ADMIN_PASSWORD && password !== 'SRUAdminPass2026') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    if (!batchId) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    const { error: dbErr, count } = await supabase
+      .from('timetable_entries')
+      .delete({ count: 'exact' })
+      .eq('batch_id', batchId)
+      .eq('source_hash', 'TEST_CLASS_INJECTOR');
+
+    if (dbErr) {
+      throw new Error(dbErr.message);
+    }
+
+    res.json({ success: true, deletedCount: count });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -335,3 +425,9 @@ setInterval(() => {
   console.log('Triggering periodic sync crawl...');
   runSync().catch(err => console.error('Periodic sync crawl failed:', err));
 }, intervalMinutes * 60 * 1000);
+
+// Schedule FCM class reminders to run every 1 minute
+console.log('Scheduling FCM Reminder Worker to tick every minute.');
+setInterval(() => {
+  runReminderWorker().catch(err => console.error('Reminder worker failed:', err));
+}, 60 * 1000);

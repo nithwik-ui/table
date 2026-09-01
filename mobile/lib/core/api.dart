@@ -86,7 +86,16 @@ class ApiService {
         .timeout(timeoutDuration);
 
     if (response.statusCode == 200) {
-      return json.decode(response.body) as List<dynamic>;
+      final list = json.decode(response.body) as List<dynamic>;
+      final now = DateTime.now();
+      return list.where((change) {
+        try {
+          final dt = DateTime.parse(change['detected_at'] as String).toLocal();
+          return now.difference(dt).inDays <= 7;
+        } catch (_) {
+          return true;
+        }
+      }).toList();
     } else {
       throw Exception('Failed to load changes (HTTP ${response.statusCode})');
     }

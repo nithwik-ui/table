@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'dart:async';
+import 'dart:io';
 import '../../core/constants.dart';
 import '../../core/api.dart';
 import '../../core/storage.dart';
@@ -50,14 +52,18 @@ class _SyncingScreenState extends State<SyncingScreen> {
       await StorageService.saveTimetableCache(entries);
 
       // 2.5 Schedule local reminders if enabled (default true)
-      if (StorageService.isClassRemindersEnabled()) {
-        await NotificationService.scheduleClassReminders(entries);
+      try {
+        if (StorageService.isClassRemindersEnabled()) {
+          await NotificationService.scheduleClassReminders(entries);
+        }
+      } catch (e) {
+        print('[SYNC] Reminder scheduling failed: $e');
       }
 
       // Try to register device token with fallback (never blocks)
       String fcmToken = 'local_device';
       try {
-        final token = await FirebaseMessaging.instance.getToken();
+        final token = await FirebaseMessaging.instance.getToken().timeout(const Duration(seconds: 3));
         if (token != null) {
           fcmToken = token;
         }
@@ -85,11 +91,21 @@ class _SyncingScreenState extends State<SyncingScreen> {
           (route) => false,
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('[SYNC] Exception: $e');
+      print('[SYNC] StackTrace: $stackTrace');
+      
+      String displayError = 'Unknown error occurred.';
+      if (e is SocketException || e is TimeoutException) {
+        displayError = 'Network failure. Please check your internet connection.';
+      } else {
+        displayError = e.toString().replaceFirst('Exception: ', '');
+      }
+      
       if (mounted) {
         setState(() {
           _isSyncing = false;
-          _errorMessage = 'Could not sync. Please check your internet connection and try again.';
+          _errorMessage = displayError;
         });
       }
     }

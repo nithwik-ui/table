@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRU Time Table – Privacy Policy</title>
+    <meta name="description" content="Privacy Policy for the SRU Time Table mobile application.">
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Navigation */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+        }
+
+        .nav-container {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 1.125rem;
+            transition: opacity 0.2s;
+        }
+
+        .brand:hover {
+            opacity: 0.8;
+        }
+
+        .brand-icon {
+            width: 32px;
+            height: 32px;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+        }
+
+        .badge {
+            background-color: #f1f5f9;
+            color: var(--text-muted);
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        /* Main Content */
+        main {
+            max-width: 768px;
+            margin: 0 auto;
+            padding: 4rem 1.5rem;
+        }
+
+        .page-header {
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            margin-bottom: 1rem;
+            color: var(--text-main);
+        }
+
+        @media (min-width: 768px) {
+            h1 { font-size: 3rem; }
+        }
+
+        .meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            font-size: 1.125rem;
+        }
+
+        .meta-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--primary);
+            border-radius: 50%;
+        }
+
+        /* Content Sections */
+        article {
+            animation: fadeInUp 0.6s ease-out forwards;
+            animation-delay: 0.1s;
+            opacity: 0;
+        }
+
+        section {
+            margin-bottom: 2.5rem;
+        }
+
+        .intro-card {
+            background-color: var(--surface);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+            transition: box-shadow 0.3s ease;
+            margin-bottom: 3rem;
+        }
+
+        .intro-card:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-main);
+        }
+
+        .intro-card h2 { margin-top: 0; }
+
+        p {
+            margin-bottom: 1.25rem;
+            color: #334155;
+        }
+
+        ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #334155;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        li::marker {
+            color: var(--primary);
+        }
+
+        strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        a {
+            color: var(--primary);
+            text-decoration: underline;
+            text-decoration-color: rgba(37, 99, 235, 0.3);
+            text-underline-offset: 4px;
+            transition: all 0.2s;
+        }
+
+        a:hover {
+            color: var(--primary-hover);
+            text-decoration-color: var(--primary-hover);
+        }
+
+        .contact-card {
+            background-color: #f1f5f9;
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            margin-top: 4rem;
+        }
+
+        .contact-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.125rem;
+            font-weight: 500;
+            margin-top: 1rem;
+            text-decoration: none;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border);
+            background-color: var(--surface);
+            padding: 2rem 1.5rem;
+            margin-top: 4rem;
+        }
+
+        .footer-content {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        @media (min-width: 768px) {
+            .footer-content {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+
+        .footer-links a.active {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .page-header, article {
+                animation: none;
+                opacity: 1;
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="nav-container">
+            <a href="/" class="brand">
+                <div class="brand-icon">S</div>
+                <span>SRU Time Table</span>
+            </a>
+            <span class="badge">Legal</span>
+        </div>
+    </header>
+
+    <main>
+        <div class="page-header">
+            <h1>Privacy Policy</h1>
+            <div class="meta">
+                <div class="meta-dot"></div>
+                <span>Last updated: <strong>August 29, 2026</strong></span>
+            </div>
+        </div>
+
+        <article>
+            <section class="intro-card">
+                <h2>1. Introduction</h2>
+                <p style="margin-bottom: 0;">
+                    Welcome to the SRU Time Table mobile application ("App"). This Privacy Policy explains how we handle, process, and protect information when you use our App. Our primary goal is to provide you with timely and accurate timetable information without compromising your privacy.
+                </p>
+            </section>
+
+            <section>
+                <h2>2. Information We Collect and Use</h2>
+                <p>
+                    We believe in minimizing data collection. The SRU Time Table app <strong>does not</strong> require you to create an account, nor does it collect personally identifiable information such as your name, email address, phone number, or physical location.
+                </p>
+                <p>
+                    To provide the App's core functionality, we process the following technical data:
+                </p>
+                <ul>
+                    <li><strong>Timetable and Batch Preferences:</strong> The app requests schedule data corresponding to your selected academic degree, year, and batch from our servers.</li>
+                    <li><strong>Firebase Cloud Messaging (FCM) Tokens:</strong> To send you push notifications regarding timetable changes, a device-specific notification token is generated and securely transmitted to our backend infrastructure.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>3. Local Device Storage</h2>
+                <p>
+                    To ensure the app remains fast and functions offline, we use local device storage (specifically, the Hive database). This local storage caches:
+                </p>
+                <ul>
+                    <li>Your timetable schedules and class details.</li>
+                    <li>Your selected batch and degree preferences.</li>
+                    <li>Your notification settings and preferences.</li>
+                </ul>
+                <p>
+                    This information is stored strictly on your device and is not synchronized to a central user database.
+                </p>
+            </section>
+
+            <section>
+                <h2>4. Push Notifications</h2>
+                <p>
+                    We utilize Firebase Cloud Messaging (FCM) to deliver timely alerts about class changes or cancellations. When you enable notifications, a unique registration token is created by Firebase and shared with our backend servers. This token allows us to route notifications specifically to your device. It does not identify you personally. You can opt out of notifications at any time through your device's system settings.
+                </p>
+            </section>
+
+            <section>
+                <h2>5. Advertising</h2>
+                <p>
+                    To support the continued development of the App, we display banner advertisements using <strong>Google Mobile Ads (AdMob)</strong>. Google and its partners may use advertising identifiers and cookies to serve ads based on your prior usage of this App or other apps and websites.
+                </p>
+                <p>
+                    For more information on how Google uses data in advertising, please review <a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer">Google's Advertising Privacy Policy</a>.
+                </p>
+            </section>
+
+            <section>
+                <h2>6. Internet and API Requests</h2>
+                <p>
+                    The App communicates with our dedicated backend API over a secure connection to fetch the latest timetable structures and verify application versions. During these routine network requests, standard internet diagnostic information (such as IP addresses and device user agents) is briefly processed by our hosting providers to deliver the data, but we do not store this diagnostic data in our application databases.
+                </p>
+            </section>
+
+            <section>
+                <h2>7. Data Sharing and Third-Party Services</h2>
+                <p>
+                    We do not sell, rent, or share your data with third parties for their own marketing purposes. The App integrates with the following third-party service providers strictly to facilitate app functionality:
+                </p>
+                <ul>
+                    <li><strong>Google Firebase:</strong> For push notification delivery (FCM).</li>
+                    <li><strong>Google AdMob:</strong> For displaying banner advertisements.</li>
+                    <li><strong>Render:</strong> For hosting our backend timetable API.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>8. Children's Privacy</h2>
+                <p>
+                    This application is designed for university students. We do not knowingly collect personal data from children under the age of 13. If you believe a child has provided us with personal information, please contact us so we can take steps to remove such information.
+                </p>
+            </section>
+
+            <section>
+                <h2>9. Changes to This Privacy Policy</h2>
+                <p>
+                    We may update this Privacy Policy periodically to reflect changes in our practices or technical updates to the App. The "Last updated" date at the top of this page will be revised accordingly. We encourage you to review this page occasionally to stay informed about how we are protecting your information.
+                </p>
+            </section>
+
+            <section class="contact-card">
+                <h2 style="margin-top: 0;">10. Contact Us</h2>
+                <p style="margin-bottom: 0;">
+                    If you have any questions, concerns, or suggestions regarding this Privacy Policy or our data practices, please contact us at:
+                </p>
+                <a href="mailto:k.nithwik750@gmail.com" class="contact-link">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                    k.nithwik750@gmail.com
+                </a>
+            </section>
+        </article>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>© 2026 SRU Time Table. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="/">Home</a>
+                <a href="/privacy-policy.html" class="active">Privacy Policy</a>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

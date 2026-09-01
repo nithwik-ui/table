@@ -1,5 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'dart:io';
+import 'dart:async';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants.dart';
@@ -163,11 +165,15 @@ class _ProfileTabState extends State<ProfileTab> {
           const SnackBar(content: Text('Timetable successfully updated!')),
         );
       }
-    } catch (_) {
+    } catch (e) {
       setState(() => _isRefreshing = false);
       if (mounted) {
+        String msg = 'Could not refresh. You are offline.';
+        if (e is! SocketException && e is! TimeoutException) {
+           msg = e.toString().replaceFirst('Exception: ', '');
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not refresh. You are offline.')),
+          SnackBar(content: Text(msg)),
         );
       }
     }

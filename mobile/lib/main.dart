@@ -24,6 +24,12 @@ Future<void> _initFirebaseSafely() async {
     await Firebase.initializeApp();
     
     final messaging = FirebaseMessaging.instance;
+    
+    // Subscribe to global topic for broadcasts
+    try {
+      await messaging.subscribeToTopic('sru_all_users');
+      debugPrint('Subscribed to sru_all_users FCM topic');
+    } catch (_) {}
 
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
@@ -53,38 +59,29 @@ Future<void> _initFirebaseSafely() async {
   }
 }
 
-void main() async {
+void main() {
   // Ensure Flutter engine bindings are initialized first
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Local Caching safely to prevent crash-on-launch
-  try {
-    await StorageService.init();
-  } catch (e) {
-    debugPrint('Local storage initialization failed: $e');
-  }
+  // Launch the UI immediately to prevent black screen delay
+  runApp(const MyApp());
 
-  // Initialize Notifications
-  try {
-    await NotificationService.init();
-  } catch (e) {
-    debugPrint('Notification service initialization failed: $e');
-  }
-
-  // Initialize Firebase (safely wrapped in try/catch to NEVER block startup)
-  await _initFirebaseSafely();
-
-  // Initialize AdMob safely — runs after runApp() so it never blocks startup
-  // If AdMob fails, the app still works perfectly, banners just won't show
+  // Initialize non-critical background services
   Future.microtask(() async {
+    try {
+      await NotificationService.init();
+    } catch (e) {
+      debugPrint('Notification service initialization failed: $e');
+    }
+
+    await _initFirebaseSafely();
+
     try {
       await MobileAds.instance.initialize();
     } catch (e) {
       debugPrint('AdMob initialization failed (non-fatal): $e');
     }
   });
-
-  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -92,9 +89,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Decide initial route based on cached batch selection
-    final bool hasExistingSelection = StorageService.hasSelection();
-
     return MaterialApp(
       title: 'SRU Timetable',
       debugShowCheckedModeBanner: false,
@@ -118,7 +112,64 @@ class MyApp extends StatelessWidget {
           iconTheme: IconThemeData(color: AppConstants.textPrimary),
         ),
       ),
-      home: hasExistingSelection ? const DashboardScreen() : const WelcomeScreen(),
+      home: const SplashController(),
+    );
+  }
+}
+
+class SplashController extends StatefulWidget {
+  const SplashController({super.key});
+
+  @override
+  State<SplashController> createState() => _SplashControllerState();
+}
+
+class _SplashControllerState extends State<SplashController> {
+  @override
+  void initState() {
+    super.initState();
+    _initApp();
+  }
+
+  Future<void> _initApp() async {
+    try {
+      await StorageService.init();
+    } catch (e) {
+      debugPrint('Local storage initialization failed: $e');
+    }
+
+    if (mounted) {
+      final bool hasExistingSelection = StorageService.hasSelection();
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => 
+              hasExistingSelection ? const DashboardScreen() : const WelcomeScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          transitionDuration: const Duration(milliseconds: 300),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppConstants.background,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/logo.png',
+              height: 64,
+            ),
+            const SizedBox(height: 24),
+            const CircularProgressIndicator(color: AppConstants.primary),
+          ],
+        ),
+      ),
     );
   }
 }

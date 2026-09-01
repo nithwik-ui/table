@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SRU Timetable - Sync Monitor</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-fixed-dim": "#bcc7de",
+                      "background": "#fbf8fa",
+                      "tertiary-fixed-dim": "#ddc39d",
+                      "secondary": "#505f76",
+                      "on-tertiary-fixed": "#271902",
+                      "on-error": "#ffffff",
+                      "surface-bright": "#fbf8fa",
+                      "primary-fixed": "#d8e3fb",
+                      "inverse-on-surface": "#f3f0f2",
+                      "on-primary-fixed": "#111c2d",
+                      "surface": "#fbf8fa",
+                      "on-primary": "#ffffff",
+                      "on-secondary-fixed": "#0b1c30",
+                      "secondary-fixed": "#d3e4fe",
+                      "secondary-container": "#d0e1fb",
+                      "on-surface-variant": "#45474c",
+                      "surface-tint": "#545f73",
+                      "on-primary-container": "#8590a6",
+                      "surface-container-lowest": "#ffffff",
+                      "tertiary": "#1e1200",
+                      "primary-container": "#1e293b",
+                      "inverse-primary": "#bcc7de",
+                      "tertiary-container": "#35260c",
+                      "on-secondary": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "on-tertiary-container": "#a38c6a",
+                      "surface-variant": "#e4e2e3",
+                      "tertiary-fixed": "#fadfb8",
+                      "on-secondary-fixed-variant": "#38485d",
+                      "surface-container": "#f0edef",
+                      "error-container": "#ffdad6",
+                      "on-secondary-container": "#54647a",
+                      "surface-container-highest": "#e4e2e3",
+                      "error": "#ba1a1a",
+                      "on-surface": "#1b1b1d",
+                      "on-background": "#1b1b1d",
+                      "on-primary-fixed-variant": "#3c475a",
+                      "outline": "#75777d",
+                      "primary": "#091426",
+                      "secondary-fixed-dim": "#b7c8e1",
+                      "inverse-surface": "#303032",
+                      "surface-dim": "#dcd9db",
+                      "surface-container-high": "#eae7e9",
+                      "outline-variant": "#c5c6cd",
+                      "on-tertiary-fixed-variant": "#564427",
+                      "surface-container-low": "#f5f3f4"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "stack-md": "1rem",
+                      "stack-lg": "1.5rem",
+                      "stack-sm": "0.5rem",
+                      "container-padding-mobile": "1rem",
+                      "gutter": "1.5rem",
+                      "container-padding-desktop": "2rem"
+              },
+              "fontFamily": {
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "headline-sm": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.01em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-sm": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1;
+        }
+        body {
+            background-color: #F8FAFC;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md h-screen overflow-hidden flex">
+<!-- SideNavBar -->
+<nav class="bg-surface dark:bg-surface-container-lowest fixed h-full w-[280px] left-0 top-0 border-r border-outline-variant dark:border-on-surface-variant flex flex-col py-stack-lg px-stack-md z-20">
+<div class="mb-8">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-primary-fixed">SRU Timetable</h1>
+<p class="font-label-md text-label-md text-on-surface-variant dark:text-surface-variant">Admin Console</p>
+</div>
+<ul class="flex flex-col gap-2 flex-grow overflow-y-auto">
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors cursor-pointer active:scale-95 transition-transform font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors cursor-pointer active:scale-95 transition-transform font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span>Timetable</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors cursor-pointer active:scale-95 transition-transform font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="bolt">bolt</span>
+<span>Live Changes</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary font-semibold hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors cursor-pointer active:scale-95 transition-transform font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="sync" data-weight="fill">sync</span>
+<span>Sync Monitor</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors cursor-pointer active:scale-95 transition-transform font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="devices">devices</span>
+<span>Users/Devices</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors cursor-pointer active:scale-95 transition-transform font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span>Notifications</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors cursor-pointer active:scale-95 transition-transform font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="campaign">campaign</span>
+<span>Broadcast</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors cursor-pointer active:scale-95 transition-transform font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+</li>
+</ul>
+<div class="mt-auto pt-4 border-t border-outline-variant dark:border-on-surface-variant">
+<div class="flex items-center justify-between mb-4 px-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Backend Online
+                </span>
+</div>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors cursor-pointer active:scale-95 transition-transform font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span>Help Center</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col ml-[280px] w-[calc(100%-280px)] overflow-hidden">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-surface-container-lowest border-b border-outline-variant dark:border-on-surface-variant shadow-sm flex justify-between items-center h-16 px-container-padding-desktop z-10 sticky top-0">
+<div class="hidden font-headline-md text-headline-md text-primary dark:text-primary-fixed">SRU Timetable</div>
+<div class="flex-1 max-w-xl mx-8 hidden">
+<!-- Search hidden per JSON -->
+</div>
+<div class="flex items-center gap-4 ml-auto">
+<button class="p-2 text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-all duration-200 rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined" data-icon="notifications_active">notifications_active</span>
+</button>
+<button class="p-2 text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-all duration-200 rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="flex items-center gap-3 pl-4 border-l border-outline-variant">
+<span class="font-label-md text-label-md font-medium text-primary">Admin User</span>
+<img alt="User Avatar" class="w-8 h-8 rounded-full object-cover border border-outline-variant" data-alt="A professional, hyper-realistic headshot of an academic administrator in a modern, well-lit office setting. Light, soft focus background with subtle corporate and academic elements. Cool, clean lighting emphasizing reliability." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiXjSDdAF0qAdfQ7Nr90aDDXZnFTJUS5qScIx8KZxy1S2Hl_P0QbudzIcy5FDI-zDJv3-5HHMU7xiZfFb32W-zwtGciOlgJpAtJDDL8ozBxVo9oGOd0H8qAprqneBG4OrFBun8qgrE9hz5v9A5q6_QiWFBa-WNLObF3aA1zJX93pIq9nto6rQQjOgsDymggUzOlMCJRjnCMG1b3CffnfL5FaZ_Mb1lmJgzKNDHCU9daRqsxLUe5Lf7rw"/>
+</div>
+</div>
+</header>
+<!-- Page Content Canvas -->
+<main class="flex-1 overflow-y-auto p-container-padding-desktop">
+<!-- Page Header -->
+<div class="mb-stack-lg flex justify-between items-end">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-primary mb-1">Sync Monitor</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Monitor the synchronization status of external timetable sources.</p>
+</div>
+<button class="bg-primary-container text-on-primary border border-primary-container hover:bg-primary transition-colors h-10 px-4 rounded-lg font-label-md text-label-md flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="sync">sync</span> Force Sync Now
+                </button>
+</div>
+<!-- Summary Cards (Bento style grid) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-stack-lg">
+<!-- Card 1 -->
+<div class="bg-surface rounded-xl border border-outline-variant p-stack-md flex flex-col justify-between shadow-sm relative overflow-hidden group">
+<div class="absolute right-0 top-0 w-24 h-24 bg-emerald-100 rounded-bl-full -mr-8 -mt-8 opacity-50"></div>
+<div class="flex justify-between items-start mb-4 relative z-10">
+<span class="font-label-md text-label-md text-on-surface-variant">Successful</span>
+<span class="material-symbols-outlined text-emerald-600 bg-emerald-50 p-1.5 rounded-lg text-[20px]" data-icon="check_circle">check_circle</span>
+</div>
+<div class="relative z-10">
+<span class="font-display-lg text-display-lg text-primary">342</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface rounded-xl border border-error p-stack-md flex flex-col justify-between shadow-sm relative overflow-hidden group">
+<div class="absolute right-0 top-0 w-24 h-24 bg-red-50 rounded-bl-full -mr-8 -mt-8 opacity-50"></div>
+<div class="flex justify-between items-start mb-4 relative z-10">
+<span class="font-label-md text-label-md text-on-surface-variant">Failed</span>
+<span class="material-symbols-outlined text-error bg-error-container p-1.5 rounded-lg text-[20px]" data-icon="error">error</span>
+</div>
+<div class="relative z-10">
+<span class="font-display-lg text-display-lg text-error">14</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface rounded-xl border border-outline-variant p-stack-md flex flex-col justify-between shadow-sm relative overflow-hidden group">
+<div class="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-8 -mt-8 opacity-50"></div>
+<div class="flex justify-between items-start mb-4 relative z-10">
+<span class="font-label-md text-label-md text-on-surface-variant">In Progress</span>
+<span class="material-symbols-outlined text-blue-600 bg-blue-50 p-1.5 rounded-lg text-[20px] animate-spin" data-icon="sync">sync</span>
+</div>
+<div class="relative z-10">
+<span class="font-display-lg text-display-lg text-primary">2</span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface rounded-xl border border-outline-variant p-stack-md flex flex-col justify-between shadow-sm relative overflow-hidden group">
+<div class="absolute right-0 top-0 w-24 h-24 bg-surface-container rounded-bl-full -mr-8 -mt-8 opacity-50"></div>
+<div class="flex justify-between items-start mb-4 relative z-10">
+<span class="font-label-md text-label-md text-on-surface-variant">Last Sync</span>
+<span class="material-symbols-outlined text-secondary bg-surface-container p-1.5 rounded-lg text-[20px]" data-icon="schedule">schedule</span>
+</div>
+<div class="relative z-10">
+<span class="font-headline-lg text-headline-lg text-primary">2 min ago</span>
+</div>
+</div>
+</div>
+<!-- Main Data Table Container -->
+<div class="bg-surface rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+<div class="p-4 border-b border-outline-variant bg-surface flex justify-between items-center">
+<h3 class="font-headline-sm text-headline-sm text-primary">Sync History</h3>
+<div class="flex gap-2">
+<button class="h-8 px-3 text-label-sm font-label-sm border border-outline-variant rounded bg-surface hover:bg-surface-container transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="filter_list">filter_list</span> Filter
+                        </button>
+<button class="h-8 px-3 text-label-sm font-label-sm border border-outline-variant rounded bg-surface hover:bg-surface-container transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="download">download</span> Export
+                        </button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-[#F8FAFC] border-b border-[#F1F5F9]">
+<tr>
+<th class="font-label-sm text-label-sm text-on-surface-variant py-3 px-4 font-semibold whitespace-nowrap">Time</th>
+<th class="font-label-sm text-label-sm text-on-surface-variant py-3 px-4 font-semibold whitespace-nowrap">Degree</th>
+<th class="font-label-sm text-label-sm text-on-surface-variant py-3 px-4 font-semibold whitespace-nowrap">Year</th>
+<th class="font-label-sm text-label-sm text-on-surface-variant py-3 px-4 font-semibold whitespace-nowrap">Batch</th>
+<th class="font-label-sm text-label-sm text-on-surface-variant py-3 px-4 font-semibold whitespace-nowrap text-right">Entries</th>
+<th class="font-label-sm text-label-sm text-on-surface-variant py-3 px-4 font-semibold whitespace-nowrap">Status</th>
+<th class="font-label-sm text-label-sm text-on-surface-variant py-3 px-4 font-semibold whitespace-nowrap text-right">Duration</th>
+<th class="font-label-sm text-label-sm text-on-surface-variant py-3 px-4 font-semibold whitespace-nowrap">Error</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#F1F5F9]">
+<!-- Row 1 -->
+<tr class="h-[56px] hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-4 font-body-sm text-body-sm text-primary whitespace-nowrap">10:32 PM</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface whitespace-nowrap">B.Tech CSE</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface whitespace-nowrap">3rd</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface whitespace-nowrap">CSE-A</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface whitespace-nowrap text-right">12</td>
+<td class="py-2 px-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-semibold bg-emerald-100 text-emerald-800">
+                                        SUCCESS
+                                    </span>
+</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant whitespace-nowrap text-right">1.2s</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant whitespace-nowrap">—</td>
+</tr>
+<!-- Row 2 (Error) -->
+<tr class="h-[56px] bg-red-50/30 hover:bg-red-50/50 transition-colors border-l-4 border-l-error">
+<td class="py-2 px-4 font-body-sm text-body-sm text-primary whitespace-nowrap">10:30 PM</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface whitespace-nowrap">B.Tech CSE</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface whitespace-nowrap">2nd</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface whitespace-nowrap">CSE-B</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface whitespace-nowrap text-right">10</td>
+<td class="py-2 px-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-semibold bg-error-container text-on-error-container">
+                                        FAILED
+                                    </span>
+</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant whitespace-nowrap text-right">—</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-error font-medium whitespace-nowrap flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="warning">warning</span> HTTP 500
+                                </td>
+</tr>
+<!-- Row 3 (Mock) -->
+<tr class="h-[56px] hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-4 font-body-sm text-body-sm text-primary whitespace-nowrap">10:25 PM</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface whitespace-nowrap">B.Tech MECH</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface whitespace-nowrap">4th</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface whitespace-nowrap">MECH-A</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface whitespace-nowrap text-right">8</td>
+<td class="py-2 px-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-semibold bg-emerald-100 text-emerald-800">
+                                        SUCCESS
+                                    </span>
+</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant whitespace-nowrap text-right">0.8s</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant whitespace-nowrap">—</td>
+</tr>
+<!-- Row 4 (Mock In Progress) -->
+<tr class="h-[56px] hover:bg-surface-container-low transition-colors bg-blue-50/20">
+<td class="py-2 px-4 font-body-sm text-body-sm text-primary whitespace-nowrap">Just Now</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface whitespace-nowrap">M.Tech AI</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface whitespace-nowrap">1st</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface whitespace-nowrap">AI-1</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface whitespace-nowrap text-right">-</td>
+<td class="py-2 px-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+<span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 animate-pulse"></span> IN PROGRESS
+                                    </span>
+</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant whitespace-nowrap text-right">Running...</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant whitespace-nowrap">—</td>
+</tr>
+<!-- Row 5 (Mock) -->
+<tr class="h-[56px] hover:bg-surface-container-low transition-colors">
+<td class="py-2 px-4 font-body-sm text-body-sm text-primary whitespace-nowrap">09:15 PM</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface whitespace-nowrap">B.Arch</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface whitespace-nowrap">1st</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface whitespace-nowrap">ARCH-A</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface whitespace-nowrap text-right">15</td>
+<td class="py-2 px-4 whitespace-nowrap">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-semibold bg-emerald-100 text-emerald-800">
+                                        SUCCESS
+                                    </span>
+</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant whitespace-nowrap text-right">2.1s</td>
+<td class="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant whitespace-nowrap">—</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 border-t border-[#F1F5F9] bg-[#F8FAFC] flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Showing 1 to 5 of 358 entries</span>
+<div class="flex gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant bg-surface text-on-surface-variant disabled:opacity-50"><span class="material-symbols-outlined text-[18px]" data-icon="chevron_left">chevron_left</span></button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-primary-container text-on-primary font-label-sm">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant bg-surface text-on-surface hover:bg-surface-container font-label-sm">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant bg-surface text-on-surface hover:bg-surface-container font-label-sm">3</button>
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant bg-surface text-on-surface-variant hover:bg-surface-container"><span class="material-symbols-outlined text-[18px]" data-icon="chevron_right">chevron_right</span></button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
