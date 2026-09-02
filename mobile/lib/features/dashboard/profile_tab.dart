@@ -129,7 +129,7 @@ class _ProfileTabState extends State<ProfileTab> {
                 if (StorageService.getUserMode() == 'faculty') {
                   await StorageService.clearFacultySelection();
                   navigator.pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const FacultySelectionScreen()),
+                    MaterialPageRoute(builder: (context) => FacultySelectionScreen()),
                     (route) => false,
                   );
                 } else {
