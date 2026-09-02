@@ -80,9 +80,8 @@ class NotificationService {
     final nowLocal = DateTime.now();
     bool anyScheduled = false;
 
-    for (final dayData in weekTimetable) {
-      final dayName = dayData['day'] as String;
-      final classes = dayData['classes'] as List<dynamic>? ?? [];
+    for (final cls in weekTimetable) {
+      final dayName = cls['day'] as String;
 
       int targetWeekday = _getWeekdayNumber(dayName);
       if (targetWeekday == 0) continue;
@@ -90,54 +89,56 @@ class NotificationService {
       // ONLY schedule if the class actually exists TODAY
       if (targetWeekday != nowLocal.weekday) continue;
 
-      for (final cls in classes) {
-        final startTimeStr = cls['start_time'] as String;
-        final endTimeStr = cls['end_time'] as String? ?? '';
-        final subject = cls['subject'] as String? ?? 'Class';
-        final room = cls['room'] as String? ?? '';
-        final faculty = cls['faculty'] as String? ?? '';
-        
-        final parts = startTimeStr.split(':');
-        if (parts.length != 2) continue;
+      final startTimeStr = cls['start_time'] as String;
+      final endTimeStr = cls['end_time'] as String? ?? '';
+      final subject = cls['subject'] as String? ?? 'Class';
+      final room = cls['room'] as String? ?? '';
+      final faculty = cls['faculty'] as String? ?? '';
+      
+      final parts = startTimeStr.split(':');
+      if (parts.length != 2) continue;
 
-        final hour = int.tryParse(parts[0]) ?? 0;
-        final minute = int.tryParse(parts[1]) ?? 0;
+      final hour = int.tryParse(parts[0]) ?? 0;
+      final minute = int.tryParse(parts[1]) ?? 0;
 
-        final classStartLocal = DateTime(nowLocal.year, nowLocal.month, nowLocal.day, hour, minute);
-        final reminderTimeLocal = classStartLocal.subtract(const Duration(minutes: 5));
+      final classStartLocal = DateTime(nowLocal.year, nowLocal.month, nowLocal.day, hour, minute);
+      final reminderTimeLocal = classStartLocal.subtract(const Duration(minutes: 5));
 
-        print('Diagnostic: [ClassReminder] Today: $dayName');
-        print('Diagnostic: [ClassReminder] Class: $subject');
-        print('Diagnostic: [ClassReminder] Start: $startTimeStr');
+      print('Diagnostic: [ClassReminder] Today: $dayName');
+      print('Diagnostic: [ClassReminder] Class: $subject');
+      print('Diagnostic: [ClassReminder] Start: $startTimeStr');
 
-        // Past class protection / starting in less than 5 minutes
-        if (!reminderTimeLocal.isAfter(nowLocal)) {
-          print('Diagnostic: [ClassReminder] Skipped $subject $startTimeStr');
-          print('Diagnostic: [ClassReminder] Reason: reminder time already passed');
-          continue;
-        }
+      // Past class protection / starting in less than 5 minutes
+      if (!reminderTimeLocal.isAfter(nowLocal)) {
+        print('Diagnostic: [ClassReminder] Skipped $subject $startTimeStr');
+        print('Diagnostic: [ClassReminder] Reason: reminder time already passed');
+        continue;
+      }
 
-        String timeDisplay = TimeUtils.format12Hour(startTimeStr);
-        if (endTimeStr.isNotEmpty) {
-          timeDisplay += ' – ${TimeUtils.format12Hour(endTimeStr)}';
-        }
-        
-        String body = timeDisplay;
-        if (room.isNotEmpty && room != 'TBA') {
-          body += ' • ${room.split('_')[0]}';
-        }
-        if (faculty.isNotEmpty) {
-          body += '\n$faculty';
-        }
+      String timeDisplay = TimeUtils.format12Hour(startTimeStr);
+      if (endTimeStr.isNotEmpty) {
+        timeDisplay += ' – ${TimeUtils.format12Hour(endTimeStr)}';
+      }
+      
+      String body = timeDisplay;
+      if (room.isNotEmpty && room != 'TBA') {
+        body += ' • ${room.split('_')[0]}';
+      }
+      if (faculty.isNotEmpty) {
+        body += '\n$faculty';
+      }
 
-        // Duplicate notification protection using deterministic ID
-        final notifId = Object.hash(
-          subject, 
-          startTimeStr, 
-          nowLocal.year, 
-          nowLocal.month, 
-          nowLocal.day
-        ).abs() % 2147483647;
+      final userMode = StorageService.getUserMode() ?? 'student';
+
+      // Duplicate notification protection using deterministic ID with namespace isolation
+      final notifId = Object.hash(
+        userMode,
+        subject, 
+        startTimeStr, 
+        nowLocal.year, 
+        nowLocal.month, 
+        nowLocal.day
+      ).abs() % 2147483647;
 
         print('Diagnostic: [ClassReminder] Reminder: $reminderTimeLocal');
         print('Diagnostic: [ClassReminder] Scheduling notification ID: $notifId');
@@ -168,7 +169,6 @@ class NotificationService {
         } catch (e) {
           print('Diagnostic: [ClassReminder] FAILED to schedule reminder: $e');
         }
-      }
     }
     
     if (!anyScheduled) {

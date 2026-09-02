@@ -5,11 +5,15 @@ import { runSync } from './sync';
 import { sendGenericBroadcast } from './notifications/fcm';
 import { runReminderWorker } from './notifications/reminderWorker';
 
-
+import facultyRouter from './api/faculty';
+import roomsRouter from './api/rooms';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+app.use('/api/faculty', facultyRouter);
+app.use('/api/rooms', roomsRouter);
 
 const PORT = process.env.PORT || 3000;
 

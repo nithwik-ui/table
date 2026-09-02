@@ -32,13 +32,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _currentIndex = widget.initialTab;
     
     // Explicitly restore/schedule exact alarms on startup for existing timetable
-    final cachedTimetable = StorageService.getTimetableCache();
+    final userMode = StorageService.getUserMode();
+    final cachedTimetable = userMode == 'faculty' 
+        ? StorageService.getFacultyTimetableCache() 
+        : StorageService.getTimetableCache();
+        
     if (cachedTimetable.isNotEmpty) {
       NotificationService.scheduleClassReminders(cachedTimetable);
     }
     
     _checkAndRefreshTimetable();
-    _checkForChanges();
+    if (userMode == 'student') {
+      _checkForChanges();
+    }
     
     // Check for updates silently on startup (after 3 seconds politeness delay)
     Future.delayed(const Duration(seconds: 3), () async {
@@ -61,25 +67,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _checkAndRefreshTimetable() async {
-    final selection = StorageService.getSelection();
-    if (selection == null) return;
+    final userMode = StorageService.getUserMode();
     
-    final lastSynced = StorageService.getLastSyncedAt();
-    if (lastSynced != null) {
-      final diff = DateTime.now().difference(lastSynced);
-      if (diff.inMinutes < 60) return;
-    }
-
-    try {
-      final batchId = selection['batchId']!;
-      final newTimetable = await ApiService.fetchTimetable(batchId);
-      await StorageService.saveTimetableCache(newTimetable);
-      await StorageService.saveLastSyncedAt(DateTime.now());
-      _checkForChanges();
+    if (userMode == 'faculty') {
+      final selection = StorageService.getFacultySelection();
+      if (selection == null) return;
       
-      // FIX: Explicitly reschedule Android exact alarms with the refreshed timetable
-      await NotificationService.scheduleClassReminders(newTimetable);
-    } catch (_) {}
+      final lastSynced = StorageService.getFacultyLastSyncedAt();
+      if (lastSynced != null) {
+        final diff = DateTime.now().difference(lastSynced);
+        if (diff.inMinutes < 60) return;
+      }
+
+      try {
+        final facultyId = selection['facultyId']!;
+        final newTimetable = await ApiService.fetchFacultyTimetable(facultyId);
+        await StorageService.saveFacultyTimetableCache(newTimetable);
+        await StorageService.saveFacultyLastSyncedAt(DateTime.now());
+        
+        await NotificationService.scheduleClassReminders(newTimetable);
+      } catch (_) {}
+    } else {
+      final selection = StorageService.getSelection();
+      if (selection == null) return;
+      
+      final lastSynced = StorageService.getLastSyncedAt();
+      if (lastSynced != null) {
+        final diff = DateTime.now().difference(lastSynced);
+        if (diff.inMinutes < 60) return;
+      }
+
+      try {
+        final batchId = selection['batchId']!;
+        final newTimetable = await ApiService.fetchTimetable(batchId);
+        await StorageService.saveTimetableCache(newTimetable);
+        await StorageService.saveLastSyncedAt(DateTime.now());
+        _checkForChanges();
+        
+        await NotificationService.scheduleClassReminders(newTimetable);
+      } catch (_) {}
+    }
   }
 
   void _checkForChanges() async {

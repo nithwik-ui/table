@@ -129,6 +129,45 @@ class ApiService {
     }
   }
 
+  // FACULTY ENDPOINTS
+  static Future<List<dynamic>> fetchFacultyList() async {
+    final response = await http
+        .get(Uri.parse('${AppConstants.apiBaseUrl}/api/faculty/list'))
+        .timeout(timeoutDuration);
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body) as List<dynamic>;
+    } else {
+      throw Exception('Failed to load faculty list (HTTP ${response.statusCode})');
+    }
+  }
+
+  static Future<List<dynamic>> fetchFacultyTimetable(String facultyId) async {
+    final response = await http
+        .get(Uri.parse('${AppConstants.apiBaseUrl}/api/faculty/timetable?faculty=${Uri.encodeComponent(facultyId)}'))
+        .timeout(timeoutDuration);
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body) as List<dynamic>;
+    } else {
+      throw Exception('Failed to load faculty timetable (HTTP ${response.statusCode})');
+    }
+  }
+
+  // FREE ROOMS ENDPOINTS
+  static Future<List<dynamic>> fetchFreeRooms(String day, String time) async {
+    final response = await http
+        .get(Uri.parse('${AppConstants.apiBaseUrl}/api/rooms/free?day=${Uri.encodeComponent(day)}&time=${Uri.encodeComponent(time)}'))
+        .timeout(timeoutDuration);
+
+    if (response.statusCode == 200) {
+      final decoded = json.decode(response.body) as Map<String, dynamic>;
+      return decoded['rooms'] as List<dynamic>;
+    } else {
+      throw Exception('Failed to load free rooms (HTTP ${response.statusCode})');
+    }
+  }
+
   static Future<Map<String, dynamic>> fetchLatestGithubRelease() async {
     try {
       final response = await http.get(

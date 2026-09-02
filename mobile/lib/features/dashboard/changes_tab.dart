@@ -26,6 +26,14 @@ class _ChangesTabState extends State<ChangesTab> {
   }
 
   void _loadLocalData() {
+    if (StorageService.getUserMode() == 'faculty') {
+      setState(() {
+        _changes = [];
+        _isLoading = false;
+      });
+      return;
+    }
+
     final cached = StorageService.getChangesCache();
     final now = DateTime.now();
     final filtered = cached.where((change) {
@@ -50,6 +58,14 @@ class _ChangesTabState extends State<ChangesTab> {
   }
 
   Future<void> _fetchChanges() async {
+    if (StorageService.getUserMode() == 'faculty') {
+      setState(() {
+        _isLoading = false;
+        _isOffline = false;
+      });
+      return;
+    }
+  
     final selection = StorageService.getSelection();
     if (selection == null) return;
     final batchId = selection['batchId']!;
@@ -293,6 +309,28 @@ class _ChangesTabState extends State<ChangesTab> {
             const SizedBox(height: 8),
 
             // Content Feed
+            if (StorageService.getUserMode() == 'faculty')
+              const Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.history_toggle_off, color: AppConstants.textSecondary, size: 48),
+                      SizedBox(height: 16),
+                      Text(
+                        'Not Available',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppConstants.textPrimary),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Changes tracking is only available for student timetables.',
+                        style: TextStyle(color: AppConstants.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator(color: AppConstants.primary))

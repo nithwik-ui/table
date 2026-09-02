@@ -66,6 +66,39 @@ export class SRUClient {
     }
   }
 
+  /**
+   * Initializes session specifically for the room free slots page.
+   */
+  public async initRoomSession(): Promise<{ csrfToken: string; cookies: string }> {
+    try {
+      const response = await this.axiosInstance.get('/room_free_slots');
+      const html = response.data;
+      const $ = cheerio.load(html);
+
+      const token = $('input[name="_token"]').val();
+      if (!token || typeof token !== 'string') {
+        throw new Error('CSRF token not found in /room_free_slots page');
+      }
+
+      this.csrfToken = token;
+
+      // Extract set-cookie headers
+      const setCookieHeaders = response.headers['set-cookie'];
+      if (setCookieHeaders && setCookieHeaders.length > 0) {
+        const parsedCookies = setCookieHeaders.map(cookieStr => cookieStr.split(';')[0]);
+        this.cookieHeader = parsedCookies.join('; ');
+      }
+
+      return {
+        csrfToken: this.csrfToken,
+        cookies: this.cookieHeader || '',
+      };
+    } catch (error) {
+      console.error('Failed to initialize room session:', error);
+      throw error;
+    }
+  }
+
   private getRequestHeaders() {
     const headers: Record<string, string> = {};
     if (this.cookieHeader) {
@@ -88,6 +121,22 @@ export class SRUClient {
       if (error.response && error.response.status === 419) {
         console.warn('Received HTTP 419, re-initializing session and retrying...');
         await this.initSession();
+        return await requestFn();
+      }
+      throw error;
+    }
+  }
+
+  private async executeRoomRequest<T>(requestFn: () => Promise<T>): Promise<T> {
+    try {
+      if (!this.csrfToken) {
+        await this.initRoomSession();
+      }
+      return await requestFn();
+    } catch (error: any) {
+      if (error.response && error.response.status === 419) {
+        console.warn('Received HTTP 419, re-initializing room session and retrying...');
+        await this.initRoomSession();
         return await requestFn();
       }
       throw error;
@@ -175,6 +224,96 @@ export class SRUClient {
       });
 
       return response.data;
+    });
+  }
+
+  /**
+   * Scrapes and returns all available faculty from the /report page.
+   */
+  public async getFacultyList(): Promise<Array<{ id: string; name: string }>> {
+    return this.executeRequest(async () => {
+      const response = await this.axiosInstance.get('/report', {
+        headers: this.getRequestHeaders(),
+      });
+      const $ = cheerio.load(response.data);
+      const faculties: Array<{ id: string; name: string }> = [];
+
+      $('#faculty option').each((_, el) => {
+        const value = $(el).val();
+        const text = $(el).text();
+        if (value && typeof value === 'string' && value.trim() !== '') {
+          faculties.push({ id: value.trim(), name: text.trim() });
+        }
+      });
+
+      return faculties;
+    });
+  }
+
+  /**
+   * Fetches the raw timetable response for a given faculty.
+   */
+  public async getFacultyTimetable(facultyId: string): Promise<any> {
+    return this.executeRequest(async () => {
+      if (!this.csrfToken) {
+        throw new Error('CSRF token not initialized');
+      }
+
+      const params = new URLSearchParams();
+      params.append('_token', this.csrfToken);
+      params.append('faculty', facultyId);
+
+      const response = await this.axiosInstance.post('/searchDueReport2Public', params, {
+        headers: {
+          ...this.getRequestHeaders(),
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Referer': `${this.baseUrl}/report`,
+        },
+      });
+
+      return response.data;
+    });
+  }
+
+  /**
+   * Fetches free classrooms for a given day and time.
+   */
+  public async getFreeRooms(day: string, time: string): Promise<Array<{ name: string; type: string }>> {
+    return this.executeRoomRequest(async () => {
+      if (!this.csrfToken) {
+        throw new Error('CSRF token not initialized');
+      }
+
+      const params = new URLSearchParams();
+      params.append('_token', this.csrfToken);
+      params.append('day', day);
+      params.append('time', time);
+
+      const response = await this.axiosInstance.post('/room_free_slots', params, {
+        headers: {
+          ...this.getRequestHeaders(),
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Referer': `${this.baseUrl}/room_free_slots`,
+        },
+      });
+
+      const html = response.data;
+      const $ = cheerio.load(html);
+      const rooms: Array<{ name: string; type: string }> = [];
+
+      // The results are in a table with id "tab"
+      $('#tab tbody tr').each((_, el) => {
+        const tds = $(el).find('td');
+        if (tds.length >= 3) { // usually S.No, Room Name, Room Type
+          const name = $(tds[1]).text().trim();
+          const type = $(tds[2]).text().trim();
+          if (name) {
+            rooms.push({ name, type });
+          }
+        }
+      });
+
+      return rooms;
     });
   }
 

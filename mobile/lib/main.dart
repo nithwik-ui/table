@@ -8,6 +8,7 @@ import 'core/storage.dart';
 import 'core/api.dart';
 import 'core/notifications.dart';
 import 'features/onboarding/welcome_screen.dart';
+import 'features/onboarding/mode_selection_screen.dart';
 import 'features/dashboard/dashboard_screen.dart';
 
 // Background message handler
@@ -139,11 +140,22 @@ class _SplashControllerState extends State<SplashController> {
     }
 
     if (mounted) {
-      final bool hasExistingSelection = StorageService.hasSelection();
+      final userMode = StorageService.getUserMode();
+      final hasStudent = StorageService.hasSelection();
+      final hasFaculty = StorageService.hasFacultySelection();
+      
+      Widget nextScreen;
+      if (userMode == 'student' && hasStudent) {
+        nextScreen = const DashboardScreen();
+      } else if (userMode == 'faculty' && hasFaculty) {
+        nextScreen = const DashboardScreen();
+      } else {
+        nextScreen = const ModeSelectionScreen();
+      }
+
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => 
-              hasExistingSelection ? const DashboardScreen() : const WelcomeScreen(),
+          pageBuilder: (context, animation, secondaryAnimation) => nextScreen,
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },

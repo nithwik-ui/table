@@ -8,6 +8,7 @@ import '../../core/api.dart';
 import '../../core/notifications.dart';
 import '../notifications/notifications_screen.dart';
 import 'dashboard_screen.dart';
+import 'free_rooms_screen.dart';
 import 'widgets/live_class_progress.dart';
 
 class HomeTab extends StatefulWidget {
@@ -219,6 +220,16 @@ class _HomeTabState extends State<HomeTab> {
                       ),
                     ),
                   ),
+                  // Free Rooms Button (Student Only)
+                  if (StorageService.getUserMode() == 'student')
+                    IconButton(
+                      icon: const Icon(Icons.meeting_room_outlined, color: AppConstants.textPrimary, size: 24),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => const FreeRoomsScreen()),
+                        );
+                      },
+                    ),
                   // Settings Gear (opens Profile)
                   IconButton(
                     icon: const Icon(Icons.settings_outlined, color: AppConstants.textPrimary, size: 22),

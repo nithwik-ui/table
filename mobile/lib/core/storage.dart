@@ -27,6 +27,19 @@ class StorageService {
         await saveChangesCache(validChanges);
       }
     }
+
+    // Migration: If no user mode but has student selection, default to student
+    if (getUserMode() == null && hasSelection()) {
+      await setUserMode('student');
+    }
+  }
+
+  static Future<void> setUserMode(String mode) async {
+    await _prefsBox?.put('user_mode', mode);
+  }
+
+  static String? getUserMode() {
+    return _prefsBox?.get('user_mode') as String?;
   }
 
   static Future<void> saveUserName(String? name) async {
@@ -87,6 +100,43 @@ class StorageService {
     return getSelection() != null;
   }
 
+  // FACULTY SELECTION
+  static Future<void> saveFacultySelection({
+    required String facultyId,
+    required String facultyName,
+  }) async {
+    await _prefsBox?.put('faculty_id', facultyId);
+    await _prefsBox?.put('faculty_name', facultyName);
+  }
+
+  static Map<String, String>? getFacultySelection() {
+    final facultyId = _prefsBox?.get('faculty_id') as String?;
+    final facultyName = _prefsBox?.get('faculty_name') as String?;
+
+    if (facultyId == null || facultyName == null) {
+      return null;
+    }
+
+    return {
+      'facultyId': facultyId,
+      'facultyName': facultyName,
+    };
+  }
+
+  static Future<void> clearFacultySelection() async {
+    await _prefsBox?.delete('faculty_id');
+    await _prefsBox?.delete('faculty_name');
+    await _prefsBox?.delete('faculty_last_synced_at');
+    
+    // Clear caches
+    await _cacheBox?.delete('faculty_timetable');
+    await _cacheBox?.delete('faculty_changes');
+  }
+
+  static bool hasFacultySelection() {
+    return getFacultySelection() != null;
+  }
+
   // NOTIFICATION SETTINGS
   static Future<void> setNotificationsEnabled(bool enabled) async {
     await _prefsBox?.put('notifications_enabled', enabled);
@@ -115,6 +165,16 @@ class StorageService {
     return DateTime.parse(str);
   }
 
+  static Future<void> saveFacultyLastSyncedAt(DateTime dateTime) async {
+    await _prefsBox?.put('faculty_last_synced_at', dateTime.toIso8601String());
+  }
+
+  static DateTime? getFacultyLastSyncedAt() {
+    final str = _prefsBox?.get('faculty_last_synced_at') as String?;
+    if (str == null) return null;
+    return DateTime.parse(str);
+  }
+
   // TIMETABLE CACHE
   static Future<void> saveTimetableCache(List<dynamic> entries) async {
     await _cacheBox?.put('timetable', entries);
@@ -122,6 +182,14 @@ class StorageService {
 
   static List<dynamic> getTimetableCache() {
     return _cacheBox?.get('timetable', defaultValue: []) as List<dynamic>? ?? [];
+  }
+
+  static Future<void> saveFacultyTimetableCache(List<dynamic> entries) async {
+    await _cacheBox?.put('faculty_timetable', entries);
+  }
+
+  static List<dynamic> getFacultyTimetableCache() {
+    return _cacheBox?.get('faculty_timetable', defaultValue: []) as List<dynamic>? ?? [];
   }
 
   // TIMETABLE CHANGES CACHE

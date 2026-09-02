@@ -11,6 +11,7 @@ import '../../core/updater.dart';
 import '../../core/notifications.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../onboarding/degree_screen.dart';
+import '../onboarding/mode_selection_screen.dart';
 
 class ProfileTab extends StatefulWidget {
   const ProfileTab({super.key});
@@ -42,45 +43,77 @@ class _ProfileTabState extends State<ProfileTab> {
       if (mounted) setState(() => _currentVersion = info.version);
     }).catchError((_) {});
 
-    final name = StorageService.getUserName();
-    final selection = StorageService.getSelection();
-    
-    // Initials calculation
-    String initials = 'S';
-    String dispName = 'Student';
-    if (name != null && name.trim().isNotEmpty) {
-      dispName = name.trim();
-      initials = dispName.substring(0, 1).toUpperCase();
-    }
+    final userMode = StorageService.getUserMode();
 
-    // Last synced calculation
-    final lastSynced = StorageService.getLastSyncedAt();
-    String lastText = 'Never';
-    if (lastSynced != null) {
-      lastText = DateFormat('MMM d, h:mm a').format(lastSynced);
-    }
-
-    setState(() {
-      _displayName = dispName;
-      _initials = initials;
-      _lastSyncedText = lastText;
-      _notificationsEnabled = StorageService.isNotificationsEnabled();
-      _remindersEnabled = StorageService.isClassRemindersEnabled();
-
-      if (selection != null) {
-        _degreeYearText = '${selection['degree']} · ${selection['year']} Year';
-        _batchCode = selection['batchCode']!;
+    if (userMode == 'faculty') {
+      final selection = StorageService.getFacultySelection();
+      
+      String initials = 'F';
+      String dispName = 'Faculty';
+      if (selection != null && selection['facultyName'] != null) {
+        dispName = selection['facultyName']!.trim();
+        initials = dispName.substring(0, 1).toUpperCase();
       }
-    });
+
+      final lastSynced = StorageService.getFacultyLastSyncedAt();
+      String lastText = 'Never';
+      if (lastSynced != null) {
+        lastText = DateFormat('MMM d, h:mm a').format(lastSynced);
+      }
+
+      setState(() {
+        _displayName = dispName;
+        _initials = initials;
+        _lastSyncedText = lastText;
+        _notificationsEnabled = StorageService.isNotificationsEnabled();
+        _remindersEnabled = StorageService.isClassRemindersEnabled();
+
+        if (selection != null) {
+          _degreeYearText = 'Faculty Mode';
+          _batchCode = selection['facultyId'] ?? '';
+        }
+      });
+    } else {
+      final name = StorageService.getUserName();
+      final selection = StorageService.getSelection();
+      
+      // Initials calculation
+      String initials = 'S';
+      String dispName = 'Student';
+      if (name != null && name.trim().isNotEmpty) {
+        dispName = name.trim();
+        initials = dispName.substring(0, 1).toUpperCase();
+      }
+
+      // Last synced calculation
+      final lastSynced = StorageService.getLastSyncedAt();
+      String lastText = 'Never';
+      if (lastSynced != null) {
+        lastText = DateFormat('MMM d, h:mm a').format(lastSynced);
+      }
+
+      setState(() {
+        _displayName = dispName;
+        _initials = initials;
+        _lastSyncedText = lastText;
+        _notificationsEnabled = StorageService.isNotificationsEnabled();
+        _remindersEnabled = StorageService.isClassRemindersEnabled();
+
+        if (selection != null) {
+          _degreeYearText = '${selection['degree']} · ${selection['year']} Year';
+          _batchCode = selection['batchCode']!;
+        }
+      });
+    }
   }
 
-  void _onResetTimetable() {
+  void _onChangeTimetable() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Change Timetable?'),
-          content: const Text('This will clear your current timetable selection and cache. Your username profile is kept.'),
+          content: const Text('This will remove your currently saved timetable and let you select a new one.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -91,17 +124,59 @@ class _ProfileTabState extends State<ProfileTab> {
                 final navigator = Navigator.of(context);
                 navigator.pop();
                 
-                // Clear selection keys only (keeping userName)
-                await StorageService.clearSelection();
+                await NotificationService.cancelAll();
+                
+                if (StorageService.getUserMode() == 'faculty') {
+                  await StorageService.clearFacultySelection();
+                  navigator.pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const FacultySelectionScreen()),
+                    (route) => false,
+                  );
+                } else {
+                  await StorageService.clearSelection();
+                  navigator.pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const DegreeScreen()),
+                    (route) => false,
+                  );
+                }
+              },
+              child: const Text('Change', style: TextStyle(color: AppConstants.primary)),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
-                navigator.pushAndRemoveUntil(
+  void _onSwitchMode() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        final isFaculty = StorageService.getUserMode() == 'faculty';
+        final targetMode = isFaculty ? 'Student' : 'Faculty';
+        return AlertDialog(
+          title: Text('Switch to $targetMode?'),
+          content: Text('This will switch your timetable mode to $targetMode. Your existing configurations will be saved.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel', style: TextStyle(color: AppConstants.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () async {
+                final navigator = Navigator.of(context);
+                navigator.pop();
+                
+                await NotificationService.cancelAll();
+                
+                // Directly switch via ModeSelectionScreen logic
+                navigator.push(
                   MaterialPageRoute(
-                    builder: (context) => const DegreeScreen(),
+                    builder: (context) => const ModeSelectionScreen(isSwitching: true),
                   ),
-                  (route) => false,
                 );
               },
-              child: const Text('Reset', style: TextStyle(color: AppConstants.error)),
+              child: const Text('Switch', style: TextStyle(color: AppConstants.primary)),
             ),
           ],
         );
@@ -148,12 +223,23 @@ class _ProfileTabState extends State<ProfileTab> {
     setState(() => _isRefreshing = true);
 
     try {
-      final list = await ApiService.fetchTimetable(batchId);
-      await StorageService.saveTimetableCache(list);
-      await StorageService.saveLastSyncedAt(DateTime.now());
+      final userMode = StorageService.getUserMode();
+      List<dynamic> list = [];
+      if (userMode == 'faculty') {
+        final facultyId = StorageService.getFacultySelection()?['facultyId'];
+        if (facultyId != null) {
+          list = await ApiService.fetchFacultyTimetable(facultyId);
+          await StorageService.saveFacultyTimetableCache(list);
+          await StorageService.saveFacultyLastSyncedAt(DateTime.now());
+        }
+      } else {
+        list = await ApiService.fetchTimetable(batchId);
+        await StorageService.saveTimetableCache(list);
+        await StorageService.saveLastSyncedAt(DateTime.now());
+      }
       
       final remindersEnabled = StorageService.isClassRemindersEnabled();
-      if (remindersEnabled) {
+      if (remindersEnabled && list.isNotEmpty) {
         await NotificationService.scheduleClassReminders(list);
       }
       
@@ -256,9 +342,9 @@ class _ProfileTabState extends State<ProfileTab> {
                           style: AppConstants.getMonoLabel(color: AppConstants.primary),
                         ),
                         const SizedBox(height: 16),
-                        // Ghost Link: Reset Timetable
+                        // Ghost Link: Change Timetable
                         TextButton(
-                          onPressed: _onResetTimetable,
+                          onPressed: _onChangeTimetable,
                           style: TextButton.styleFrom(foregroundColor: AppConstants.primary),
                           child: Text(
                             'Change timetable',
@@ -360,6 +446,20 @@ class _ProfileTabState extends State<ProfileTab> {
                           title: Text('Clear cache', style: AppConstants.getBodyLarge(color: AppConstants.warning)),
                           trailing: const Icon(Icons.chevron_right, color: AppConstants.textSecondary),
                           onTap: _isRefreshing ? null : _clearCacheOnly,
+                        ),
+                        const Divider(height: 1, color: AppConstants.outline),
+                        // Switch mode
+                        ListTile(
+                          leading: Icon(
+                            StorageService.getUserMode() == 'faculty' ? Icons.school_outlined : Icons.person_outline,
+                            color: AppConstants.purpleAccent,
+                          ),
+                          title: Text(
+                            StorageService.getUserMode() == 'faculty' ? 'Switch to student' : 'Switch to faculty',
+                            style: AppConstants.getBodyLarge(color: AppConstants.purpleAccent),
+                          ),
+                          trailing: const Icon(Icons.chevron_right, color: AppConstants.textSecondary),
+                          onTap: _isRefreshing ? null : _onSwitchMode,
                         ),
                       ],
                     ),

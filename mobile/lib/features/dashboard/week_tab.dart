@@ -45,7 +45,11 @@ class _WeekTabState extends State<WeekTab> {
   }
 
   void _loadLocalData() {
-    final cached = StorageService.getTimetableCache();
+    final userMode = StorageService.getUserMode();
+    final cached = userMode == 'faculty'
+        ? StorageService.getFacultyTimetableCache()
+        : StorageService.getTimetableCache();
+        
     setState(() {
       _timetable = cached;
     });
@@ -88,16 +92,28 @@ class _WeekTabState extends State<WeekTab> {
   }
 
   Future<void> _fetchTimetable() async {
-    final selection = StorageService.getSelection();
-    if (selection == null) return;
-    final batchId = selection['batchId']!;
-
+    final userMode = StorageService.getUserMode();
+    
     try {
-      final list = await ApiService.fetchTimetable(batchId);
-      await StorageService.saveTimetableCache(list);
-      await StorageService.saveLastSyncedAt(DateTime.now());
+      List<dynamic> list = [];
+      if (userMode == 'faculty') {
+        final selection = StorageService.getFacultySelection();
+        if (selection == null) return;
+        final facultyId = selection['facultyId']!;
+        
+        list = await ApiService.fetchFacultyTimetable(facultyId);
+        await StorageService.saveFacultyTimetableCache(list);
+        await StorageService.saveFacultyLastSyncedAt(DateTime.now());
+      } else {
+        final selection = StorageService.getSelection();
+        if (selection == null) return;
+        final batchId = selection['batchId']!;
+        
+        list = await ApiService.fetchTimetable(batchId);
+        await StorageService.saveTimetableCache(list);
+        await StorageService.saveLastSyncedAt(DateTime.now());
+      }
       
-      // FIX: Ensure alarms are explicitly rescheduled on manual refresh
       await NotificationService.scheduleClassReminders(list);
       
       if (mounted) {
