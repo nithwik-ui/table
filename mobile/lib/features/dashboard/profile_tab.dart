@@ -11,6 +11,7 @@ import '../../core/updater.dart';
 import '../../core/notifications.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../onboarding/degree_screen.dart';
+import '../onboarding/faculty_selection_screen.dart';
 import '../onboarding/mode_selection_screen.dart';
 
 class ProfileTab extends StatefulWidget {
