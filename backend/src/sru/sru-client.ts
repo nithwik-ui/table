@@ -301,12 +301,18 @@ export class SRUClient {
       const $ = cheerio.load(html);
       const rooms: Array<{ name: string; type: string }> = [];
 
-      // The results are in a table with id "tab"
-      $('#tab tbody tr').each((_, el) => {
+      // The results are in tables with class "table"
+      $('.table tbody tr').each((_, el) => {
         const tds = $(el).find('td');
-        if (tds.length >= 3) { // usually S.No, Room Name, Room Type
-          const name = $(tds[1]).text().trim();
-          const type = $(tds[2]).text().trim();
+        if (tds.length >= 2) {
+          const roomCell = $(tds[1]);
+          const badge = roomCell.find('.badge');
+          
+          let type = badge.text().trim();
+          // The name is the text inside the td but excluding the badge text. 
+          // An easy way is to get the full text, remove the badge text, and trim trailing hyphens.
+          let name = roomCell.text().replace(type, '').replace('-', '').trim();
+
           if (name) {
             rooms.push({ name, type });
           }
