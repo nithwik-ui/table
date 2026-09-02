@@ -1,5 +1,5 @@
 import { supabase } from '../db/supabase';
-import { sendClassReminderPush } from './fcm';
+import { sendClassReminderPush, sendFacultyClassReminderPush } from './fcm';
 
 // Helper: Get current day and minutes in IST (Asia/Kolkata)
 function getISTDateTime(): { day: string; minutes: number } {
@@ -43,6 +43,22 @@ export async function runReminderWorker() {
     // We dispatch pushes per class to its corresponding batch_id
     for (const c of classes) {
       await sendClassReminderPush(c.batch_id, c.subject, c.room);
+    }
+
+    // 2. Query faculty timetable for classes starting at the target time
+    const { data: facultyClasses, error: facultyError } = await supabase
+      .from('faculty_timetable_entries')
+      .select('faculty_id, subject, room')
+      .eq('day', day)
+      .eq('start_time', targetTimeStr);
+
+    if (facultyError) {
+      console.error('ReminderWorker: Error querying faculty timetable:', facultyError.message);
+    } else if (facultyClasses && facultyClasses.length > 0) {
+      console.log(`ReminderWorker: Found ${facultyClasses.length} faculty class(es) starting at ${targetTimeStr}. Dispatching pushes...`);
+      for (const fc of facultyClasses) {
+        await sendFacultyClassReminderPush(fc.faculty_id, fc.subject, fc.room);
+      }
     }
 
   } catch (err: any) {

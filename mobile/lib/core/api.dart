@@ -101,12 +101,38 @@ class ApiService {
     }
   }
 
-  static Future<bool> registerDevice(String fcmToken, String batchId) async {
+  static Future<List<dynamic>> fetchFacultyChanges(String facultyId) async {
+    final response = await http
+        .get(Uri.parse('${AppConstants.apiBaseUrl}/api/faculty/${Uri.encodeComponent(facultyId)}/changes'))
+        .timeout(timeoutDuration);
+
+    if (response.statusCode == 200) {
+      final list = json.decode(response.body) as List<dynamic>;
+      final now = DateTime.now();
+      return list.where((change) {
+        try {
+          final dt = DateTime.parse(change['detected_at'] as String).toLocal();
+          return now.difference(dt).inDays <= 7;
+        } catch (_) {
+          return true;
+        }
+      }).toList();
+    } else {
+      throw Exception('Failed to load faculty changes (HTTP ${response.statusCode})');
+    }
+  }
+
+  static Future<bool> registerDevice(String fcmToken, String batchId, {String userMode = 'student', String? facultyId}) async {
     try {
       final response = await http.post(
         Uri.parse('${AppConstants.apiBaseUrl}/api/devices/register'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({'fcm_token': fcmToken, 'batch_id': batchId}),
+        body: json.encode({
+          'fcm_token': fcmToken,
+          'batch_id': batchId,
+          'user_mode': userMode,
+          'faculty_id': facultyId,
+        }),
       ).timeout(timeoutDuration);
       
       return response.statusCode == 200;

@@ -201,6 +201,15 @@ class StorageService {
     return _cacheBox?.get('changes', defaultValue: []) as List<dynamic>? ?? [];
   }
 
+  // FACULTY TIMETABLE CHANGES CACHE
+  static Future<void> saveFacultyChangesCache(List<dynamic> changes) async {
+    await _cacheBox?.put('faculty_changes', changes);
+  }
+
+  static List<dynamic> getFacultyChangesCache() {
+    return _cacheBox?.get('faculty_changes', defaultValue: []) as List<dynamic>? ?? [];
+  }
+
   // METADATA DISCOVERY CACHE (offline onboarding recovery)
   static Future<void> saveDegreesCache(List<dynamic> degrees) async {
     await _cacheBox?.put('degrees', degrees);

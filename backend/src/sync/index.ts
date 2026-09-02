@@ -2,7 +2,7 @@ import { SRUClient, TimetableEntry } from '../sru/sru-client';
 import { supabase } from '../db/supabase';
 import * as crypto from 'crypto';
 import { diffTimetables } from './diff';
-import { sendBatchNotifications } from '../notifications/fcm';
+import { sendBatchNotifications, sendFacultyBatchNotifications } from '../notifications/fcm';
 
 // Politeness settings
 const CONCURRENCY_LIMIT = 3;
@@ -373,12 +373,156 @@ export async function runSync() {
     }
   });
 
+  // --- Step 5: Faculty Synchronization ---
+  console.log('\nSynchronizing faculty timetables...');
+  const activeFaculties = await client.getFacultyList();
+  console.log(`Discovered ${activeFaculties.length} faculty members. Syncing...`);
+  
+  let facultySucceededCount = 0;
+  let facultyFailedCount = 0;
+  let facultyUnchangedCount = 0;
+  let facultyUpdatedCount = 0;
+
+  await executeInPool(activeFaculties, CONCURRENCY_LIMIT, async (facultyName: string) => {
+    await sleep(DELAY_BETWEEN_REQUESTS_MS);
+    
+    // Convert faculty name to an ID format (slug) for consistency
+    const facultyId = Buffer.from(facultyName).toString('base64');
+
+    try {
+      // 1. Fetch raw timetable
+      const raw = await client.getFacultyTimetable(facultyName);
+      if (!raw || !raw.success) {
+        throw new Error('Live portal returned unsuccessful status');
+      }
+
+      // 2. Normalize and sort
+      const normalized = client.normalize(raw);
+      const sorted = sortEntries(normalized);
+      const serialized = JSON.stringify(sorted);
+      const newHash = computeHash(serialized);
+
+      // 3. Compare with database snapshot
+      const { data: snapshot, error: snapshotErr } = await supabase
+        .from('faculty_snapshots')
+        .select('hash')
+        .eq('faculty_id', facultyId)
+        .maybeSingle();
+
+      if (snapshotErr) {
+        throw new Error(`Failed to check database snapshot: ${snapshotErr.message}`);
+      }
+
+      if (snapshot && snapshot.hash === newHash) {
+        facultyUnchangedCount++;
+        facultySucceededCount++;
+        console.log(`[-] Faculty ${facultyName}: Timetable unchanged.`);
+      } else {
+        console.log(`[+] Faculty ${facultyName}: Update detected! Syncing...`);
+
+        // Diff with old entries if snapshot existed previously
+        if (snapshot) {
+          const { data: oldEntries, error: oldEntriesErr } = await supabase
+            .from('faculty_timetable_entries')
+            .select('id, day, start_time, end_time, subject, faculty, room, ltp, semester')
+            .eq('faculty_id', facultyId);
+
+          if (oldEntriesErr) {
+            console.error(`Failed to fetch old faculty entries for diff: ${oldEntriesErr.message}`);
+          } else {
+            // Re-using diffTimetables with facultyId instead of batchId
+            const { changes } = diffTimetables(facultyId, oldEntries || [], sorted);
+            
+            // Map the output of diffTimetables from batch_id -> faculty_id
+            const facultyChanges = changes.map((c: any) => {
+              const { batch_id, ...rest } = c;
+              return { ...rest, faculty_id: facultyId };
+            });
+
+            if (facultyChanges.length > 0) {
+              const { error: insertChangesErr } = await supabase
+                .from('faculty_changes')
+                .insert(facultyChanges);
+
+              if (insertChangesErr) {
+                console.error(`Failed to write faculty changes: ${insertChangesErr.message}`);
+              } else {
+                console.log(`[+] Recorded ${facultyChanges.length} schedule updates for faculty ${facultyName}.`);
+                sendFacultyBatchNotifications(facultyId, facultyName, facultyChanges).catch(err => {
+                  console.error('Failed to dispatch faculty push notifications:', err);
+                });
+              }
+            }
+          }
+        }
+
+        // Update raw snapshot
+        const { error: snapshotUpsertErr } = await supabase
+          .from('faculty_snapshots')
+          .upsert({
+            faculty_id: facultyId,
+            hash: newHash,
+            raw_json: raw,
+            synced_at: new Date().toISOString()
+          }, { onConflict: 'faculty_id' });
+
+        if (snapshotUpsertErr) {
+          throw new Error(`Failed to save raw snapshot: ${snapshotUpsertErr.message}`);
+        }
+
+        // Delete existing entries
+        const { error: deleteErr } = await supabase
+          .from('faculty_timetable_entries')
+          .delete()
+          .eq('faculty_id', facultyId);
+
+        if (deleteErr) {
+          throw new Error(`Failed to delete existing entries: ${deleteErr.message}`);
+        }
+
+        // Insert new normalized entries
+        if (sorted.length > 0) {
+          const insertPayload = sorted.map(item => ({
+            faculty_id: facultyId,
+            day: item.day,
+            start_time: item.start_time,
+            end_time: item.end_time,
+            subject: item.subject,
+            faculty: item.faculty,
+            room: item.room,
+            semester: item.semester,
+            ltp: item.ltp,
+            source_hash: computeHash(JSON.stringify(item))
+          }));
+
+          const { error: insertErr } = await supabase
+            .from('faculty_timetable_entries')
+            .insert(insertPayload);
+
+          if (insertErr) {
+            throw new Error(`Failed to insert timetable entries: ${insertErr.message}`);
+          }
+        }
+
+        facultyUpdatedCount++;
+        facultySucceededCount++;
+        console.log(`[✓] Faculty ${facultyName}: Synced ${sorted.length} classes.`);
+      }
+    } catch (err: any) {
+      facultyFailedCount++;
+      console.error(`[✗] Faculty ${facultyName} failed:`, err.message || err);
+    }
+  });
+
   const durationSec = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log('\n=== Synchronization Summary ===');
   console.log(`Duration: ${durationSec} seconds`);
   console.log(`Total active batches processed: ${dbBatches.length}`);
-  console.log(`Succeeded: ${succeededCount} (Updated: ${updatedCount}, Unchanged: ${unchangedCount})`);
-  console.log(`Failed: ${failedCount}`);
+  console.log(`  Batches Succeeded: ${succeededCount} (Updated: ${updatedCount}, Unchanged: ${unchangedCount})`);
+  console.log(`  Batches Failed: ${failedCount}`);
+  console.log(`Total active faculties processed: ${activeFaculties.length}`);
+  console.log(`  Faculty Succeeded: ${facultySucceededCount} (Updated: ${facultyUpdatedCount}, Unchanged: ${facultyUnchangedCount})`);
+  console.log(`  Faculty Failed: ${facultyFailedCount}`);
   console.log('=================================');
 }
 

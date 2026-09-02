@@ -46,13 +46,18 @@ Future<void> _initFirebaseSafely() async {
 
     // Auto-refresh token if server rotates it
     messaging.onTokenRefresh.listen((fcmToken) async {
-      final selection = StorageService.getSelection();
-      if (selection != null) {
-        final batchId = selection['batchId']!;
-        try {
-          await ApiService.registerDevice(fcmToken, batchId);
-        } catch (_) {}
-      }
+      final userMode = StorageService.getUserMode() ?? 'student';
+      final batchId = StorageService.getSelection()?['batchId'] ?? '';
+      final facultyId = StorageService.getFacultySelection()?['facultyId'];
+
+      try {
+        await ApiService.registerDevice(
+          fcmToken,
+          batchId,
+          userMode: userMode,
+          facultyId: facultyId,
+        );
+      } catch (_) {}
     });
 
   } catch (e) {

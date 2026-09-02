@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../core/api.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
@@ -83,6 +84,21 @@ class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
       );
       await StorageService.saveFacultyTimetableCache(timetable);
       await StorageService.saveFacultyLastSyncedAt(DateTime.now());
+
+      // Try to register device token as faculty
+      String fcmToken = 'local_device';
+      try {
+        final token = await FirebaseMessaging.instance.getToken().timeout(const Duration(seconds: 3));
+        if (token != null) {
+          fcmToken = token;
+        }
+      } catch (_) {}
+      await ApiService.registerDevice(
+        fcmToken,
+        '', // No batch id for faculty
+        userMode: 'faculty',
+        facultyId: facultyId,
+      );
       
       if (!mounted) return;
       

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../core/constants.dart';
+import '../../core/api.dart';
 import '../../core/storage.dart';
 import 'welcome_screen.dart';
 import 'faculty_selection_screen.dart';
@@ -13,8 +15,16 @@ class ModeSelectionScreen extends StatelessWidget {
   void _selectStudent(BuildContext context) async {
     await StorageService.setUserMode('student');
     
-    // If student config exists, go to Dashboard
     if (StorageService.hasSelection()) {
+      // Re-register device as student
+      final batchId = StorageService.getSelection()?['batchId'] ?? '';
+      try {
+        final token = await FirebaseMessaging.instance.getToken().timeout(const Duration(seconds: 3));
+        if (token != null) {
+          await ApiService.registerDevice(token, batchId, userMode: 'student');
+        }
+      } catch (_) {}
+
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const DashboardScreen()),
         (route) => false,
@@ -29,8 +39,16 @@ class ModeSelectionScreen extends StatelessWidget {
   void _selectFaculty(BuildContext context) async {
     await StorageService.setUserMode('faculty');
     
-    // If faculty config exists, go to Dashboard
     if (StorageService.hasFacultySelection()) {
+      // Re-register device as faculty
+      final facultyId = StorageService.getFacultySelection()?['facultyId'];
+      try {
+        final token = await FirebaseMessaging.instance.getToken().timeout(const Duration(seconds: 3));
+        if (token != null) {
+          await ApiService.registerDevice(token, '', userMode: 'faculty', facultyId: facultyId);
+        }
+      } catch (_) {}
+
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const DashboardScreen()),
         (route) => false,

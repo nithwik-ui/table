@@ -231,17 +231,46 @@ app.get('/api/batches/:batchId/changes', async (req: Request, res: Response) => 
   }
 });
 
+// GET /api/faculty/:facultyId/changes
+app.get('/api/faculty/:facultyId/changes', async (req: Request, res: Response) => {
+  try {
+    const { facultyId } = req.params;
+    const { data, error } = await supabase
+      .from('faculty_changes')
+      .select('*')
+      .eq('faculty_id', facultyId)
+      .order('detected_at', { ascending: false });
+
+    if (error) throw error;
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/devices/register
 app.post('/api/devices/register', async (req: Request, res: Response) => {
   try {
-    const { fcm_token, batch_id } = req.body;
-    if (!fcm_token || !batch_id) {
-      return res.status(400).json({ error: 'Missing parameters: fcm_token or batch_id' });
+    const { fcm_token, batch_id, user_mode, faculty_id } = req.body;
+    if (!fcm_token) {
+      return res.status(400).json({ error: 'Missing parameters: fcm_token' });
     }
+
+    const mode = user_mode || 'student';
+    const finalBatchId = mode === 'student' ? batch_id : null;
+    const finalFacultyId = mode === 'faculty' ? faculty_id : null;
 
     const { error } = await supabase
       .from('device_tokens')
-      .upsert({ fcm_token, batch_id }, { onConflict: 'fcm_token' });
+      .upsert(
+        { 
+          fcm_token, 
+          batch_id: finalBatchId, 
+          faculty_id: finalFacultyId,
+          user_mode: mode 
+        }, 
+        { onConflict: 'fcm_token' }
+      );
 
     if (error) throw error;
     res.json({ success: true });
