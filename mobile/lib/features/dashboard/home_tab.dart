@@ -53,7 +53,11 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   void _loadLocalData() {
-    final name = StorageService.getUserName();
+    final mode = StorageService.getUserMode();
+    final name = mode == 'student' 
+        ? StorageService.getUserName() 
+        : StorageService.getFacultySelection()?['facultyName'];
+    
     final selection = StorageService.getSelection();
 
     // Greeting time calculation (local timezone context)
@@ -71,8 +75,10 @@ class _HomeTabState extends State<HomeTab> {
     setState(() {
       _greeting = greet;
       _userName = name;
-      if (selection != null) {
+      if (mode == 'student' && selection != null) {
         _contextLine = '${selection['degree']} · ${selection['year']} · ${selection['batchCode']}';
+      } else if (mode == 'faculty') {
+        _contextLine = 'Faculty Schedule';
       }
     });
     
@@ -215,7 +221,7 @@ class _HomeTabState extends State<HomeTab> {
                       alignment: Alignment.centerLeft,
                       child: Image.asset(
                         'assets/logo.png',
-                        height: 28,
+                        height: 22,
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -230,20 +236,6 @@ class _HomeTabState extends State<HomeTab> {
                         );
                       },
                     ),
-                  // Settings Gear (opens Profile)
-                  IconButton(
-                    icon: const Icon(Icons.settings_outlined, color: AppConstants.textPrimary, size: 22),
-                    onPressed: () {
-                      final parent = context.findAncestorStateOfType<State<DashboardScreen>>();
-                      if (parent != null) {
-                        // Switch to Profile Tab
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (context) => const DashboardScreen(initialTab: 3)),
-                          (route) => false,
-                        );
-                      }
-                    },
-                  ),
                   // Notification Bell
                   IconButton(
                     icon: const Icon(Icons.notifications_none, color: AppConstants.textPrimary, size: 24),
