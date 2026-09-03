@@ -15,17 +15,10 @@ class FacultySelectionScreen extends StatefulWidget {
 class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
   List<dynamic> _allFaculty = [];
   List<dynamic> _filteredFaculty = [];
-  bool _isLoading = true;
+  bool _isLoading = false;
   bool _isSaving = false;
   String _error = '';
   final TextEditingController _searchController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchFaculty();
-    _searchController.addListener(_filterFaculty);
-  }
 
   @override
   void dispose() {
@@ -33,66 +26,202 @@ class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
     super.dispose();
   }
 
-  Future<void> _fetchFaculty() async {
+  Future<void> _searchFaculty() async {
+    final query = _searchController.text.trim();
+    if (query.length < 2) {
+      setState(() => _error = 'Please enter at least 2 characters');
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _error = '';
     });
     
     try {
-      final facultyList = await ApiService.fetchFacultyList();
+      final facultyList = await ApiService.facultySearch(query);
       setState(() {
         _allFaculty = facultyList;
         _filteredFaculty = facultyList;
         _isLoading = false;
       });
+      if (facultyList.isEmpty) {
+        setState(() => _error = 'No active faculty found.');
+      }
     } catch (e) {
       setState(() {
-        _error = 'Failed to load faculty list. Please try again.';
+        _error = 'Failed to search faculty. Please try again.';
         _isLoading = false;
       });
     }
   }
 
-  void _filterFaculty() {
-    final query = _searchController.text.toLowerCase();
-    setState(() {
-      _filteredFaculty = _allFaculty.where((f) {
-        final name = (f['name'] ?? '').toString().toLowerCase();
-        return name.contains(query);
-      }).toList();
-    });
+  void _showLoginDialog(dynamic faculty) {
+    bool isActivation = false;
+    final passwordCtrl = TextEditingController();
+    final newPasswordCtrl = TextEditingController();
+    final confirmPasswordCtrl = TextEditingController();
+    String dialogError = '';
+    bool dialogLoading = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              backgroundColor: AppConstants.surface,
+              title: Text(isActivation ? 'Activate Account' : 'Faculty Login', style: AppConstants.getHeadline().copyWith(fontSize: 16)),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Logging in as: ${faculty['faculty_name']}', style: AppConstants.getBodyMedium()),
+                    const SizedBox(height: 16),
+                    if (dialogError.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Text(dialogError, style: const TextStyle(color: AppConstants.error, fontSize: 13)),
+                      ),
+                    
+                    if (!isActivation)
+                      TextField(
+                        controller: passwordCtrl,
+                        obscureText: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Password',
+                          border: OutlineInputBorder(),
+                        ),
+                      )
+                    else ...[
+                      TextField(
+                        controller: passwordCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Activation Code (SRU#...)',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: newPasswordCtrl,
+                        obscureText: true,
+                        decoration: const InputDecoration(
+                          labelText: 'New Password',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: confirmPasswordCtrl,
+                        obscureText: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Confirm Password',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    TextButton(
+                      onPressed: () {
+                        setStateDialog(() {
+                          isActivation = !isActivation;
+                          dialogError = '';
+                          passwordCtrl.clear();
+                          newPasswordCtrl.clear();
+                          confirmPasswordCtrl.clear();
+                        });
+                      },
+                      child: Text(isActivation ? 'Already activated? Login here.' : 'First time? Activate account.'),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: dialogLoading ? null : () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: AppConstants.primary),
+                  onPressed: dialogLoading ? null : () async {
+                    setStateDialog(() { dialogError = ''; dialogLoading = true; });
+                    try {
+                      Map<String, dynamic> res;
+                      if (isActivation) {
+                        if (newPasswordCtrl.text != confirmPasswordCtrl.text) {
+                          throw Exception('Passwords do not match');
+                        }
+                        res = await ApiService.facultyActivate(
+                          faculty['id'], 
+                          passwordCtrl.text.trim(), 
+                          newPasswordCtrl.text
+                        );
+                      } else {
+                        res = await ApiService.facultyLogin(
+                          faculty['id'], 
+                          passwordCtrl.text
+                        );
+                      }
+
+                      if (res['success'] == true) {
+                        Navigator.pop(ctx);
+                        _proceedWithFaculty(faculty['id'], faculty['faculty_name'], res['token']);
+                      } else {
+                        throw Exception('Authentication failed');
+                      }
+                    } catch (e) {
+                      setStateDialog(() {
+                        dialogError = e.toString().replaceAll('Exception: ', '');
+                        dialogLoading = false;
+                      });
+                    }
+                  },
+                  child: dialogLoading 
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : Text(isActivation ? 'Activate' : 'Login', style: const TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          }
+        );
+      }
+    );
   }
 
-  Future<void> _selectFaculty(dynamic faculty) async {
+  Future<void> _proceedWithFaculty(String facultyId, String facultyName, String token) async {
     setState(() {
       _isSaving = true;
       _error = '';
     });
     
     try {
-      final facultyId = faculty['id'].toString();
-      final facultyName = faculty['name'].toString();
-      
-      // Fetch timetable
+      // 1. Save Token
+      await StorageService.setFacultyToken(token);
+
+      // 2. Fetch timetable and holidays
       final timetable = await ApiService.fetchFacultyTimetable(facultyId);
+      final overrides = await ApiService.fetchCalendarOverrides('', 'faculty');
       
-      // Save data locally
+      // 3. Save data locally
+      await StorageService.clearFacultySelection();
       await StorageService.saveFacultySelection(
         facultyId: facultyId,
         facultyName: facultyName,
       );
       await StorageService.saveFacultyTimetableCache(timetable);
+      await StorageService.saveCalendarOverridesCache(overrides);
       await StorageService.saveFacultyLastSyncedAt(DateTime.now());
 
-      // Try to register device token as faculty
+      // 4. Try to register device token as faculty
       String fcmToken = 'local_device';
       try {
-        final token = await FirebaseMessaging.instance.getToken().timeout(const Duration(seconds: 3));
-        if (token != null) {
-          fcmToken = token;
+        final t = await FirebaseMessaging.instance.getToken().timeout(const Duration(seconds: 3));
+        if (t != null) {
+          fcmToken = t;
         }
       } catch (_) {}
+      
       await ApiService.registerDevice(
         fcmToken,
         '', // No batch id for faculty
@@ -100,6 +229,7 @@ class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
         facultyId: facultyId,
       );
       
+      await Future.delayed(const Duration(seconds: 1));
       if (!mounted) return;
       
       Navigator.of(context).pushAndRemoveUntil(
@@ -107,10 +237,13 @@ class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
         (route) => false,
       );
     } catch (e) {
+      if (!mounted) return;
       setState(() {
-        _error = 'Failed to load timetable for selected faculty. Please try again.';
+        _error = 'Failed to load timetable. Please check your connection and try again.';
         _isSaving = false;
       });
+      // Important: if we failed to fetch the timetable, wipe the token so they don't get stuck half-logged-in
+      await StorageService.clearFacultySelection();
     }
   }
 
@@ -119,25 +252,42 @@ class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
     return Scaffold(
       backgroundColor: AppConstants.background,
       appBar: AppBar(
-        title: const Text('Select Faculty'),
+        title: const Text('Faculty Portal Login'),
       ),
       body: SafeArea(
         child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.all(AppConstants.paddingContainer),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search faculty name...',
-                  prefixIcon: const Icon(Icons.search),
-                  filled: true,
-                  fillColor: AppConstants.surface,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppConstants.radiusButton),
-                    borderSide: BorderSide.none,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Enter your name...',
+                        prefixIcon: const Icon(Icons.search),
+                        filled: true,
+                        fillColor: AppConstants.surface,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppConstants.radiusButton),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      onSubmitted: (_) => _searchFaculty(),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppConstants.primary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14)
+                    ),
+                    onPressed: _isLoading ? null : _searchFaculty,
+                    child: const Text('Search', style: TextStyle(color: Colors.white)),
+                  )
+                ],
               ),
             ),
             
@@ -171,7 +321,7 @@ class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
                   : _filteredFaculty.isEmpty
                       ? Center(
                           child: Text(
-                            'No faculty found',
+                            'Search for your name to login.',
                             style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
                           ),
                         )
@@ -185,10 +335,11 @@ class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
                                 child: Icon(Icons.person, color: AppConstants.primary),
                               ),
                               title: Text(
-                                faculty['name'],
+                                faculty['faculty_name'] ?? '',
                                 style: AppConstants.getBodyLarge().copyWith(fontWeight: FontWeight.w500),
                               ),
-                              onTap: _isSaving ? null : () => _selectFaculty(faculty),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: _isSaving ? null : () => _showLoginDialog(faculty),
                             );
                           },
                         ),
@@ -203,7 +354,7 @@ class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
                   children: [
                     CircularProgressIndicator(),
                     SizedBox(width: 16),
-                    Text('Fetching timetable...'),
+                    Text('Authenticating and fetching timetable...'),
                   ],
                 ),
               ),

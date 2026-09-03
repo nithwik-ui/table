@@ -45,11 +45,13 @@ class _SyncingScreenState extends State<SyncingScreen> {
     });
 
     try {
-      // 1. Fetch live batch timetable entries
+      // 1. Fetch live batch timetable entries and calendar overrides
       final entries = await ApiService.fetchTimetable(widget.batchId);
+      final overrides = await ApiService.fetchCalendarOverrides('', 'student');
       
       // 2. Cache timetable entries locally
       await StorageService.saveTimetableCache(entries);
+      await StorageService.saveCalendarOverridesCache(overrides);
 
       // 2.5 Schedule local reminders if enabled (default true)
       try {

@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>TIMETABLE</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+
+    <!-- Favicon -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="apple-touch-icon" sizes="76x76" href="../assets/img/apple-icon.png">
+    <link rel="icon" type="image/png" href="../assets/img/favicon.png">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icon Font Stylesheet -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="https://timetable.sruniv.com/assets/lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+    <link href="https://timetable.sruniv.com/assets/lib/tempusdominus/css/tempusdominus-bootstrap-4.min.css" rel="stylesheet" />
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="https://timetable.sruniv.com/assets/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="https://timetable.sruniv.com/assets/css/style.css" rel="stylesheet">
+
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://timetable.sruniv.com/assets/lib/chart/chart.min.js"></script>
+    <script src="https://timetable.sruniv.com/assets/lib/easing/easing.min.js"></script>
+    <script src="https://timetable.sruniv.com/assets/lib/waypoints/waypoints.min.js"></script>
+    <script src="https://timetable.sruniv.com/assets/lib/owlcarousel/owl.carousel.min.js"></script>
+    <script src="https://timetable.sruniv.com/assets/lib/tempusdominus/js/moment.min.js"></script>
+    <script src="https://timetable.sruniv.com/assets/lib/tempusdominus/js/moment-timezone.min.js"></script>
+    <script src="https://timetable.sruniv.com/assets/lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js"></script>
+
+    <!-- Template Javascript -->
+    <script src="https://timetable.sruniv.com/assets/js/main.js"></script>
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
+    <!-- DataTables Buttons CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.0.1/css/buttons.dataTables.min.css">
+    
+    <!-- DataTables JS -->
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.js"></script>
+    <!-- DataTables Buttons JS -->
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.0.1/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.0.1/js/buttons.html5.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.0.1/js/buttons.print.min.js"></script>
+
+</head>
+<div class="container py-4">
+    <h4 class="mb-4 text-primary">
+        <i class="bi bi-door-open"></i> Room Free Slots
+    </h4>
+
+    <!-- Search Form -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <form method="POST" action="https://timetable.sruniv.com/room_free_slots">
+                <input type="hidden" name="_token" value="BDGYOyrm6OZb5DTAd796RQTeTlKQgmErZq8cG9oj">                <div class="row g-3 align-items-end">
+                    <!-- Day Dropdown -->
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Select Day</label>
+                        <select name="day" class="form-select" required>
+                            <option value="">-- Choose Day --</option>
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                        </select>
+                    </div>
+
+                    <!-- Time Dropdown -->
+                    <!--<div class="col-md-4">
+                        <label class="form-label fw-semibold">Select Time</label>
+                        <select name="time" class="form-select" required>
+                            <option value="">-- Choose Time --</option>
+                            <option value="09:00">09:00</option>
+                            <option value="10:00">10:00</option>
+                            <option value="11:00">11:00</option>
+                            <option value="12:00">12:00</option>
+                            <option value="13:00">13:00</option>
+                            <option value="14:00">14:00</option>
+                            <option value="15:00">15:00</option>
+                            <option value="16:00">16:00</option>
+                        </select>
+                    </div>-->
+                    
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Select Time</label>
+                        <select name="time" class="form-select" required>
+                            <option value="">-- Choose Time --</option>
+                            <option value="08:30">08:30</option>
+                            <option value="09:30">09:30</option>
+                            <option value="10:30">10:30</option>
+                            <option value="11:30">11:30</option>
+                            <option value="12:30">12:30</option>
+                            <option value="13:30">13:30</option>
+                            <option value="14:30">14:30</option>
+                            <option value="15:30">15:30</option>
+                            <option value="16:30">16:30</option>
+                        </select>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="col-md-4 d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-search"></i> Find Free Rooms
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+            <div class="mt-5">
+            <h5 class="text-success mb-3">
+                <i class="bi bi-check2-circle"></i> Free Rooms on 
+                <b class="text-danger">Wednesday</b> at 
+                <b class="text-danger">10:30</b> (60)
+            </h5>
+
+            <div class="table-responsive">
+                                
+                <div class="row">
+                                            <div class="col-md-4"> <!-- 3 equal columns -->
+                            <table class="table table-hover table-bordered align-middle shadow-sm">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th style="width: 10%;">#</th>
+                                        <th>Room Name</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                                                                                                <tr>
+                                            <td>1</td>
+                                            <td>
+                                                001 -
+                                                <span class="badge bg-info text-dark">Field instructional-1</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>2</td>
+                                            <td>
+                                                004 -
+                                                <span class="badge bg-info text-dark">Field instructional-4</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>3</td>
+                                            <td>
+                                                10001-B_BL10-GF -
+                                                <span class="badge bg-info text-dark">Computing Facility</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>4</td>
+                                            <td>
+                                                10003-B_BL10-GF -
+                                                <span class="badge bg-info text-dark">Computing Facility</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>5</td>
+                                            <td>
+                                                10102-BL10-FF -
+                                                <span class="badge bg-info text-dark">Computing Facility</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>6</td>
+                                            <td>
+                                                10102-B_BL10-FF -
+                                                <span class="badge bg-info text-dark">Computing Facility</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>7</td>
+                                            <td>
+                                                10103-BL10-FF -
+                                                <span class="badge bg-info text-dark">Computing Facility</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>8</td>
+                                            <td>
+                                                10103-B_BL10-FF -
+                                                <span class="badge bg-info text-dark">Computing Facility</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>9</td>
+                                            <td>
+                                                11004-A-BL11-GF -
+                                                <span class="badge bg-info text-dark">Computing Facility 41</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>10</td>
+                                            <td>
+                                                1104-B_BL1-FF -
+                                                <span class="badge bg-info text-dark">Advanced Computing Facility 1</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>11</td>
+                                            <td>
+                                                11202-A-BL11-SF -
+                                                <span class="badge bg-info text-dark">Computing Facility 43</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>12</td>
+                                            <td>
+                                                11202-B-BL11-SF -
+                                                <span class="badge bg-info text-dark">Computing Facility 43</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>13</td>
+                                            <td>
+                                                1205-BL1-SF -
+                                                <span class="badge bg-info text-dark">Lecture Hall</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>14</td>
+                                            <td>
+                                                1215-BL1-SF -
+                                                <span class="badge bg-info text-dark">Lecture Hall</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>15</td>
+                                            <td>
+                                                2005-BL2-GF -
+                                                <span class="badge bg-info text-dark">Faraday Hall</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>16</td>
+                                            <td>
+                                                2015-B_BL2-GF -
+                                                <span class="badge bg-info text-dark">Computing Facility 8</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>17</td>
+                                            <td>
+                                                2111-B_BL2-FF -
+                                                <span class="badge bg-info text-dark">Advanced Computing Facility 2</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>18</td>
+                                            <td>
+                                                2211-B_BL2-SF -
+                                                <span class="badge bg-info text-dark">Advanced Computing Facility 3</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>19</td>
+                                            <td>
+                                                2213-BL2-SF -
+                                                <span class="badge bg-info text-dark">Computing Facility 9</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>20</td>
+                                            <td>
+                                                2214-B_BL2-SF -
+                                                <span class="badge bg-info text-dark">Computing Facility 10</span>
+                                            </td>
+                                        </tr>
+                                                                    </tbody>
+                            </table>
+                        </div>
+                                            <div class="col-md-4"> <!-- 3 equal columns -->
+                            <table class="table table-hover table-bordered align-middle shadow-sm">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th style="width: 10%;">#</th>
+                                        <th>Room Name</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                                                                                                <tr>
+                                            <td>1</td>
+                                            <td>
+                                                3013_A -
+                                                <span class="badge bg-info text-dark">Faculty Cabin</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>2</td>
+                                            <td>
+                                                3015-BL3-FF -
+                                                <span class="badge bg-info text-dark">Physics Lab</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>3</td>
+                                            <td>
+                                                3017_A -
+                                                <span class="badge bg-info text-dark">Faculty Cabin</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>4</td>
+                                            <td>
+                                                3106-BL3-FF -
+                                                <span class="badge bg-info text-dark">Lecture Hall</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>5</td>
+                                            <td>
+                                                3110_A -
+                                                <span class="badge bg-info text-dark">Faculty Cabin</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>6</td>
+                                            <td>
+                                                3112_BL3-FF -
+                                                <span class="badge bg-info text-dark">Chemistry Lab</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>7</td>
+                                            <td>
+                                                3213-BL3-SF -
+                                                <span class="badge bg-info text-dark">Computing Facility 22</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>8</td>
+                                            <td>
+                                                3213-B_BL3-SF -
+                                                <span class="badge bg-info text-dark">Computing Facility 22</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>9</td>
+                                            <td>
+                                                3219-BL3-SF -
+                                                <span class="badge bg-info text-dark">Lecture Hall</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>10</td>
+                                            <td>
+                                                3220-BL3-SF -
+                                                <span class="badge bg-info text-dark">Lecture hall</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>11</td>
+                                            <td>
+                                                4102-BL4-GF -
+                                                <span class="badge bg-info text-dark">Highways Lab</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>12</td>
+                                            <td>
+                                                4406-BL4-GF -
+                                                <span class="badge bg-info text-dark">Survey Lab</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>13</td>
+                                            <td>
+                                                4407-BL4-GF -
+                                                <span class="badge bg-info text-dark">Concrete Lab</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>14</td>
+                                            <td>
+                                                4610-BL4-GF -
+                                                <span class="badge bg-info text-dark">Fluid Mechanics Lab</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>15</td>
+                                            <td>
+                                                4711-BL4-GF -
+                                                <span class="badge bg-info text-dark">Geotechnical Lab</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>16</td>
+                                            <td>
+                                                4814-BL4-GF -
+                                                <span class="badge bg-info text-dark">Heat Transfer Lab</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>17</td>
+                                            <td>
+                                                5007-BL5-GF -
+                                                <span class="badge bg-info text-dark">Computing Facility 23</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>18</td>
+                                            <td>
+                                                5007-B_BL5-GF -
+                                                <span class="badge bg-info text-dark">Computing Facility 23</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>19</td>
+                                            <td>
+                                                5012-BL5-GF -
+                                                <span class="badge bg-info text-dark">Agronomy Lab</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>20</td>
+                                            <td>
+                                                5020-BL5-GF -
+                                                <span class="badge bg-info text-dark">Lecture Hall</span>
+                                            </td>
+                                        </tr>
+                                                                    </tbody>
+                            </table>
+                        </div>
+                                            <div class="col-md-4"> <!-- 3 equal columns -->
+                            <table class="table table-hover table-bordered align-middle shadow-sm">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th style="width: 10%;">#</th>
+                                        <th>Room Name</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                                                                                                <tr>
+                                            <td>1</td>
+                                            <td>
+                                                5023-BL5-GF -
+                                                <span class="badge bg-info text-dark">Soil Science &amp; Biochemistry Lab</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>2</td>
+                                            <td>
+                                                5102-BL5-FF -
+                                                <span class="badge bg-info text-dark">Agricultural Economics Lab</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>3</td>
+                                            <td>
+                                                6101-BL6-FF -
+                                                <span class="badge bg-info text-dark">Plant Pathology Lab</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>4</td>
+                                            <td>
+                                                6102-BL6-FF -
+                                                <span class="badge bg-info text-dark">Horticulture Lab</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>5</td>
+                                            <td>
+                                                6103-BL6-FF -
+                                                <span class="badge bg-info text-dark">Genetics &amp; Plant Breeding / Crop Physiology Lab</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>6</td>
+                                            <td>
+                                                6201-BL6-SF -
+                                                <span class="badge bg-info text-dark">Agricultural Engineering Lab</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>7</td>
+                                            <td>
+                                                6205-BL6-SF -
+                                                <span class="badge bg-info text-dark">Animal Science Lab</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>8</td>
+                                            <td>
+                                                6206-BL6-SF -
+                                                <span class="badge bg-info text-dark">Entomology Lab</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>9</td>
+                                            <td>
+                                                7003-BL7-GF -
+                                                <span class="badge bg-info text-dark">Advanced Computing Facility 4</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>10</td>
+                                            <td>
+                                                7003-B_BL7-GF -
+                                                <span class="badge bg-info text-dark">Advanced Computing Facility 4</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>11</td>
+                                            <td>
+                                                7005-BL7-GF -
+                                                <span class="badge bg-info text-dark">Maker Machinery Zone</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>12</td>
+                                            <td>
+                                                7102-BL7-FF -
+                                                <span class="badge bg-info text-dark">Centre for embedded System &amp; IOT Lab</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>13</td>
+                                            <td>
+                                                7103-BL7-FF -
+                                                <span class="badge bg-info text-dark">PLC and Automation Lab</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>14</td>
+                                            <td>
+                                                7105-BL7-FF -
+                                                <span class="badge bg-info text-dark">Catapult Zone</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>15</td>
+                                            <td>
+                                                8001-BL8-GF -
+                                                <span class="badge bg-info text-dark">Computing Facility </span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>16</td>
+                                            <td>
+                                                8001-B_BL8-GF -
+                                                <span class="badge bg-info text-dark">Computing Facility</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>17</td>
+                                            <td>
+                                                8003-BL8-GF -
+                                                <span class="badge bg-info text-dark">Computing Facility </span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>18</td>
+                                            <td>
+                                                8003-B_BL8-GF -
+                                                <span class="badge bg-info text-dark">Computing Facility</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>19</td>
+                                            <td>
+                                                8103-B_BL8-FF -
+                                                <span class="badge bg-info text-dark">Computing Facility</span>
+                                            </td>
+                                        </tr>
+                                                                            <tr>
+                                            <td>20</td>
+                                            <td>
+                                                8207-B_BL8-SF -
+                                                <span class="badge bg-info text-dark">Computing Facility</span>
+                                            </td>
+                                        </tr>
+                                                                    </tbody>
+                            </table>
+                        </div>
+                                    </div>
+            </div>
+        </div>
+    </div>
+<!-- jQuery (must come first) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- DataTables core -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+
+<!-- DataTables Buttons extension -->
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css">
+<script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    if ($('#tab').length) {
+        $('#tab').DataTable({
+            dom: 'Bfrtip',
+            pageLength: 10,
+            buttons: ['csv', 'excel']
+        });
+    } else {
+        console.log("⚠️ Table #tab not found when initializing DataTable");
+    }
+});
+</script>
+<!-- Footer Start -->
+            <div class="container-fluid pt-4 px-4">
+                <div class="bg-light rounded-top p-4">
+                    <div class="row">
+                        <div class="col-12 col-sm-12 text-center text-sm-start">
+                             &copy; Center for Software Development and Digital Learning, SR University.
+                        
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Footer End -->
+        </div>
+        <!-- Content End -->
+
+
+        <!-- Back to Top -->
+        <a href="#" class="btn btn-lg btn-primary btn-lg-square back-to-top"><i class="bi bi-arrow-up"></i></a>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://timetable.sruniv.com/./assets/lib/chart/chart.min.js"></script>
+    <script src="https://timetable.sruniv.com/./assets/lib/easing/easing.min.js"></script>
+    <script src="https://timetable.sruniv.com/./assets/lib/waypoints/waypoints.min.js"></script>
+    <script src="https://timetable.sruniv.com/./assets/lib/owlcarousel/owl.carousel.min.js"></script>
+    <script src="https://timetable.sruniv.com/./assets/lib/tempusdominus/js/moment.min.js"></script>
+    <script src="https://timetable.sruniv.com/./assets/lib/tempusdominus/js/moment-timezone.min.js"></script>
+    <script src="https://timetable.sruniv.com/./assets/lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js"></script>
+
+    <!-- Template Javascript -->
+    <script src="https://timetable.sruniv.com/./assets/js/main.js"></script>
+</body>
+
+</html>

@@ -131,6 +131,22 @@ class StorageService {
     // Clear caches
     await _cacheBox?.delete('faculty_timetable');
     await _cacheBox?.delete('faculty_changes');
+    await _prefsBox?.delete('faculty_token');
+  }
+
+  static Future<void> setFacultyToken(String token) async {
+    await _prefsBox?.put('faculty_token', token);
+  }
+
+  static String? getFacultyToken() {
+    return _prefsBox?.get('faculty_token') as String?;
+  }
+
+  static Future<void> fullLogout() async {
+    await setUserMode('');
+    await _prefsBox?.delete('user_mode');
+    await clearSelection();
+    await clearFacultySelection();
   }
 
   static bool hasFacultySelection() {
@@ -208,6 +224,15 @@ class StorageService {
 
   static List<dynamic> getFacultyChangesCache() {
     return _cacheBox?.get('faculty_changes', defaultValue: []) as List<dynamic>? ?? [];
+  }
+
+  // CALENDAR OVERRIDES CACHE
+  static Future<void> saveCalendarOverridesCache(List<dynamic> overrides) async {
+    await _cacheBox?.put('calendar_overrides', overrides);
+  }
+
+  static List<dynamic> getCalendarOverridesCache() {
+    return _cacheBox?.get('calendar_overrides', defaultValue: []) as List<dynamic>? ?? [];
   }
 
   // METADATA DISCOVERY CACHE (offline onboarding recovery)

@@ -158,7 +158,7 @@ class ApiService {
   // FACULTY ENDPOINTS
   static Future<List<dynamic>> fetchFacultyList() async {
     final response = await http
-        .get(Uri.parse('${AppConstants.apiBaseUrl}/api/faculty/list'))
+        .get(Uri.parse('${AppConstants.apiBaseUrl}/api/faculty-scraping/list'))
         .timeout(timeoutDuration);
 
     if (response.statusCode == 200) {
@@ -170,7 +170,7 @@ class ApiService {
 
   static Future<List<dynamic>> fetchFacultyTimetable(String facultyId) async {
     final response = await http
-        .get(Uri.parse('${AppConstants.apiBaseUrl}/api/faculty/timetable?faculty=${Uri.encodeComponent(facultyId)}'))
+        .get(Uri.parse('${AppConstants.apiBaseUrl}/api/faculty-scraping/timetable?faculty=${Uri.encodeComponent(facultyId)}'))
         .timeout(timeoutDuration);
 
     if (response.statusCode == 200) {
@@ -178,6 +178,53 @@ class ApiService {
     } else {
       throw Exception('Failed to load faculty timetable (HTTP ${response.statusCode})');
     }
+  }
+
+  // --- NEW AUTH ENDPOINTS ---
+  static Future<List<dynamic>> facultySearch(String query) async {
+    final response = await http.get(Uri.parse('${AppConstants.apiBaseUrl}/api/faculty/search?q=${Uri.encodeComponent(query)}')).timeout(timeoutDuration);
+    if (response.statusCode == 200) {
+      return json.decode(response.body) as List<dynamic>;
+    }
+    throw Exception('Failed to search faculty');
+  }
+
+  static Future<Map<String, dynamic>> facultyActivate(String facultyId, String activationPassword, String newPassword) async {
+    final response = await http.post(
+      Uri.parse('${AppConstants.apiBaseUrl}/api/faculty/activate'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'faculty_id': facultyId,
+        'activation_password': activationPassword,
+        'new_password': newPassword
+      })
+    ).timeout(timeoutDuration);
+    
+    return json.decode(response.body) as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> facultyLogin(String facultyId, String password) async {
+    final response = await http.post(
+      Uri.parse('${AppConstants.apiBaseUrl}/api/faculty/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'faculty_id': facultyId,
+        'password': password
+      })
+    ).timeout(timeoutDuration);
+    
+    return json.decode(response.body) as Map<String, dynamic>;
+  }
+
+  // --- CALENDAR OVERRIDES ---
+  static Future<List<dynamic>> fetchCalendarOverrides(String date, String mode) async {
+    final response = await http.get(
+      Uri.parse('${AppConstants.apiBaseUrl}/api/calendar-overrides?date=$date&mode=$mode')
+    ).timeout(timeoutDuration);
+    if (response.statusCode == 200) {
+      return json.decode(response.body) as List<dynamic>;
+    }
+    return [];
   }
 
   // FREE ROOMS ENDPOINTS

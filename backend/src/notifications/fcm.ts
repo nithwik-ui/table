@@ -500,4 +500,27 @@ export async function sendFacultyClassReminderPush(facultyId: string, subject: s
   }
 }
 
-
+export async function sendHolidaySilentPush(date: string, targetMode: string) {
+  if (!fcmInitialized) {
+    console.warn('Skipping holiday silent push: Firebase Admin SDK is not initialized.');
+    return;
+  }
+  
+  try {
+    const payload = {
+      topic: 'sru_all_users',
+      data: {
+        type: 'calendar_override_updated',
+        date,
+        target_mode: targetMode
+      }
+    };
+    
+    // We send this as a pure data message (silent push). 
+    // The mobile app background handler will intercept this and cancel any invalid local notifications.
+    const response = await admin.messaging().send(payload);
+    console.log(`Dispatched Holiday Silent Push for ${date} (${targetMode}). MessageId: ${response}`);
+  } catch (err: any) {
+    console.error('Error dispatching holiday silent push:', err.message || err);
+  }
+}

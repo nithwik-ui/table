@@ -16,6 +16,26 @@ import 'features/dashboard/dashboard_screen.dart';
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   try {
     await Hive.initFlutter();
+    await StorageService.init();
+    
+    if (message.data['type'] == 'calendar_override_updated') {
+      final mode = message.data['target_mode'];
+      final currentMode = StorageService.getUserMode() ?? 'student';
+      
+      if (mode == 'both' || mode == currentMode) {
+        final overrides = await ApiService.fetchCalendarOverrides('', currentMode);
+        await StorageService.saveCalendarOverridesCache(overrides);
+        
+        final isFaculty = currentMode == 'faculty';
+        final timetable = isFaculty 
+          ? StorageService.getFacultyTimetableCache() 
+          : StorageService.getTimetableCache();
+          
+        if (timetable.isNotEmpty && StorageService.isClassRemindersEnabled()) {
+          await NotificationService.scheduleClassReminders(timetable);
+        }
+      }
+    }
   } catch (_) {}
   debugPrint("Handling a background message: ${message.messageId}");
 }

@@ -3,6 +3,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../core/constants.dart';
 import '../../core/api.dart';
 import '../../core/storage.dart';
+import '../../core/notifications.dart';
 import 'welcome_screen.dart';
 import 'faculty_selection_screen.dart';
 import '../dashboard/dashboard_screen.dart';
@@ -13,6 +14,10 @@ class ModeSelectionScreen extends StatelessWidget {
   const ModeSelectionScreen({super.key, this.isSwitching = false});
 
   void _selectStudent(BuildContext context) async {
+    // Cancel any existing faculty notifications and wipe state
+    await NotificationService.cancelFacultyClassReminders();
+    await StorageService.clearFacultySelection();
+    
     await StorageService.setUserMode('student');
     
     if (StorageService.hasSelection()) {
@@ -25,18 +30,26 @@ class ModeSelectionScreen extends StatelessWidget {
         }
       } catch (_) {}
 
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const DashboardScreen()),
-        (route) => false,
-      );
+      if (context.mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const DashboardScreen()),
+          (route) => false,
+        );
+      }
     } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-      );
+      if (context.mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+        );
+      }
     }
   }
 
   void _selectFaculty(BuildContext context) async {
+    // Cancel any existing student notifications and wipe state
+    await NotificationService.cancelStudentClassReminders();
+    await StorageService.clearSelection();
+    
     await StorageService.setUserMode('faculty');
     
     if (StorageService.hasFacultySelection()) {
@@ -49,14 +62,18 @@ class ModeSelectionScreen extends StatelessWidget {
         }
       } catch (_) {}
 
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const DashboardScreen()),
-        (route) => false,
-      );
+      if (context.mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const DashboardScreen()),
+          (route) => false,
+        );
+      }
     } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const FacultySelectionScreen()),
-      );
+      if (context.mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const FacultySelectionScreen()),
+        );
+      }
     }
   }
 

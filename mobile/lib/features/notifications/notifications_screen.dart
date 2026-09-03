@@ -23,21 +23,73 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _loadNotificationHistory() async {
-    final selection = StorageService.getSelection();
-    if (selection == null) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'No batch selected. Please configure your timetable.';
-      });
-      return;
+    final userMode = StorageService.getUserMode();
+    if (userMode == 'faculty') {
+      final selection = StorageService.getFacultySelection();
+      if (selection == null) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'No faculty selected. Please configure your profile.';
+        });
+        return;
+      }
+      final facultyId = selection['facultyId']!;
+      final facultyName = selection['facultyName']!;
+
+      try {
+        final changes = await ApiService.fetchFacultyChanges(facultyId);
+        final parsedList = _parseChanges(changes, facultyName);
+        if (mounted) {
+          setState(() {
+            _notifications = parsedList;
+            _isLoading = false;
+            _errorMessage = null;
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = 'Could not retrieve notifications. You are offline.';
+          });
+        }
+      }
+    } else {
+      final selection = StorageService.getSelection();
+      if (selection == null) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'No batch selected. Please configure your timetable.';
+        });
+        return;
+      }
+
+      final batchId = selection['batchId']!;
+      final batchCode = selection['batchCode']!;
+
+      try {
+        final changes = await ApiService.fetchChanges(batchId);
+        final parsedList = _parseChanges(changes, batchCode);
+        if (mounted) {
+          setState(() {
+            _notifications = parsedList;
+            _isLoading = false;
+            _errorMessage = null;
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = 'Could not retrieve notifications. You are offline.';
+          });
+        }
+      }
     }
+  }
 
-    final batchId = selection['batchId']!;
-    final batchCode = selection['batchCode']!;
-
-    try {
-      final changes = await ApiService.fetchChanges(batchId);
-      final List<Map<String, dynamic>> parsedList = [];
+  List<Map<String, dynamic>> _parseChanges(List<dynamic> changes, String identifier) {
+    final List<Map<String, dynamic>> parsedList = [];
 
       for (final change in changes) {
         final type = change['change_type'] as String;
@@ -64,7 +116,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
         if (type == 'ROOM_CHANGED') {
           title = 'Room Changed';
-          body = '$subject ($batchCode) moved to $newVal.';
+          body = '$subject ($identifier) moved to $newVal.';
         } else if (type == 'FACULTY_CHANGED') {
           title = 'Faculty Changed';
           final contextData = _getTimetableContext(change);
@@ -85,11 +137,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         } else if (type == 'CLASS_REMOVED') {
           title = 'Class Cancelled';
           final oldSubject = oldVal.split(' (')[0];
-          body = '$oldSubject ($batchCode) has been cancelled for today.';
+          body = '$oldSubject ($identifier) has been cancelled for today.';
         } else if (type == 'CLASS_ADDED') {
           title = 'Class Added';
           final newSubject = newVal.split(' (')[0];
-          body = '$newSubject ($batchCode) has been added.';
+          body = '$newSubject ($identifier) has been added.';
         } else if (type == 'TIME_CHANGED') {
           title = 'Class Rescheduled';
           body = '$subject rescheduled from $oldVal to $newVal.';
@@ -107,24 +159,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           'read': true,
         });
       }
-
-
-
-      if (mounted) {
-        setState(() {
-          _notifications = parsedList;
-          _isLoading = false;
-          _errorMessage = null;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'Could not retrieve notifications. You are offline.';
-        });
-      }
-    }
+      return parsedList;
   }
 
   void _markAllRead() {
@@ -144,7 +179,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       subject = fieldParts.skip(1).join(':');
     }
     
-    final timetable = StorageService.getTimetableCache();
+    final userMode = StorageService.getUserMode();
+    final timetable = userMode == 'faculty' ? StorageService.getFacultyTimetableCache() : StorageService.getTimetableCache();
+    
     for (final dayData in timetable) {
       final classes = dayData['classes'] as List<dynamic>? ?? [];
       for (final cls in classes) {

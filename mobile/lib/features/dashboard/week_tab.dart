@@ -159,7 +159,7 @@ class _WeekTabState extends State<WeekTab> {
                       alignment: Alignment.centerLeft,
                       child: Image.asset(
                         'assets/logo.png',
-                        height: 28,
+                        height: 32,
                         fit: BoxFit.contain,
                       ),
                     ),

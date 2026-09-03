@@ -83,11 +83,14 @@ class _ChangesTabState extends State<ChangesTab> {
           _isOffline = false;
         });
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _isOffline = true;
+          // Only show offline banner if it's a network issue
+          if (e.toString().contains('SocketException') || e.toString().contains('TimeoutException')) {
+            _isOffline = true;
+          }
         });
       }
     }
@@ -222,7 +225,7 @@ class _ChangesTabState extends State<ChangesTab> {
                       alignment: Alignment.centerLeft,
                       child: Image.asset(
                         'assets/logo.png',
-                        height: 28,
+                        height: 32,
                         fit: BoxFit.contain,
                       ),
                     ),

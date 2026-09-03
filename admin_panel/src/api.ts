@@ -71,5 +71,88 @@ export const api = {
       }),
     });
     return res.json();
+  },
+
+  // --- FACULTY MANAGEMENT ---
+  getLiveFacultyList: async (): Promise<any[]> => {
+    const res = await fetch(`${API_BASE}/faculty-scraping/list`);
+    if (!res.ok) throw new Error('Failed to fetch live faculty list');
+    return res.json();
+  },
+
+  getFaculty: async (): Promise<any[]> => {
+    const res = await fetch(`${API_BASE}/admin/faculty?password=${ADMIN_PASSWORD}`);
+    if (!res.ok) throw new Error('Failed to fetch faculty');
+    return res.json();
+  },
+  
+  createFaculty: async (faculty_name: string): Promise<any> => {
+    const res = await fetch(`${API_BASE}/admin/faculty`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: ADMIN_PASSWORD, faculty_name }),
+    });
+    return res.json();
+  },
+
+  resetFacultyActivation: async (id: string): Promise<any> => {
+    const res = await fetch(`${API_BASE}/admin/faculty/${id}/reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: ADMIN_PASSWORD }),
+    });
+    return res.json();
+  },
+
+  updateFacultyStatus: async (id: string, is_active: boolean): Promise<any> => {
+    const res = await fetch(`${API_BASE}/admin/faculty/${id}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: ADMIN_PASSWORD, is_active }),
+    });
+    return res.json();
+  },
+
+  deleteFaculty: async (id: string): Promise<any> => {
+    const res = await fetch(`${API_BASE}/admin/faculty/${id}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: ADMIN_PASSWORD }),
+    });
+    return res.json();
+  },
+
+  // --- HOLIDAYS ---
+  getHolidays: async (): Promise<any[]> => {
+    const res = await fetch(`${API_BASE}/admin/holidays?password=${ADMIN_PASSWORD}`);
+    if (!res.ok) throw new Error('Failed to fetch holidays');
+    return res.json();
+  },
+
+  createHoliday: async (holidayData: any): Promise<any> => {
+    const res = await fetch(`${API_BASE}/admin/holidays`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: ADMIN_PASSWORD, ...holidayData }),
+    });
+    return res.json();
+  },
+
+  updateHoliday: async (id: string, holidayData: any): Promise<any> => {
+    const res = await fetch(`${API_BASE}/admin/holidays/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: ADMIN_PASSWORD, ...holidayData }),
+    });
+    return res.json();
+  },
+
+  deleteHoliday: async (id: string): Promise<any> => {
+    const res = await fetch(`${API_BASE}/admin/holidays/${id}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: ADMIN_PASSWORD }),
+    });
+    return res.json();
   }
 };

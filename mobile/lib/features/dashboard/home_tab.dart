@@ -27,6 +27,7 @@ class _HomeTabState extends State<HomeTab> {
   Map<String, dynamic>? _upNextClass;
   String _upNextStatus = '';
   List<dynamic> _todayClasses = [];
+  String? _todayHolidayTitle;
   
   bool _isOffline = false;
   bool _isRefreshing = false;
@@ -86,7 +87,8 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   void _updateFreshnessAndTimetable() {
-    final lastSynced = StorageService.getLastSyncedAt();
+    final userMode = StorageService.getUserMode();
+    final lastSynced = userMode == 'faculty' ? StorageService.getFacultyLastSyncedAt() : StorageService.getLastSyncedAt();
     if (lastSynced == null) {
       setState(() {
         _freshnessText = 'Never updated';
@@ -104,9 +106,15 @@ class _HomeTabState extends State<HomeTab> {
     }
 
     // Refresh timetable from cache
-    final timetable = StorageService.getTimetableCache();
+    final timetable = userMode == 'faculty' ? StorageService.getFacultyTimetableCache() : StorageService.getTimetableCache();
     if (timetable.isNotEmpty) {
       _calculateSchedules(timetable);
+    } else {
+      setState(() {
+        _upNextClass = null;
+        _upNextStatus = '';
+        _todayClasses = [];
+      });
     }
   }
 
@@ -130,7 +138,41 @@ class _HomeTabState extends State<HomeTab> {
     final currentMinutes = nowLocal.hour * 60 + nowLocal.minute;
 
     // Filter today's classes
-    final today = timetable.where((e) => e['day'] == currentDay).toList();
+    final rawToday = timetable.where((e) => e['day'] == currentDay).toList();
+    
+    // Apply calendar overrides
+    final overrides = StorageService.getCalendarOverridesCache();
+    final userMode = StorageService.getUserMode() ?? 'student';
+    final formattedDate = "${nowLocal.year}-${nowLocal.month.toString().padLeft(2, '0')}-${nowLocal.day.toString().padLeft(2, '0')}";
+    
+    List<dynamic> today = [];
+    String? holidayTitle;
+    for (final cls in rawToday) {
+      bool isCancelled = false;
+      for (final override in overrides) {
+        if (override['override_date'] == formattedDate) {
+          final targetMode = override['target_mode'];
+          if (targetMode == 'both' || targetMode == userMode) {
+            holidayTitle = override['title'];
+            final oStart = override['start_time'];
+            final oEnd = override['end_time'];
+            if (oStart != null && oStart.toString().isNotEmpty && oEnd != null && oEnd.toString().isNotEmpty) {
+               final cStart = cls['start_time'] as String;
+               if (cStart.compareTo(oStart) >= 0 && cStart.compareTo(oEnd) <= 0) {
+                 isCancelled = true;
+                 break;
+               }
+            } else {
+              isCancelled = true; // Full day
+              break;
+            }
+          }
+        }
+      }
+      if (!isCancelled) {
+        today.add(cls);
+      }
+    }
     
     // Sort chronologically
     today.sort((a, b) => (a['start_time'] as String).compareTo(b['start_time'] as String));
@@ -164,6 +206,7 @@ class _HomeTabState extends State<HomeTab> {
     setState(() {
       _upNextClass = nextClass;
       _upNextStatus = status;
+      _todayHolidayTitle = holidayTitle;
       // Filter out the active "Up Next" class from the remaining classes feed
       if (nextClass != null) {
         _todayClasses = remaining.skip(1).toList();
@@ -174,32 +217,61 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   Future<void> _refreshTimetable() async {
-    final selection = StorageService.getSelection();
-    if (selection == null) return;
-    final batchId = selection['batchId']!;
-
-    setState(() {
-      _isRefreshing = true;
-    });
-
-    try {
-      final list = await ApiService.fetchTimetable(batchId);
-      await StorageService.saveTimetableCache(list);
-      await StorageService.saveLastSyncedAt(DateTime.now());
-      
-      // FIX: Ensure alarms are explicitly rescheduled on manual refresh
-      await NotificationService.scheduleClassReminders(list);
+    final userMode = StorageService.getUserMode();
+    if (userMode == 'faculty') {
+      final selection = StorageService.getFacultySelection();
+      if (selection == null) return;
+      final facultyId = selection['facultyId']!;
       
       setState(() {
-        _isOffline = false;
-        _isRefreshing = false;
+        _isRefreshing = true;
       });
-      _updateFreshnessAndTimetable();
-    } catch (_) {
+
+      try {
+        final list = await ApiService.fetchFacultyTimetable(facultyId);
+        await StorageService.saveFacultyTimetableCache(list);
+        await StorageService.saveFacultyLastSyncedAt(DateTime.now());
+        
+        await NotificationService.scheduleClassReminders(list);
+        
+        setState(() {
+          _isOffline = false;
+          _isRefreshing = false;
+        });
+        _updateFreshnessAndTimetable();
+      } catch (_) {
+        setState(() {
+          _isOffline = true;
+          _isRefreshing = false;
+        });
+      }
+    } else {
+      final selection = StorageService.getSelection();
+      if (selection == null) return;
+      final batchId = selection['batchId']!;
+
       setState(() {
-        _isOffline = true;
-        _isRefreshing = false;
+        _isRefreshing = true;
       });
+
+      try {
+        final list = await ApiService.fetchTimetable(batchId);
+        await StorageService.saveTimetableCache(list);
+        await StorageService.saveLastSyncedAt(DateTime.now());
+        
+        await NotificationService.scheduleClassReminders(list);
+        
+        setState(() {
+          _isOffline = false;
+          _isRefreshing = false;
+        });
+        _updateFreshnessAndTimetable();
+      } catch (_) {
+        setState(() {
+          _isOffline = true;
+          _isRefreshing = false;
+        });
+      }
     }
   }
 
@@ -221,7 +293,7 @@ class _HomeTabState extends State<HomeTab> {
                       alignment: Alignment.centerLeft,
                       child: Image.asset(
                         'assets/logo.png',
-                        height: 22,
+                        height: 32,
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -229,7 +301,7 @@ class _HomeTabState extends State<HomeTab> {
                   // Free Rooms Button (Student Only)
                   if (StorageService.getUserMode() == 'student')
                     IconButton(
-                      icon: const Icon(Icons.meeting_room_outlined, color: AppConstants.textPrimary, size: 24),
+                      icon: const Icon(Icons.door_front_door_outlined, color: AppConstants.textPrimary, size: 26),
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(builder: (context) => const FreeRoomsScreen()),
@@ -284,6 +356,43 @@ class _HomeTabState extends State<HomeTab> {
                         child: Text(
                           'Try again',
                           style: AppConstants.getBodyMedium(color: AppConstants.error).copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            // Holiday banner
+            if (_todayHolidayTitle != null) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppConstants.infoContainer,
+                    borderRadius: BorderRadius.circular(AppConstants.radiusButton),
+                    border: Border.all(color: AppConstants.info.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.event_busy, color: AppConstants.info, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Admin Notice',
+                              style: AppConstants.getHeadline().copyWith(fontSize: 14, color: AppConstants.info),
+                            ),
+                            Text(
+                              _todayHolidayTitle!,
+                              style: AppConstants.getBodyMedium(color: AppConstants.info.withOpacity(0.9)),
+                            ),
+                          ],
                         ),
                       ),
                     ],

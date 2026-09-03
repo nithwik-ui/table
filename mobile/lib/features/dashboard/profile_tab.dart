@@ -125,15 +125,15 @@ class _ProfileTabState extends State<ProfileTab> {
                 final navigator = Navigator.of(context);
                 navigator.pop();
                 
-                await NotificationService.cancelAll();
-                
                 if (StorageService.getUserMode() == 'faculty') {
+                  await NotificationService.cancelFacultyClassReminders();
                   await StorageService.clearFacultySelection();
                   navigator.pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => FacultySelectionScreen()),
+                    MaterialPageRoute(builder: (context) => const FacultySelectionScreen()),
                     (route) => false,
                   );
                 } else {
+                  await NotificationService.cancelStudentClassReminders();
                   await StorageService.clearSelection();
                   navigator.pushAndRemoveUntil(
                     MaterialPageRoute(builder: (context) => const DegreeScreen()),
@@ -168,9 +168,7 @@ class _ProfileTabState extends State<ProfileTab> {
                 final navigator = Navigator.of(context);
                 navigator.pop();
                 
-                await NotificationService.cancelAll();
-                
-                // Directly switch via ModeSelectionScreen logic
+                // ModeSelectionScreen handles cancellation of the outgoing mode's notifications
                 navigator.push(
                   MaterialPageRoute(
                     builder: (context) => const ModeSelectionScreen(isSwitching: true),
@@ -212,7 +210,11 @@ class _ProfileTabState extends State<ProfileTab> {
         await NotificationService.scheduleClassReminders(list);
       }
     } else {
-      await NotificationService.cancelAll();
+      if (StorageService.getUserMode() == 'faculty') {
+        await NotificationService.cancelFacultyClassReminders();
+      } else {
+        await NotificationService.cancelStudentClassReminders();
+      }
     }
   }
 
@@ -224,8 +226,13 @@ class _ProfileTabState extends State<ProfileTab> {
     setState(() => _isRefreshing = true);
 
     try {
-      final userMode = StorageService.getUserMode();
+      final userMode = StorageService.getUserMode() ?? 'student';
       List<dynamic> list = [];
+      
+      // Also fetch the latest calendar overrides
+      final overrides = await ApiService.fetchCalendarOverrides('', userMode);
+      await StorageService.saveCalendarOverridesCache(overrides);
+
       if (userMode == 'faculty') {
         final facultyId = StorageService.getFacultySelection()?['facultyId'];
         if (facultyId != null) {

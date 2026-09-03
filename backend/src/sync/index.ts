@@ -383,9 +383,10 @@ export async function runSync() {
   let facultyUnchangedCount = 0;
   let facultyUpdatedCount = 0;
 
-  await executeInPool(activeFaculties, CONCURRENCY_LIMIT, async (facultyName: string) => {
+  await executeInPool(activeFaculties, CONCURRENCY_LIMIT, async (faculty: { id: string; name: string }) => {
     await sleep(DELAY_BETWEEN_REQUESTS_MS);
     
+    const facultyName = faculty.name;
     // Convert faculty name to an ID format (slug) for consistency
     const facultyId = Buffer.from(facultyName).toString('base64');
 

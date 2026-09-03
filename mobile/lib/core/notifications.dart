@@ -140,35 +140,68 @@ class NotificationService {
         nowLocal.day
       ).abs() % 2147483647;
 
-        print('Diagnostic: [ClassReminder] Reminder: $reminderTimeLocal');
-        print('Diagnostic: [ClassReminder] Scheduling notification ID: $notifId');
+      print('Diagnostic: [ClassReminder] Reminder: $reminderTimeLocal');
+      print('Diagnostic: [ClassReminder] Scheduling notification ID: $notifId');
 
-        final reminderTimeTz = tz.TZDateTime.from(reminderTimeLocal, tz.local);
-
-        try {
-          await _notificationsPlugin.zonedSchedule(
-            notifId,
-            'Class Reminder',
-            '$subject starts in 5 minutes\n$body',
-            reminderTimeTz,
-            const NotificationDetails(
-              android: AndroidNotificationDetails(
-                'class_reminders',
-                'Class Reminders',
-                channelDescription: 'Notifications before a class starts.',
-                importance: Importance.max,
-                priority: Priority.high,
-                icon: '@drawable/ic_notification',
-              ),
-            ),
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-            uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-          );
-          anyScheduled = true;
-          print('Diagnostic: [ClassReminder] Scheduled successfully');
-        } catch (e) {
-          print('Diagnostic: [ClassReminder] FAILED to schedule reminder: $e');
+      // Check for calendar overrides
+      final overrides = StorageService.getCalendarOverridesCache();
+      bool isCancelledByHoliday = false;
+      final formattedDate = "${nowLocal.year}-${nowLocal.month.toString().padLeft(2, '0')}-${nowLocal.day.toString().padLeft(2, '0')}";
+      for (final override in overrides) {
+        if (override['override_date'] == formattedDate) {
+          final targetMode = override['target_mode'];
+          if (targetMode == 'both' || targetMode == userMode) {
+            // If there's a time window, check if class falls in it
+            final oStart = override['start_time'];
+            final oEnd = override['end_time'];
+            if (oStart != null && oStart.toString().isNotEmpty && oEnd != null && oEnd.toString().isNotEmpty) {
+               // Check if class start time is within holiday window
+               final cStart = startTimeStr; // e.g. "09:00"
+               if (cStart.compareTo(oStart) >= 0 && cStart.compareTo(oEnd) <= 0) {
+                 isCancelledByHoliday = true;
+                 break;
+               }
+            } else {
+              // Full day holiday
+              isCancelledByHoliday = true;
+              break;
+            }
+          }
         }
+      }
+
+      if (isCancelledByHoliday) {
+        print('Diagnostic: [ClassReminder] Skipped $subject $startTimeStr due to calendar override/holiday');
+        continue;
+      }
+
+      final reminderTimeTz = tz.TZDateTime.from(reminderTimeLocal, tz.local);
+
+      try {
+        await _notificationsPlugin.zonedSchedule(
+          notifId,
+          'Class Reminder',
+          '$subject starts in 5 minutes\n$body',
+          reminderTimeTz,
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'class_reminders',
+              'Class Reminders',
+              channelDescription: 'Notifications before a class starts.',
+              importance: Importance.max,
+              priority: Priority.high,
+              icon: '@drawable/ic_notification',
+            ),
+          ),
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+          payload: userMode, // IMPORTANT: Used for mode-specific cancellation
+        );
+        anyScheduled = true;
+        print('Diagnostic: [ClassReminder] Scheduled successfully');
+      } catch (e) {
+        print('Diagnostic: [ClassReminder] FAILED to schedule reminder: $e');
+      }
     }
     
     if (!anyScheduled) {
@@ -179,8 +212,22 @@ class NotificationService {
     print('========== DIAGNOSTIC: END SCHEDULE CLASS REMINDERS ==========');
   }
 
-  static Future<void> cancelAll() async {
-    await _notificationsPlugin.cancelAll();
+  static Future<void> cancelStudentClassReminders() async {
+    final pendingRequests = await _notificationsPlugin.pendingNotificationRequests();
+    for (final request in pendingRequests) {
+      if (request.payload == 'student') {
+        await _notificationsPlugin.cancel(request.id);
+      }
+    }
+  }
+
+  static Future<void> cancelFacultyClassReminders() async {
+    final pendingRequests = await _notificationsPlugin.pendingNotificationRequests();
+    for (final request in pendingRequests) {
+      if (request.payload == 'faculty') {
+        await _notificationsPlugin.cancel(request.id);
+      }
+    }
   }
 
   static int _getWeekdayNumber(String dayName) {
