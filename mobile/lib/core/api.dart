@@ -200,7 +200,11 @@ class ApiService {
       })
     ).timeout(timeoutDuration);
     
-    return json.decode(response.body) as Map<String, dynamic>;
+    final data = json.decode(response.body) as Map<String, dynamic>;
+    if (response.statusCode != 200) {
+      throw Exception(data['error'] ?? 'Failed to activate faculty account');
+    }
+    return data;
   }
 
   static Future<Map<String, dynamic>> facultyLogin(String facultyId, String password) async {
@@ -213,7 +217,11 @@ class ApiService {
       })
     ).timeout(timeoutDuration);
     
-    return json.decode(response.body) as Map<String, dynamic>;
+    final data = json.decode(response.body) as Map<String, dynamic>;
+    if (response.statusCode != 200) {
+      throw Exception(data['error'] ?? 'Failed to login');
+    }
+    return data;
   }
 
   // --- CALENDAR OVERRIDES ---

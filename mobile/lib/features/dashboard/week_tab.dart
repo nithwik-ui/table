@@ -4,8 +4,7 @@ import '../../core/constants.dart';
 import '../../core/storage.dart';
 import '../../core/utils.dart';
 import 'ad_banner.dart';
-import '../../core/api.dart';
-import '../../core/notifications.dart';
+import '../../core/sync.dart';
 import '../notifications/notifications_screen.dart';
 import 'widgets/live_class_progress.dart';
 
@@ -29,7 +28,21 @@ class _WeekTabState extends State<WeekTab> {
     super.initState();
     _calculateCurrentWeek();
     _loadLocalData();
-    _fetchTimetable();
+    SyncService.instance.addListener(_onSyncUpdate);
+  }
+
+  void _onSyncUpdate() {
+    if (mounted) {
+      if (!SyncService.instance.isSyncing) {
+        _loadLocalData();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    SyncService.instance.removeListener(_onSyncUpdate);
+    super.dispose();
   }
 
   void _calculateCurrentWeek() {
@@ -91,44 +104,7 @@ class _WeekTabState extends State<WeekTab> {
     });
   }
 
-  Future<void> _fetchTimetable() async {
-    final userMode = StorageService.getUserMode();
-    
-    try {
-      List<dynamic> list = [];
-      if (userMode == 'faculty') {
-        final selection = StorageService.getFacultySelection();
-        if (selection == null) return;
-        final facultyId = selection['facultyId']!;
-        
-        list = await ApiService.fetchFacultyTimetable(facultyId);
-        await StorageService.saveFacultyTimetableCache(list);
-        await StorageService.saveFacultyLastSyncedAt(DateTime.now());
-      } else {
-        final selection = StorageService.getSelection();
-        if (selection == null) return;
-        final batchId = selection['batchId']!;
-        
-        list = await ApiService.fetchTimetable(batchId);
-        await StorageService.saveTimetableCache(list);
-        await StorageService.saveLastSyncedAt(DateTime.now());
-      }
-      
-      await NotificationService.scheduleClassReminders(list);
-      
-      if (mounted) {
-        setState(() {
-          _timetable = list;
-          _isOffline = false;
-        });
-        _calculateNextClassHighlight();
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() => _isOffline = true);
-      }
-    }
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -138,9 +114,43 @@ class _WeekTabState extends State<WeekTab> {
     
     // Format headers
     final subHeadlineText = DateFormat('EEEE, d MMMM').format(selectedDate);
+    final formattedDate = "${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}";
+    final userMode = StorageService.getUserMode() ?? 'student';
+    final overrides = userMode == 'faculty' 
+        ? StorageService.getFacultyCalendarOverridesCache() 
+        : StorageService.getStudentCalendarOverridesCache();
 
-    // Filter classes for selected day
-    final dayClasses = _timetable.where((e) => e['day'] == selectedDayName).toList();
+    String? holidayTitle;
+    String? holidayMessage;
+    List<dynamic> dayClasses = [];
+    final rawToday = _timetable.where((e) => (e['day'] as String).toLowerCase() == selectedDayName.toLowerCase()).toList();
+    for (final rawCls in rawToday) {
+      final cls = Map<String, dynamic>.from(rawCls);
+      bool isCancelled = false;
+      for (final override in overrides) {
+        if (override['override_date'] == formattedDate) {
+          final targetMode = override['target_mode'];
+          if (targetMode == 'both' || targetMode == userMode) {
+            holidayTitle = override['title'];
+            holidayMessage = override['message'];
+            final oStart = override['start_time'];
+            final oEnd = override['end_time'];
+            if (oStart != null && oStart.toString().isNotEmpty && oEnd != null && oEnd.toString().isNotEmpty) {
+               final cStart = cls['start_time'] as String;
+               if (cStart.compareTo(oStart) >= 0 && cStart.compareTo(oEnd) <= 0) {
+                 isCancelled = true;
+                 break;
+               }
+            } else {
+              isCancelled = true;
+              break;
+            }
+          }
+        }
+      }
+      cls['isCancelled'] = isCancelled;
+      dayClasses.add(cls);
+    }
     dayClasses.sort((a, b) => (a['start_time'] as String).compareTo(b['start_time'] as String));
 
     return Scaffold(
@@ -207,7 +217,10 @@ class _WeekTabState extends State<WeekTab> {
                         ),
                       ),
                       TextButton(
-                        onPressed: _fetchTimetable,
+                        onPressed: () {
+                          setState(() => _isOffline = false);
+                          SyncService.instance.syncTimetable();
+                        },
                         child: Text(
                           'Try again',
                           style: AppConstants.getBodyMedium(color: AppConstants.error).copyWith(fontWeight: FontWeight.bold),
@@ -292,9 +305,25 @@ class _WeekTabState extends State<WeekTab> {
             // Selected Day date Sub-headline
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer),
-              child: Text(
-                subHeadlineText,
-                style: AppConstants.getHeadline().copyWith(fontSize: 16, color: AppConstants.textSecondary),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    subHeadlineText,
+                    style: AppConstants.getHeadline().copyWith(fontSize: 16, color: AppConstants.textSecondary),
+                  ),
+                  if (holidayTitle != null)
+                    Expanded(
+                      child: Text(
+                        holidayMessage != null && holidayMessage.isNotEmpty 
+                            ? '$holidayTitle - $holidayMessage'
+                            : holidayTitle!,
+                        style: AppConstants.getBodyMedium(color: AppConstants.info).copyWith(fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.right,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 12),
@@ -323,9 +352,10 @@ class _WeekTabState extends State<WeekTab> {
                         final room = (c['room'] as String? ?? 'No Room').split('_')[0];
                         final ltp = c['ltp'] as String? ?? '';
                         final isLab = ltp.toLowerCase().contains('lab') || ltp.toLowerCase().contains('practical') || ltp == 'P';
+                        final isCancelled = c['isCancelled'] == true;
                         
                         // Check if this class is the "Next" class highlighted
-                        final isNext = _nextClassToday != null &&
+                        final isNext = !isCancelled && _nextClassToday != null &&
                             _nextClassToday!['day'] == c['day'] &&
                             _nextClassToday!['start_time'] == c['start_time'] &&
                             _nextClassToday!['subject'] == c['subject'];
@@ -335,11 +365,11 @@ class _WeekTabState extends State<WeekTab> {
                           child: Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: AppConstants.surface,
+                              color: isCancelled ? AppConstants.surface.withOpacity(0.5) : AppConstants.surface,
                               borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-                              boxShadow: AppConstants.shadowLevel1,
+                              boxShadow: isCancelled ? null : AppConstants.shadowLevel1,
                               border: Border.all(
-                                color: isNext ? AppConstants.primary : AppConstants.outline,
+                                color: isNext ? AppConstants.primary : (isCancelled ? AppConstants.outline : AppConstants.outline),
                                 width: isNext ? 1.5 : 1.0,
                               ),
                             ),
@@ -353,21 +383,31 @@ class _WeekTabState extends State<WeekTab> {
                                     Expanded(
                                       child: Text(
                                         c['subject'] as String,
-                                        style: AppConstants.getHeadline().copyWith(fontSize: 18),
+                                        style: AppConstants.getHeadline().copyWith(
+                                          fontSize: 18,
+                                          decoration: isCancelled ? TextDecoration.lineThrough : null,
+                                          color: isCancelled ? AppConstants.textSecondary : null,
+                                        ),
                                       ),
                                     ),
                                     Row(
                                       children: [
                                         Text(
                                           '${TimeUtils.format12Hour(c['start_time'])} - ${TimeUtils.format12Hour(c['end_time'])}',
-                                          style: AppConstants.getLabelSmall(color: AppConstants.primary).copyWith(fontWeight: FontWeight.w600),
+                                          style: AppConstants.getLabelSmall(
+                                            color: isCancelled ? AppConstants.textSecondary : AppConstants.primary
+                                          ).copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            decoration: isCancelled ? TextDecoration.lineThrough : null,
+                                          ),
                                         ),
                                         const SizedBox(width: 8),
-                                        LiveClassProgressIndicator(
-                                          startTime: c['start_time'] as String,
-                                          endTime: c['end_time'] as String,
-                                          isToday: _selectedDayIndex == DateTime.now().weekday - 1,
-                                        ),
+                                        if (!isCancelled)
+                                          LiveClassProgressIndicator(
+                                            startTime: c['start_time'] as String,
+                                            endTime: c['end_time'] as String,
+                                            isToday: _selectedDayIndex == DateTime.now().weekday - 1,
+                                          ),
                                       ],
                                     ),
                                   ],
@@ -378,8 +418,12 @@ class _WeekTabState extends State<WeekTab> {
                                     const Icon(Icons.place_outlined, size: 16, color: AppConstants.textSecondary),
                                     const SizedBox(width: 6),
                                     Text(
-                                      room,
-                                      style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
+                                      isCancelled ? 'Cancelled' : room,
+                                      style: AppConstants.getBodyMedium(
+                                        color: isCancelled ? AppConstants.error : AppConstants.textSecondary
+                                      ).copyWith(
+                                        fontWeight: isCancelled ? FontWeight.bold : null,
+                                      ),
                                     ),
                                     const SizedBox(width: 16),
                                     const Icon(Icons.person_outline, size: 16, color: AppConstants.textSecondary),
@@ -393,7 +437,7 @@ class _WeekTabState extends State<WeekTab> {
                                     ),
                                   ],
                                 ),
-                                if (isNext || ltp.isNotEmpty) ...[
+                                if (!isCancelled && (isNext || ltp.isNotEmpty)) ...[
                                   const SizedBox(height: 12),
                                   Row(
                                     children: [

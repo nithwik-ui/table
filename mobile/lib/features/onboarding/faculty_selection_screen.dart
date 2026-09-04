@@ -3,6 +3,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../core/api.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
+import '../../core/notifications.dart';
+import '../../core/sync.dart';
 import '../dashboard/dashboard_screen.dart';
 
 class FacultySelectionScreen extends StatefulWidget {
@@ -13,7 +15,6 @@ class FacultySelectionScreen extends StatefulWidget {
 }
 
 class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
-  List<dynamic> _allFaculty = [];
   List<dynamic> _filteredFaculty = [];
   bool _isLoading = false;
   bool _isSaving = false;
@@ -41,7 +42,6 @@ class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
     try {
       final facultyList = await ApiService.facultySearch(query);
       setState(() {
-        _allFaculty = facultyList;
         _filteredFaculty = facultyList;
         _isLoading = false;
       });
@@ -163,8 +163,8 @@ class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
                           passwordCtrl.text
                         );
                       }
-
                       if (res['success'] == true) {
+                        if (!ctx.mounted) return;
                         Navigator.pop(ctx);
                         _proceedWithFaculty(faculty['id'], faculty['faculty_name'], res['token']);
                       } else {
@@ -210,7 +210,7 @@ class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
         facultyName: facultyName,
       );
       await StorageService.saveFacultyTimetableCache(timetable);
-      await StorageService.saveCalendarOverridesCache(overrides);
+      await StorageService.saveFacultyCalendarOverridesCache(overrides);
       await StorageService.saveFacultyLastSyncedAt(DateTime.now());
 
       // 4. Try to register device token as faculty
@@ -229,6 +229,11 @@ class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
         facultyId: facultyId,
       );
       
+      // 5. Successfully authenticated and setup. Now we switch mode!
+      await StorageService.setUserMode('faculty');
+      await NotificationService.reconcileReminders();
+      SyncService.instance.syncTimetable();
+
       await Future.delayed(const Duration(seconds: 1));
       if (!mounted) return;
       

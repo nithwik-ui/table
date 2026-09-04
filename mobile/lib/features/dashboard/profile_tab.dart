@@ -9,6 +9,7 @@ import '../../core/storage.dart';
 import '../../core/api.dart';
 import '../../core/updater.dart';
 import '../../core/notifications.dart';
+import '../../core/sync.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../onboarding/degree_screen.dart';
 import '../onboarding/faculty_selection_screen.dart';
@@ -37,6 +38,28 @@ class _ProfileTabState extends State<ProfileTab> {
   void initState() {
     super.initState();
     _loadProfileData();
+    SyncService.instance.addListener(_onSyncUpdate);
+  }
+
+  void _onSyncUpdate() {
+    if (mounted) {
+      if (!SyncService.instance.isSyncing) {
+        setState(() {
+          _isRefreshing = false;
+        });
+        _loadProfileData();
+      } else {
+        setState(() {
+          _isRefreshing = true;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    SyncService.instance.removeListener(_onSyncUpdate);
+    super.dispose();
   }
 
   void _loadProfileData() {
@@ -71,7 +94,7 @@ class _ProfileTabState extends State<ProfileTab> {
 
         if (selection != null) {
           _degreeYearText = 'Faculty Mode';
-          _batchCode = selection['facultyId'] ?? '';
+          _batchCode = '';
         }
       });
     } else {
@@ -219,68 +242,9 @@ class _ProfileTabState extends State<ProfileTab> {
   }
 
   Future<void> _refreshTimetable() async {
-    final selection = StorageService.getSelection();
-    if (selection == null) return;
-    final batchId = selection['batchId']!;
-
-    setState(() => _isRefreshing = true);
-
-    try {
-      final userMode = StorageService.getUserMode() ?? 'student';
-      List<dynamic> list = [];
-      
-      // Also fetch the latest calendar overrides
-      final overrides = await ApiService.fetchCalendarOverrides('', userMode);
-      await StorageService.saveCalendarOverridesCache(overrides);
-
-      if (userMode == 'faculty') {
-        final facultyId = StorageService.getFacultySelection()?['facultyId'];
-        if (facultyId != null) {
-          list = await ApiService.fetchFacultyTimetable(facultyId);
-          await StorageService.saveFacultyTimetableCache(list);
-          await StorageService.saveFacultyLastSyncedAt(DateTime.now());
-        }
-      } else {
-        list = await ApiService.fetchTimetable(batchId);
-        await StorageService.saveTimetableCache(list);
-        await StorageService.saveLastSyncedAt(DateTime.now());
-      }
-      
-      final remindersEnabled = StorageService.isClassRemindersEnabled();
-      if (remindersEnabled && list.isNotEmpty) {
-        await NotificationService.scheduleClassReminders(list);
-      }
-      
-      setState(() => _isRefreshing = false);
-      _loadProfileData();
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Timetable successfully updated!')),
-        );
-      }
-    } catch (e) {
-      setState(() => _isRefreshing = false);
-      if (mounted) {
-        String msg = 'Could not refresh. You are offline.';
-        if (e is! SocketException && e is! TimeoutException) {
-           msg = e.toString().replaceFirst('Exception: ', '');
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
-        );
-      }
-    }
+    SyncService.instance.syncTimetable();
   }
 
-  Future<void> _clearCacheOnly() async {
-    // Clear only cache (keeping selection/name intact)
-    await StorageService.saveTimetableCache([]);
-    _loadProfileData();
-    
-    // Resync immediately
-    await _refreshTimetable();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -448,13 +412,6 @@ class _ProfileTabState extends State<ProfileTab> {
                           onTap: _isRefreshing || _isCheckingUpdates ? null : () => _checkForUpdates(context),
                         ),
                         const Divider(height: 1, color: AppConstants.outline),
-                        // Clear cache
-                        ListTile(
-                          leading: const Icon(Icons.delete_outline, color: AppConstants.warning),
-                          title: Text('Clear cache', style: AppConstants.getBodyLarge(color: AppConstants.warning)),
-                          trailing: const Icon(Icons.chevron_right, color: AppConstants.textSecondary),
-                          onTap: _isRefreshing ? null : _clearCacheOnly,
-                        ),
                         const Divider(height: 1, color: AppConstants.outline),
                         // Switch mode
                         ListTile(

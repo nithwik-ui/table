@@ -4,8 +4,7 @@ import '../../core/constants.dart';
 import '../../core/storage.dart';
 import '../../core/utils.dart';
 import 'ad_banner.dart';
-import '../../core/api.dart';
-import '../../core/notifications.dart';
+import '../../core/sync.dart';
 import '../notifications/notifications_screen.dart';
 import 'dashboard_screen.dart';
 import 'free_rooms_screen.dart';
@@ -28,6 +27,7 @@ class _HomeTabState extends State<HomeTab> {
   String _upNextStatus = '';
   List<dynamic> _todayClasses = [];
   String? _todayHolidayTitle;
+  String? _todayHolidayMessage;
   
   bool _isOffline = false;
   bool _isRefreshing = false;
@@ -37,7 +37,6 @@ class _HomeTabState extends State<HomeTab> {
   void initState() {
     super.initState();
     _loadLocalData();
-    _refreshTimetable();
     
     // Auto-update freshness text and class statuses every minute
     _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
@@ -45,10 +44,24 @@ class _HomeTabState extends State<HomeTab> {
         _updateFreshnessAndTimetable();
       }
     });
+    
+    SyncService.instance.addListener(_onSyncUpdate);
+  }
+
+  void _onSyncUpdate() {
+    if (mounted) {
+      if (!SyncService.instance.isSyncing) {
+        setState(() => _isRefreshing = false);
+        _updateFreshnessAndTimetable();
+      } else {
+        setState(() => _isRefreshing = true);
+      }
+    }
   }
 
   @override
   void dispose() {
+    SyncService.instance.removeListener(_onSyncUpdate);
     _timer?.cancel();
     super.dispose();
   }
@@ -134,26 +147,31 @@ class _HomeTabState extends State<HomeTab> {
       'Saturday',
       'Sunday' // 7
     ];
-    final currentDay = weekdays[weekdayIndex];
+    final currentDay = weekdays[weekdayIndex].toLowerCase();
     final currentMinutes = nowLocal.hour * 60 + nowLocal.minute;
 
     // Filter today's classes
-    final rawToday = timetable.where((e) => e['day'] == currentDay).toList();
+    final rawToday = timetable.where((e) => (e['day'] as String).toLowerCase() == currentDay).toList();
     
     // Apply calendar overrides
-    final overrides = StorageService.getCalendarOverridesCache();
     final userMode = StorageService.getUserMode() ?? 'student';
+    final overrides = userMode == 'faculty' 
+        ? StorageService.getFacultyCalendarOverridesCache() 
+        : StorageService.getStudentCalendarOverridesCache();
     final formattedDate = "${nowLocal.year}-${nowLocal.month.toString().padLeft(2, '0')}-${nowLocal.day.toString().padLeft(2, '0')}";
     
     List<dynamic> today = [];
     String? holidayTitle;
-    for (final cls in rawToday) {
+    String? holidayMessage;
+    for (final rawCls in rawToday) {
+      final cls = Map<String, dynamic>.from(rawCls);
       bool isCancelled = false;
       for (final override in overrides) {
         if (override['override_date'] == formattedDate) {
           final targetMode = override['target_mode'];
           if (targetMode == 'both' || targetMode == userMode) {
             holidayTitle = override['title'];
+            holidayMessage = override['message'];
             final oStart = override['start_time'];
             final oEnd = override['end_time'];
             if (oStart != null && oStart.toString().isNotEmpty && oEnd != null && oEnd.toString().isNotEmpty) {
@@ -169,15 +187,15 @@ class _HomeTabState extends State<HomeTab> {
           }
         }
       }
-      if (!isCancelled) {
-        today.add(cls);
-      }
+      cls['isCancelled'] = isCancelled;
+      today.add(cls);
     }
     
     // Sort chronologically
     today.sort((a, b) => (a['start_time'] as String).compareTo(b['start_time'] as String));
 
     // Calculate remaining classes (where end_time has not passed)
+    // Keep cancelled classes in the list so they can be shown as struck through
     final remaining = today.where((e) {
       final endParts = (e['end_time'] as String).split(':').map(int.parse).toList();
       final endMinutes = endParts[0] * 60 + endParts[1];
@@ -187,9 +205,12 @@ class _HomeTabState extends State<HomeTab> {
     Map<String, dynamic>? nextClass;
     String status = '';
 
-    if (remaining.isNotEmpty) {
-      // Check if first remaining class is currently in progress
-      final first = remaining.first;
+    // Find the first NON-CANCELLED class for "Up Next"
+    final activeRemaining = remaining.where((e) => e['isCancelled'] != true).toList();
+
+    if (activeRemaining.isNotEmpty) {
+      // Check if first active remaining class is currently in progress
+      final first = activeRemaining.first;
       final startParts = (first['start_time'] as String).split(':').map(int.parse).toList();
       final startMinutes = startParts[0] * 60 + startParts[1];
 
@@ -207,73 +228,17 @@ class _HomeTabState extends State<HomeTab> {
       _upNextClass = nextClass;
       _upNextStatus = status;
       _todayHolidayTitle = holidayTitle;
-      // Filter out the active "Up Next" class from the remaining classes feed
+      _todayHolidayMessage = holidayMessage;
+      
+      // Filter out the active "Up Next" class from the remaining classes feed, but keep cancelled classes
       if (nextClass != null) {
-        _todayClasses = remaining.skip(1).toList();
+        _todayClasses = remaining.where((e) => e['id'] != nextClass!['id']).toList();
       } else {
         _todayClasses = remaining;
       }
     });
   }
 
-  Future<void> _refreshTimetable() async {
-    final userMode = StorageService.getUserMode();
-    if (userMode == 'faculty') {
-      final selection = StorageService.getFacultySelection();
-      if (selection == null) return;
-      final facultyId = selection['facultyId']!;
-      
-      setState(() {
-        _isRefreshing = true;
-      });
-
-      try {
-        final list = await ApiService.fetchFacultyTimetable(facultyId);
-        await StorageService.saveFacultyTimetableCache(list);
-        await StorageService.saveFacultyLastSyncedAt(DateTime.now());
-        
-        await NotificationService.scheduleClassReminders(list);
-        
-        setState(() {
-          _isOffline = false;
-          _isRefreshing = false;
-        });
-        _updateFreshnessAndTimetable();
-      } catch (_) {
-        setState(() {
-          _isOffline = true;
-          _isRefreshing = false;
-        });
-      }
-    } else {
-      final selection = StorageService.getSelection();
-      if (selection == null) return;
-      final batchId = selection['batchId']!;
-
-      setState(() {
-        _isRefreshing = true;
-      });
-
-      try {
-        final list = await ApiService.fetchTimetable(batchId);
-        await StorageService.saveTimetableCache(list);
-        await StorageService.saveLastSyncedAt(DateTime.now());
-        
-        await NotificationService.scheduleClassReminders(list);
-        
-        setState(() {
-          _isOffline = false;
-          _isRefreshing = false;
-        });
-        _updateFreshnessAndTimetable();
-      } catch (_) {
-        setState(() {
-          _isOffline = true;
-          _isRefreshing = false;
-        });
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -352,7 +317,10 @@ class _HomeTabState extends State<HomeTab> {
                         ),
                       ),
                       TextButton(
-                        onPressed: _refreshTimetable,
+                        onPressed: () {
+                          setState(() => _isOffline = false);
+                          SyncService.instance.syncTimetable();
+                        },
                         child: Text(
                           'Try again',
                           style: AppConstants.getBodyMedium(color: AppConstants.error).copyWith(fontWeight: FontWeight.bold),
@@ -385,13 +353,14 @@ class _HomeTabState extends State<HomeTab> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Admin Notice',
+                              _todayHolidayTitle!,
                               style: AppConstants.getHeadline().copyWith(fontSize: 14, color: AppConstants.info),
                             ),
-                            Text(
-                              _todayHolidayTitle!,
-                              style: AppConstants.getBodyMedium(color: AppConstants.info.withOpacity(0.9)),
-                            ),
+                            if (_todayHolidayMessage != null && _todayHolidayMessage!.isNotEmpty)
+                              Text(
+                                _todayHolidayMessage!,
+                                style: AppConstants.getBodyMedium(color: AppConstants.info.withOpacity(0.9)),
+                              ),
                           ],
                         ),
                       ),
@@ -405,7 +374,9 @@ class _HomeTabState extends State<HomeTab> {
             Expanded(
               child: RefreshIndicator(
                 color: AppConstants.primary,
-                onRefresh: _refreshTimetable,
+                onRefresh: () async {
+                  await SyncService.instance.syncTimetable();
+                },
                 child: ListView(
                   padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer),
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -579,13 +550,15 @@ class _HomeTabState extends State<HomeTab> {
                           final room = (c['room'] as String? ?? 'No Room').split('_')[0];
                           final ltp = c['ltp'] as String? ?? '';
                           final isLab = ltp.toLowerCase().contains('lab') || ltp.toLowerCase().contains('practical') || ltp == 'P';
+                          final isCancelled = c['isCancelled'] == true;
 
                           return Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: AppConstants.surface,
+                              color: isCancelled ? AppConstants.surface.withOpacity(0.5) : AppConstants.surface,
                               borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-                              boxShadow: AppConstants.shadowLevel1,
+                              boxShadow: isCancelled ? null : AppConstants.shadowLevel1,
+                              border: isCancelled ? Border.all(color: AppConstants.outline) : null,
                             ),
                             child: Row(
                               children: [
@@ -594,7 +567,7 @@ class _HomeTabState extends State<HomeTab> {
                                   width: 4,
                                   height: 40,
                                   decoration: BoxDecoration(
-                                    color: isLab ? AppConstants.warning : AppConstants.primary,
+                                    color: isCancelled ? AppConstants.textSecondary.withOpacity(0.3) : (isLab ? AppConstants.warning : AppConstants.primary),
                                     borderRadius: BorderRadius.circular(AppConstants.radiusTag),
                                   ),
                                 ),
@@ -605,25 +578,37 @@ class _HomeTabState extends State<HomeTab> {
                                     children: [
                                       Text(
                                         c['subject'] as String,
-                                        style: AppConstants.getHeadline().copyWith(fontSize: 16),
+                                        style: AppConstants.getHeadline().copyWith(
+                                          fontSize: 16,
+                                          decoration: isCancelled ? TextDecoration.lineThrough : null,
+                                          color: isCancelled ? AppConstants.textSecondary : null,
+                                        ),
                                       ),
                                       const SizedBox(height: 4),
                                       Row(
                                         children: [
                                           Text(
                                             '${TimeUtils.format12Hour(c['start_time'])} - ${TimeUtils.format12Hour(c['end_time'])}',
-                                            style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
+                                            style: AppConstants.getBodyMedium(color: AppConstants.textSecondary).copyWith(
+                                              decoration: isCancelled ? TextDecoration.lineThrough : null,
+                                            ),
                                           ),
                                           const SizedBox(width: 12),
-                                          LiveClassProgressIndicator(
-                                            startTime: c['start_time'] as String,
-                                            endTime: c['end_time'] as String,
-                                            isToday: true,
-                                          ),
-                                          const SizedBox(width: 12),
+                                          if (!isCancelled) ...[
+                                            LiveClassProgressIndicator(
+                                              startTime: c['start_time'] as String,
+                                              endTime: c['end_time'] as String,
+                                              isToday: true,
+                                            ),
+                                            const SizedBox(width: 12),
+                                          ],
                                           Text(
-                                            room,
-                                            style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
+                                            isCancelled ? 'Cancelled' : room,
+                                            style: AppConstants.getBodyMedium(
+                                              color: isCancelled ? AppConstants.error : AppConstants.textSecondary
+                                            ).copyWith(
+                                              fontWeight: isCancelled ? FontWeight.bold : null,
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -631,7 +616,7 @@ class _HomeTabState extends State<HomeTab> {
                                   ),
                                 ),
                                 // LTP type badge
-                                if (ltp.isNotEmpty)
+                                if (ltp.isNotEmpty && !isCancelled)
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(

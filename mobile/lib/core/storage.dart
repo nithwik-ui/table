@@ -94,6 +94,7 @@ class StorageService {
     // Clear caches
     await _cacheBox?.delete('timetable');
     await _cacheBox?.delete('changes');
+    await _cacheBox?.delete('student_calendar_overrides');
   }
 
   static bool hasSelection() {
@@ -131,6 +132,7 @@ class StorageService {
     // Clear caches
     await _cacheBox?.delete('faculty_timetable');
     await _cacheBox?.delete('faculty_changes');
+    await _cacheBox?.delete('faculty_calendar_overrides');
     await _prefsBox?.delete('faculty_token');
   }
 
@@ -226,13 +228,22 @@ class StorageService {
     return _cacheBox?.get('faculty_changes', defaultValue: []) as List<dynamic>? ?? [];
   }
 
-  // CALENDAR OVERRIDES CACHE
-  static Future<void> saveCalendarOverridesCache(List<dynamic> overrides) async {
-    await _cacheBox?.put('calendar_overrides', overrides);
+  // CALENDAR OVERRIDES CACHE (STUDENT)
+  static Future<void> saveStudentCalendarOverridesCache(List<dynamic> overrides) async {
+    await _cacheBox?.put('student_calendar_overrides', overrides);
   }
 
-  static List<dynamic> getCalendarOverridesCache() {
-    return _cacheBox?.get('calendar_overrides', defaultValue: []) as List<dynamic>? ?? [];
+  static List<dynamic> getStudentCalendarOverridesCache() {
+    return _cacheBox?.get('student_calendar_overrides', defaultValue: []) as List<dynamic>? ?? [];
+  }
+
+  // CALENDAR OVERRIDES CACHE (FACULTY)
+  static Future<void> saveFacultyCalendarOverridesCache(List<dynamic> overrides) async {
+    await _cacheBox?.put('faculty_calendar_overrides', overrides);
+  }
+
+  static List<dynamic> getFacultyCalendarOverridesCache() {
+    return _cacheBox?.get('faculty_calendar_overrides', defaultValue: []) as List<dynamic>? ?? [];
   }
 
   // METADATA DISCOVERY CACHE (offline onboarding recovery)

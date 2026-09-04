@@ -62,6 +62,31 @@ class NotificationService {
     );
   }
 
+  static Future<void> reconcileReminders() async {
+    print('========== DIAGNOSTIC: BEGIN RECONCILE REMINDERS ==========');
+    final userMode = StorageService.getUserMode();
+    
+    if (userMode == null || userMode.isEmpty) {
+      // Clear all pending if no mode
+      final pendingRequests = await _notificationsPlugin.pendingNotificationRequests();
+      for (final request in pendingRequests) {
+        await _notificationsPlugin.cancel(request.id);
+      }
+      return;
+    }
+
+    List<dynamic> timetable = [];
+    if (userMode == 'faculty') {
+      timetable = StorageService.getFacultyTimetableCache();
+    } else {
+      timetable = StorageService.getTimetableCache();
+    }
+
+    if (timetable.isNotEmpty) {
+      await scheduleClassReminders(timetable);
+    }
+  }
+
   static Future<void> scheduleClassReminders(List<dynamic> weekTimetable) async {
     print('========== DIAGNOSTIC: BEGIN SCHEDULE CLASS REMINDERS ==========');
     
@@ -144,7 +169,9 @@ class NotificationService {
       print('Diagnostic: [ClassReminder] Scheduling notification ID: $notifId');
 
       // Check for calendar overrides
-      final overrides = StorageService.getCalendarOverridesCache();
+      final overrides = userMode == 'faculty' 
+          ? StorageService.getFacultyCalendarOverridesCache() 
+          : StorageService.getStudentCalendarOverridesCache();
       bool isCancelledByHoliday = false;
       final formattedDate = "${nowLocal.year}-${nowLocal.month.toString().padLeft(2, '0')}-${nowLocal.day.toString().padLeft(2, '0')}";
       for (final override in overrides) {

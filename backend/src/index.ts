@@ -3,7 +3,6 @@ import cors from 'cors';
 import { supabase } from './db/supabase';
 import { runSync } from './sync';
 import { sendGenericBroadcast } from './notifications/fcm';
-import { runReminderWorker } from './notifications/reminderWorker';
 
 import facultyRouter from './api/faculty';
 import roomsRouter from './api/rooms';
@@ -467,8 +466,4 @@ setInterval(() => {
   runSync().catch(err => console.error('Periodic sync crawl failed:', err));
 }, intervalMinutes * 60 * 1000);
 
-// Schedule FCM class reminders to run every 1 minute
-console.log('Scheduling FCM Reminder Worker to tick every minute.');
-setInterval(() => {
-  runReminderWorker().catch(err => console.error('Reminder worker failed:', err));
-}, 60 * 1000);
+

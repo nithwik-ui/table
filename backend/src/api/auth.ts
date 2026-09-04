@@ -64,9 +64,18 @@ router.post('/activate', async (req: Request, res: Response) => {
     try {
         const { faculty_id, activation_password, new_password } = req.body;
         if (!faculty_id || !activation_password || !new_password) {
+            console.log(`[AUTH] Activation failed for ${faculty_id || 'unknown'}: Missing parameters`);
             return res.status(400).json({ error: 'Missing parameters.' });
         }
+        
+        const cleanActivation = activation_password.trim();
+        if (!/^SRU#\d{6}$/.test(cleanActivation)) {
+            console.log(`[AUTH] Activation failed for ${faculty_id}: Invalid activation format`);
+            return res.status(400).json({ error: 'Activation code must be exactly SRU# followed by 6 digits.' });
+        }
+
         if (new_password.length < 6) {
+            console.log(`[AUTH] Activation failed for ${faculty_id}: Password too short`);
             return res.status(400).json({ error: 'Password must be at least 6 characters.' });
         }
 
@@ -79,16 +88,19 @@ router.post('/activate', async (req: Request, res: Response) => {
             .single();
 
         if (accErr || !account) {
+            console.log(`[AUTH] Activation failed for ${faculty_id}: Account not found or inactive`);
             return res.status(401).json({ error: 'Invalid faculty credentials.' });
         }
 
         if (account.activation_used) {
+            console.log(`[AUTH] Activation failed for ${faculty_id}: Activation code already used`);
             return res.status(401).json({ error: 'Invalid faculty credentials.' });
         }
 
         // Verify one-time hash
-        const isMatch = await bcrypt.compare(activation_password, account.activation_code_hash || '');
+        const isMatch = await bcrypt.compare(cleanActivation, account.activation_code_hash || '');
         if (!isMatch) {
+            console.log(`[AUTH] Activation failed for ${faculty_id}: Incorrect activation code`);
             return res.status(401).json({ error: 'Invalid faculty credentials.' });
         }
 
@@ -109,6 +121,7 @@ router.post('/activate', async (req: Request, res: Response) => {
         if (updErr) throw updErr;
 
         clearRateLimit(ip);
+        console.log(`[AUTH] Activation SUCCESS for ${faculty_id}`);
 
         // Issue JWT token
         const token = jwt.sign(
@@ -133,6 +146,7 @@ router.post('/login', async (req: Request, res: Response) => {
     try {
         const { faculty_id, password } = req.body;
         if (!faculty_id || !password) {
+            console.log(`[AUTH] Login failed for ${faculty_id || 'unknown'}: Missing parameters`);
             return res.status(400).json({ error: 'Missing parameters.' });
         }
 
@@ -144,15 +158,18 @@ router.post('/login', async (req: Request, res: Response) => {
             .single();
 
         if (accErr || !account || !account.activation_used || !account.password_hash) {
+            console.log(`[AUTH] Login failed for ${faculty_id}: Account not found, inactive, or not activated`);
             return res.status(401).json({ error: 'Invalid faculty credentials.' });
         }
 
         const isMatch = await bcrypt.compare(password, account.password_hash);
         if (!isMatch) {
+            console.log(`[AUTH] Login failed for ${faculty_id}: Incorrect password`);
             return res.status(401).json({ error: 'Invalid faculty credentials.' });
         }
 
         clearRateLimit(ip);
+        console.log(`[AUTH] Login SUCCESS for ${faculty_id}`);
 
         // Issue JWT token
         const token = jwt.sign(

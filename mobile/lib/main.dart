@@ -7,7 +7,7 @@ import 'core/constants.dart';
 import 'core/storage.dart';
 import 'core/api.dart';
 import 'core/notifications.dart';
-import 'features/onboarding/welcome_screen.dart';
+import 'core/sync.dart';
 import 'features/onboarding/mode_selection_screen.dart';
 import 'features/dashboard/dashboard_screen.dart';
 
@@ -24,20 +24,50 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       
       if (mode == 'both' || mode == currentMode) {
         final overrides = await ApiService.fetchCalendarOverrides('', currentMode);
-        await StorageService.saveCalendarOverridesCache(overrides);
-        
-        final isFaculty = currentMode == 'faculty';
-        final timetable = isFaculty 
-          ? StorageService.getFacultyTimetableCache() 
-          : StorageService.getTimetableCache();
-          
-        if (timetable.isNotEmpty && StorageService.isClassRemindersEnabled()) {
-          await NotificationService.scheduleClassReminders(timetable);
+        if (currentMode == 'faculty') {
+          await StorageService.saveFacultyCalendarOverridesCache(overrides);
+        } else {
+          await StorageService.saveStudentCalendarOverridesCache(overrides);
+        }
+        await NotificationService.reconcileReminders();
+      }
+    } else if (message.data['change_type'] != null) {
+      // Backend fcm.ts sends change_type and batch_id
+      final currentMode = StorageService.getUserMode();
+      
+      if (currentMode == 'student' && message.data['batch_id'] != null) {
+        final selection = StorageService.getSelection();
+        if (selection != null && selection['batchId'] == message.data['batch_id']) {
+          // Fetch updated timetable and changes directly
+          try {
+            final list = await ApiService.fetchTimetable(selection['batchId']!);
+            await StorageService.saveTimetableCache(list);
+            
+            final changesList = await ApiService.fetchChanges(selection['batchId']!);
+            await StorageService.saveChangesCache(changesList);
+            
+            if (StorageService.isClassRemindersEnabled()) {
+              await NotificationService.scheduleClassReminders(list);
+            }
+          } catch (_) {}
+        }
+      } else if (currentMode == 'faculty' && message.data['faculty_id'] != null) {
+        final selection = StorageService.getFacultySelection();
+        if (selection != null && selection['facultyId'] == message.data['faculty_id']) {
+          try {
+            final list = await ApiService.fetchFacultyTimetable(selection['facultyId']!);
+            await StorageService.saveFacultyTimetableCache(list);
+            
+            if (StorageService.isClassRemindersEnabled()) {
+              await NotificationService.scheduleClassReminders(list);
+            }
+          } catch (_) {}
         }
       }
     }
-  } catch (_) {}
-  debugPrint("Handling a background message: ${message.messageId}");
+  } catch (e) {
+    debugPrint("Background handler error: $e");
+  }
 }
 
 Future<void> _initFirebaseSafely() async {
@@ -110,8 +140,34 @@ void main() {
   });
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Reconcile reminders and sync when app comes to foreground
+      NotificationService.reconcileReminders();
+      SyncService.instance.syncTimetable();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -160,6 +216,11 @@ class _SplashControllerState extends State<SplashController> {
   Future<void> _initApp() async {
     try {
       await StorageService.init();
+      // Safely schedule reminders based on stored state on app startup
+      await NotificationService.reconcileReminders();
+      
+      // Trigger background sync on startup
+      SyncService.instance.syncTimetable();
     } catch (e) {
       debugPrint('Local storage initialization failed: $e');
     }

@@ -4,6 +4,7 @@ import '../../core/constants.dart';
 import '../../core/api.dart';
 import '../../core/storage.dart';
 import '../../core/notifications.dart';
+import '../../core/sync.dart';
 import 'welcome_screen.dart';
 import 'faculty_selection_screen.dart';
 import '../dashboard/dashboard_screen.dart';
@@ -14,13 +15,13 @@ class ModeSelectionScreen extends StatelessWidget {
   const ModeSelectionScreen({super.key, this.isSwitching = false});
 
   void _selectStudent(BuildContext context) async {
-    // Cancel any existing faculty notifications and wipe state
-    await NotificationService.cancelFacultyClassReminders();
-    await StorageService.clearFacultySelection();
-    
-    await StorageService.setUserMode('student');
-    
     if (StorageService.hasSelection()) {
+      await StorageService.setUserMode('student');
+      await NotificationService.reconcileReminders();
+      
+      // Trigger background sync for the newly selected mode
+      SyncService.instance.syncTimetable();
+
       // Re-register device as student
       final batchId = StorageService.getSelection()?['batchId'] ?? '';
       try {
@@ -38,7 +39,7 @@ class ModeSelectionScreen extends StatelessWidget {
       }
     } else {
       if (context.mounted) {
-        Navigator.of(context).pushReplacement(
+        Navigator.of(context).push(
           MaterialPageRoute(builder: (context) => const WelcomeScreen()),
         );
       }
@@ -46,13 +47,13 @@ class ModeSelectionScreen extends StatelessWidget {
   }
 
   void _selectFaculty(BuildContext context) async {
-    // Cancel any existing student notifications and wipe state
-    await NotificationService.cancelStudentClassReminders();
-    await StorageService.clearSelection();
-    
-    await StorageService.setUserMode('faculty');
-    
     if (StorageService.hasFacultySelection()) {
+      await StorageService.setUserMode('faculty');
+      await NotificationService.reconcileReminders();
+      
+      // Trigger background sync for the newly selected mode
+      SyncService.instance.syncTimetable();
+
       // Re-register device as faculty
       final facultyId = StorageService.getFacultySelection()?['facultyId'];
       try {
@@ -70,7 +71,7 @@ class ModeSelectionScreen extends StatelessWidget {
       }
     } else {
       if (context.mounted) {
-        Navigator.of(context).pushReplacement(
+        Navigator.of(context).push(
           MaterialPageRoute(builder: (context) => const FacultySelectionScreen()),
         );
       }

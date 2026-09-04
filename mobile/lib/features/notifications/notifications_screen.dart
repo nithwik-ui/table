@@ -38,6 +38,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
       try {
         final changes = await ApiService.fetchFacultyChanges(facultyId);
+        await StorageService.saveFacultyChangesCache(changes);
         final parsedList = _parseChanges(changes, facultyName);
         if (mounted) {
           setState(() {
@@ -48,9 +49,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         }
       } catch (e) {
         if (mounted) {
+          final cached = StorageService.getFacultyChangesCache();
           setState(() {
+            _notifications = _parseChanges(cached, facultyName);
             _isLoading = false;
-            _errorMessage = 'Could not retrieve notifications. You are offline.';
+            _errorMessage = cached.isEmpty ? 'Could not retrieve notifications. You are offline.' : null;
           });
         }
       }
@@ -69,6 +72,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
       try {
         final changes = await ApiService.fetchChanges(batchId);
+        await StorageService.saveChangesCache(changes);
         final parsedList = _parseChanges(changes, batchCode);
         if (mounted) {
           setState(() {
@@ -79,9 +83,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         }
       } catch (e) {
         if (mounted) {
+          final cached = StorageService.getChangesCache();
           setState(() {
+            _notifications = _parseChanges(cached, batchCode);
             _isLoading = false;
-            _errorMessage = 'Could not retrieve notifications. You are offline.';
+            _errorMessage = cached.isEmpty ? 'Could not retrieve notifications. You are offline.' : null;
           });
         }
       }

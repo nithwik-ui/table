@@ -51,7 +51,7 @@ class _SyncingScreenState extends State<SyncingScreen> {
       
       // 2. Cache timetable entries locally
       await StorageService.saveTimetableCache(entries);
-      await StorageService.saveCalendarOverridesCache(overrides);
+      await StorageService.saveStudentCalendarOverridesCache(overrides);
 
       // 2.5 Schedule local reminders if enabled (default true)
       try {
@@ -59,7 +59,7 @@ class _SyncingScreenState extends State<SyncingScreen> {
           await NotificationService.scheduleClassReminders(entries);
         }
       } catch (e) {
-        print('[SYNC] Reminder scheduling failed: $e');
+        debugPrint('[SYNC] Reminder scheduling failed: $e');
       }
 
       // Try to register device token with fallback (never blocks)
@@ -82,6 +82,9 @@ class _SyncingScreenState extends State<SyncingScreen> {
         batchId: widget.batchId,
         batchCode: widget.batchCode,
       );
+      
+      // Explicitly set user mode since first-time users skip mode_selection_screen logic
+      await StorageService.setUserMode('student');
 
       // 5. Update data freshness timestamp
       await StorageService.saveLastSyncedAt(DateTime.now());
@@ -94,8 +97,8 @@ class _SyncingScreenState extends State<SyncingScreen> {
         );
       }
     } catch (e, stackTrace) {
-      print('[SYNC] Exception: $e');
-      print('[SYNC] StackTrace: $stackTrace');
+      debugPrint('[SYNC] Exception: $e');
+      debugPrint('[SYNC] StackTrace: $stackTrace');
       
       String displayError = 'Unknown error occurred.';
       if (e is SocketException || e is TimeoutException) {
