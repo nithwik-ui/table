@@ -96,7 +96,7 @@ export default function FacultyTestClass() {
               >
                 <option value="">Select Faculty...</option>
                 {facultyList.map(f => (
-                  <option key={f.id} value={f.id}>{f.faculty_name}</option>
+                  <option key={f.id} value={f.id}>{f.name}</option>
                 ))}
               </select>
             </div>
