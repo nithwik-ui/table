@@ -73,6 +73,37 @@ export const api = {
     return res.json();
   },
 
+  injectFacultyTestClass: async (facultyId: string, subject: string, startTime: string, endTime: string): Promise<{ success: boolean; error?: string }> => {
+    const res = await fetch(`${API_BASE}/admin/faculty-test-class`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        password: ADMIN_PASSWORD,
+        facultyId,
+        subject,
+        startTime,
+        endTime,
+      }),
+    });
+    return res.json();
+  },
+
+  removeFacultyTestClasses: async (facultyId: string): Promise<{ success: boolean; error?: string }> => {
+    const res = await fetch(`${API_BASE}/admin/faculty-test-class`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        password: ADMIN_PASSWORD,
+        facultyId,
+      }),
+    });
+    return res.json();
+  },
+
   // --- FACULTY MANAGEMENT ---
   getLiveFacultyList: async (): Promise<any[]> => {
     const res = await fetch(`${API_BASE}/faculty-scraping/list`);

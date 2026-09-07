@@ -381,6 +381,136 @@ app.get('/api/admin/announcements', async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/admin/test-class
+app.post('/api/admin/test-class', async (req: Request, res: Response) => {
+  try {
+    const { password, batchId, subject, startTime, endTime } = req.body;
+    if (password !== process.env.ADMIN_PASSWORD && password !== 'SRUAdminPass2026') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    if (!batchId || !subject || !startTime || !endTime) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    const { day } = getISTDateTime();
+
+    const { error: dbErr } = await supabase.from('timetable_entries').insert({
+      batch_id: batchId,
+      day: day,
+      start_time: startTime,
+      end_time: endTime,
+      subject: subject,
+      faculty: 'Admin Injector',
+      room: 'Test Room',
+      semester: 'N/A',
+      ltp: 'L',
+      source_hash: 'TEST_CLASS_INJECTOR'
+    });
+
+    if (dbErr) {
+      throw new Error(dbErr.message);
+    }
+
+    res.json({ success: true, day, startTime, endTime });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/admin/test-class
+app.delete('/api/admin/test-class', async (req: Request, res: Response) => {
+  try {
+    const { password, batchId } = req.body;
+    if (password !== process.env.ADMIN_PASSWORD && password !== 'SRUAdminPass2026') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    if (!batchId) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    const { error: dbErr, count } = await supabase
+      .from('timetable_entries')
+      .delete({ count: 'exact' })
+      .eq('batch_id', batchId)
+      .eq('source_hash', 'TEST_CLASS_INJECTOR');
+
+    if (dbErr) {
+      throw new Error(dbErr.message);
+    }
+
+    res.json({ success: true, deletedCount: count });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/admin/faculty-test-class
+app.post('/api/admin/faculty-test-class', async (req: Request, res: Response) => {
+  try {
+    const { password, facultyId, subject, startTime, endTime } = req.body;
+    if (password !== process.env.ADMIN_PASSWORD && password !== 'SRUAdminPass2026') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    if (!facultyId || !subject || !startTime || !endTime) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    const { day } = getISTDateTime();
+
+    const { error: dbErr } = await supabase.from('faculty_timetable_entries').insert({
+      faculty_id: facultyId,
+      day: day,
+      start_time: startTime,
+      end_time: endTime,
+      subject: subject,
+      faculty: 'Admin Injector',
+      room: 'Test Room',
+      semester: 'N/A',
+      ltp: 'L',
+      source_hash: 'TEST_CLASS_INJECTOR'
+    });
+
+    if (dbErr) {
+      throw new Error(dbErr.message);
+    }
+
+    res.json({ success: true, day, startTime, endTime });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/admin/faculty-test-class
+app.delete('/api/admin/faculty-test-class', async (req: Request, res: Response) => {
+  try {
+    const { password, facultyId } = req.body;
+    if (password !== process.env.ADMIN_PASSWORD && password !== 'SRUAdminPass2026') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    if (!facultyId) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    const { error: dbErr, count } = await supabase
+      .from('faculty_timetable_entries')
+      .delete({ count: 'exact' })
+      .eq('faculty_id', facultyId)
+      .eq('source_hash', 'TEST_CLASS_INJECTOR');
+
+    if (dbErr) {
+      throw new Error(dbErr.message);
+    }
+
+    res.json({ success: true, deletedCount: count });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Start Express Server
 app.listen(PORT, () => {
   console.log(`Server online on port ${PORT}`);

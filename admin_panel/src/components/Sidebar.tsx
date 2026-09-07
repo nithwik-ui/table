@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 const navItems = [
   { path: '/', icon: 'campaign', label: 'Broadcast', filled: true },
   { path: '/test-class', icon: 'science', label: 'Test Class', filled: true },
+  { path: '/faculty-test-class', icon: 'biotech', label: 'Faculty Test', filled: true },
   { path: '/holidays', icon: 'event', label: 'Holidays', filled: true },
   { path: '/faculty', icon: 'manage_accounts', label: 'Faculty', filled: true },
 ];

@@ -11,12 +11,15 @@ import 'core/sync.dart';
 import 'features/onboarding/mode_selection_screen.dart';
 import 'features/dashboard/dashboard_screen.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 // Background message handler
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   try {
     await Hive.initFlutter();
     await StorageService.init();
+    await NotificationService.init();
     
     if (message.data['type'] == 'calendar_override_updated') {
       final mode = message.data['target_mode'];
@@ -92,6 +95,14 @@ Future<void> _initFirebaseSafely() async {
           message.notification!.body,
         );
       }
+    });
+
+    // Handle background notification clicks
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const DashboardScreen(initialTab: 0)),
+        (route) => false,
+      );
     });
 
     // Auto-refresh token if server rotates it
@@ -194,6 +205,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           iconTheme: IconThemeData(color: AppConstants.textPrimary),
         ),
       ),
+      navigatorKey: navigatorKey,
       home: const SplashController(),
     );
   }
@@ -230,11 +242,19 @@ class _SplashControllerState extends State<SplashController> {
       final hasStudent = StorageService.hasSelection();
       final hasFaculty = StorageService.hasFacultySelection();
       
+      bool launchedFromNotification = false;
+      try {
+        final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+        if (initialMessage != null) {
+          launchedFromNotification = true;
+        }
+      } catch (_) {}
+      
       Widget nextScreen;
       if (userMode == 'student' && hasStudent) {
-        nextScreen = const DashboardScreen();
+        nextScreen = DashboardScreen(initialTab: launchedFromNotification ? 0 : 0); // Always default to 0
       } else if (userMode == 'faculty' && hasFaculty) {
-        nextScreen = const DashboardScreen();
+        nextScreen = DashboardScreen(initialTab: launchedFromNotification ? 0 : 0);
       } else {
         nextScreen = const ModeSelectionScreen();
       }

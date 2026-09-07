@@ -3,7 +3,7 @@ import '../../core/api.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
 import 'package:intl/intl.dart';
-
+import 'ad_banner.dart';
 class FreeRoomsScreen extends StatefulWidget {
   const FreeRoomsScreen({super.key});
 
@@ -347,6 +347,7 @@ class _FreeRoomsScreenState extends State<FreeRoomsScreen> {
                         )
                   : const SizedBox.shrink(),
             ),
+            const AdBanner(),
           ],
         ),
       ),

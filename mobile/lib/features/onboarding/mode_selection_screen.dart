@@ -16,6 +16,7 @@ class ModeSelectionScreen extends StatelessWidget {
 
   void _selectStudent(BuildContext context) async {
     if (StorageService.hasSelection()) {
+      await NotificationService.clearModeReminders('faculty');
       await StorageService.setUserMode('student');
       await NotificationService.reconcileReminders();
       
@@ -48,6 +49,7 @@ class ModeSelectionScreen extends StatelessWidget {
 
   void _selectFaculty(BuildContext context) async {
     if (StorageService.hasFacultySelection()) {
+      await NotificationService.clearModeReminders('student');
       await StorageService.setUserMode('faculty');
       await NotificationService.reconcileReminders();
       

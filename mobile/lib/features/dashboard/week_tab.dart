@@ -496,7 +496,6 @@ class _WeekTabState extends State<WeekTab> {
                       ],
                     ),
             ),
-            const AdBanner(),
           ],
         ),
       ),

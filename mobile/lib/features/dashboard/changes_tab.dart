@@ -522,7 +522,6 @@ class _ChangesTabState extends State<ChangesTab> {
                           ),
                         ),
             ),
-            const AdBanner(),
           ],
         ),
       ),

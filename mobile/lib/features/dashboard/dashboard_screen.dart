@@ -11,6 +11,7 @@ import 'home_tab.dart';
 import 'week_tab.dart';
 import 'changes_tab.dart';
 import 'profile_tab.dart';
+import 'ad_banner.dart';
 
 class DashboardScreen extends StatefulWidget {
   final int initialTab;
@@ -139,9 +140,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: tabs,
+      body: Column(
+        children: [
+          Expanded(
+            child: IndexedStack(
+              index: _currentIndex,
+              children: tabs,
+            ),
+          ),
+          if (_currentIndex != 3) const AdBanner(),
+        ],
       ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(

@@ -15,11 +15,19 @@ class FacultySelectionScreen extends StatefulWidget {
 }
 
 class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
+  List<dynamic> _allFaculty = [];
   List<dynamic> _filteredFaculty = [];
-  bool _isLoading = false;
+  bool _isLoading = true;
   bool _isSaving = false;
   String _error = '';
   final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchFacultyList();
+    _searchController.addListener(_filterFaculty);
+  }
 
   @override
   void dispose() {
@@ -27,42 +35,43 @@ class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
     super.dispose();
   }
 
-  Future<void> _searchFaculty() async {
-    final query = _searchController.text.trim();
-    if (query.length < 2) {
-      setState(() => _error = 'Please enter at least 2 characters');
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-      _error = '';
-    });
-    
+  Future<void> _fetchFacultyList() async {
     try {
-      final facultyList = await ApiService.facultySearch(query);
-      setState(() {
-        _filteredFaculty = facultyList;
-        _isLoading = false;
-      });
-      if (facultyList.isEmpty) {
-        setState(() => _error = 'No active faculty found.');
+      final list = await ApiService.fetchFacultyList();
+      if (mounted) {
+        setState(() {
+          _allFaculty = list;
+          _filteredFaculty = list;
+          _isLoading = false;
+        });
       }
     } catch (e) {
-      setState(() {
-        _error = 'Failed to search faculty. Please try again.';
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = 'Failed to load faculty list. Please check your connection.';
+          _isLoading = false;
+        });
+      }
     }
   }
 
+  void _filterFaculty() {
+    final query = _searchController.text.toLowerCase().trim();
+    setState(() {
+      if (query.isEmpty) {
+        _filteredFaculty = _allFaculty;
+      } else {
+        _filteredFaculty = _allFaculty.where((f) {
+          final name = (f['name'] as String).toLowerCase();
+          return name.contains(query);
+        }).toList();
+      }
+    });
+  }
+
   void _showLoginDialog(dynamic faculty) {
-    bool isActivation = false;
     final passwordCtrl = TextEditingController();
-    final newPasswordCtrl = TextEditingController();
-    final confirmPasswordCtrl = TextEditingController();
     String dialogError = '';
-    bool dialogLoading = false;
 
     showDialog(
       context: context,
@@ -72,114 +81,46 @@ class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
           builder: (context, setStateDialog) {
             return AlertDialog(
               backgroundColor: AppConstants.surface,
-              title: Text(isActivation ? 'Activate Account' : 'Faculty Login', style: AppConstants.getHeadline().copyWith(fontSize: 16)),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Logging in as: ${faculty['faculty_name']}', style: AppConstants.getBodyMedium()),
-                    const SizedBox(height: 16),
-                    if (dialogError.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Text(dialogError, style: const TextStyle(color: AppConstants.error, fontSize: 13)),
-                      ),
-                    
-                    if (!isActivation)
-                      TextField(
-                        controller: passwordCtrl,
-                        obscureText: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Password',
-                          border: OutlineInputBorder(),
-                        ),
-                      )
-                    else ...[
-                      TextField(
-                        controller: passwordCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Activation Code (SRU#...)',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: newPasswordCtrl,
-                        obscureText: true,
-                        decoration: const InputDecoration(
-                          labelText: 'New Password',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: confirmPasswordCtrl,
-                        obscureText: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Confirm Password',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    TextButton(
-                      onPressed: () {
-                        setStateDialog(() {
-                          isActivation = !isActivation;
-                          dialogError = '';
-                          passwordCtrl.clear();
-                          newPasswordCtrl.clear();
-                          confirmPasswordCtrl.clear();
-                        });
-                      },
-                      child: Text(isActivation ? 'Already activated? Login here.' : 'First time? Activate account.'),
+              title: Text('Faculty Login', style: AppConstants.getHeadline().copyWith(fontSize: 16)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Logging in as: ${faculty['name']}', style: AppConstants.getBodyMedium()),
+                  const SizedBox(height: 16),
+                  if (dialogError.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Text(dialogError, style: const TextStyle(color: AppConstants.error, fontSize: 13)),
                     ),
-                  ],
-                ),
+                  TextField(
+                    controller: passwordCtrl,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Password',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
               ),
               actions: [
                 TextButton(
-                  onPressed: dialogLoading ? null : () => Navigator.pop(ctx),
+                  onPressed: () => Navigator.pop(ctx),
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(backgroundColor: AppConstants.primary),
-                  onPressed: dialogLoading ? null : () async {
-                    setStateDialog(() { dialogError = ''; dialogLoading = true; });
-                    try {
-                      Map<String, dynamic> res;
-                      if (isActivation) {
-                        if (newPasswordCtrl.text != confirmPasswordCtrl.text) {
-                          throw Exception('Passwords do not match');
-                        }
-                        res = await ApiService.facultyActivate(
-                          faculty['id'], 
-                          passwordCtrl.text.trim(), 
-                          newPasswordCtrl.text
-                        );
-                      } else {
-                        res = await ApiService.facultyLogin(
-                          faculty['id'], 
-                          passwordCtrl.text
-                        );
-                      }
-                      if (res['success'] == true) {
-                        if (!ctx.mounted) return;
-                        Navigator.pop(ctx);
-                        _proceedWithFaculty(faculty['id'], faculty['faculty_name'], res['token']);
-                      } else {
-                        throw Exception('Authentication failed');
-                      }
-                    } catch (e) {
+                  onPressed: () {
+                    final expectedPassword = 'Sru#${faculty['id']}';
+                    if (passwordCtrl.text.trim() == expectedPassword) {
+                      Navigator.pop(ctx);
+                      _proceedWithFaculty(faculty['id'].toString(), faculty['name'].toString());
+                    } else {
                       setStateDialog(() {
-                        dialogError = e.toString().replaceAll('Exception: ', '');
-                        dialogLoading = false;
+                        dialogError = 'Incorrect password.';
                       });
                     }
                   },
-                  child: dialogLoading 
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : Text(isActivation ? 'Activate' : 'Login', style: const TextStyle(color: Colors.white)),
+                  child: const Text('Login', style: TextStyle(color: Colors.white)),
                 ),
               ],
             );
@@ -189,15 +130,15 @@ class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
     );
   }
 
-  Future<void> _proceedWithFaculty(String facultyId, String facultyName, String token) async {
+  Future<void> _proceedWithFaculty(String facultyId, String facultyName) async {
     setState(() {
       _isSaving = true;
       _error = '';
     });
     
     try {
-      // 1. Save Token
-      await StorageService.setFacultyToken(token);
+      // 1. Save local token (no longer using JWT backend)
+      await StorageService.setFacultyToken('local_auth_token_$facultyId');
 
       // 2. Fetch timetable and holidays
       final timetable = await ApiService.fetchFacultyTimetable(facultyId);
@@ -230,6 +171,7 @@ class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
       );
       
       // 5. Successfully authenticated and setup. Now we switch mode!
+      await NotificationService.clearModeReminders('student');
       await StorageService.setUserMode('faculty');
       await NotificationService.reconcileReminders();
       SyncService.instance.syncTimetable();
@@ -247,7 +189,7 @@ class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
         _error = 'Failed to load timetable. Please check your connection and try again.';
         _isSaving = false;
       });
-      // Important: if we failed to fetch the timetable, wipe the token so they don't get stuck half-logged-in
+      // Wipe the token so they don't get stuck half-logged-in
       await StorageService.clearFacultySelection();
     }
   }
@@ -257,42 +199,25 @@ class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
     return Scaffold(
       backgroundColor: AppConstants.background,
       appBar: AppBar(
-        title: const Text('Faculty Portal Login'),
+        title: const Text('Faculty Portal'),
       ),
       body: SafeArea(
         child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.all(AppConstants.paddingContainer),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Enter your name...',
-                        prefixIcon: const Icon(Icons.search),
-                        filled: true,
-                        fillColor: AppConstants.surface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppConstants.radiusButton),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                      onSubmitted: (_) => _searchFaculty(),
-                    ),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search for your name...',
+                  prefixIcon: const Icon(Icons.search),
+                  filled: true,
+                  fillColor: AppConstants.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppConstants.radiusButton),
+                    borderSide: BorderSide.none,
                   ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppConstants.primary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14)
-                    ),
-                    onPressed: _isLoading ? null : _searchFaculty,
-                    child: const Text('Search', style: TextStyle(color: Colors.white)),
-                  )
-                ],
+                ),
               ),
             ),
             
@@ -326,7 +251,7 @@ class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
                   : _filteredFaculty.isEmpty
                       ? Center(
                           child: Text(
-                            'Search for your name to login.',
+                            'No faculty found.',
                             style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
                           ),
                         )
@@ -340,7 +265,7 @@ class _FacultySelectionScreenState extends State<FacultySelectionScreen> {
                                 child: Icon(Icons.person, color: AppConstants.primary),
                               ),
                               title: Text(
-                                faculty['faculty_name'] ?? '',
+                                faculty['name'] ?? '',
                                 style: AppConstants.getBodyLarge().copyWith(fontWeight: FontWeight.w500),
                               ),
                               trailing: const Icon(Icons.chevron_right),

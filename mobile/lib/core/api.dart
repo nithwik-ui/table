@@ -180,48 +180,12 @@ class ApiService {
     }
   }
 
-  // --- NEW AUTH ENDPOINTS ---
-  static Future<List<dynamic>> facultySearch(String query) async {
-    final response = await http.get(Uri.parse('${AppConstants.apiBaseUrl}/api/faculty/search?q=${Uri.encodeComponent(query)}')).timeout(timeoutDuration);
+  static Future<List<dynamic>> fetchFacultyList() async {
+    final response = await http.get(Uri.parse('${AppConstants.apiBaseUrl}/api/faculty/list')).timeout(timeoutDuration);
     if (response.statusCode == 200) {
       return json.decode(response.body) as List<dynamic>;
     }
-    throw Exception('Failed to search faculty');
-  }
-
-  static Future<Map<String, dynamic>> facultyActivate(String facultyId, String activationPassword, String newPassword) async {
-    final response = await http.post(
-      Uri.parse('${AppConstants.apiBaseUrl}/api/faculty/activate'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'faculty_id': facultyId,
-        'activation_password': activationPassword,
-        'new_password': newPassword
-      })
-    ).timeout(timeoutDuration);
-    
-    final data = json.decode(response.body) as Map<String, dynamic>;
-    if (response.statusCode != 200) {
-      throw Exception(data['error'] ?? 'Failed to activate faculty account');
-    }
-    return data;
-  }
-
-  static Future<Map<String, dynamic>> facultyLogin(String facultyId, String password) async {
-    final response = await http.post(
-      Uri.parse('${AppConstants.apiBaseUrl}/api/faculty/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'faculty_id': facultyId,
-        'password': password
-      })
-    ).timeout(timeoutDuration);
-    
-    final data = json.decode(response.body) as Map<String, dynamic>;
-    if (response.statusCode != 200) {
-      throw Exception(data['error'] ?? 'Failed to login');
-    }
-    return data;
+    throw Exception('Failed to load faculty list');
   }
 
   // --- CALENDAR OVERRIDES ---

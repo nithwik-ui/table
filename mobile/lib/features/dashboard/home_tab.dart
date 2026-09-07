@@ -664,7 +664,6 @@ class _HomeTabState extends State<HomeTab> {
                       ),
                     ],
                     const SizedBox(height: 24),
-                    const AdBanner(),
                     const SizedBox(height: 24),
                   ],
                 ),

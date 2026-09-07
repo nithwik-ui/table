@@ -149,14 +149,14 @@ class _ProfileTabState extends State<ProfileTab> {
                 navigator.pop();
                 
                 if (StorageService.getUserMode() == 'faculty') {
-                  await NotificationService.cancelFacultyClassReminders();
+                  await NotificationService.clearModeReminders('faculty');
                   await StorageService.clearFacultySelection();
                   navigator.pushAndRemoveUntil(
                     MaterialPageRoute(builder: (context) => const FacultySelectionScreen()),
                     (route) => false,
                   );
                 } else {
-                  await NotificationService.cancelStudentClassReminders();
+                  await NotificationService.clearModeReminders('student');
                   await StorageService.clearSelection();
                   navigator.pushAndRemoveUntil(
                     MaterialPageRoute(builder: (context) => const DegreeScreen()),
@@ -234,9 +234,9 @@ class _ProfileTabState extends State<ProfileTab> {
       }
     } else {
       if (StorageService.getUserMode() == 'faculty') {
-        await NotificationService.cancelFacultyClassReminders();
+        await NotificationService.clearModeReminders('faculty');
       } else {
-        await NotificationService.cancelStudentClassReminders();
+        await NotificationService.clearModeReminders('student');
       }
     }
   }

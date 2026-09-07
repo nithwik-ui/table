@@ -155,6 +155,19 @@ class StorageService {
     return getFacultySelection() != null;
   }
 
+  static List<int> getScheduledReminderIds(String mode) {
+    final ids = _prefsBox?.get('${mode}_scheduled_reminders') as List<dynamic>?;
+    return ids?.cast<int>() ?? [];
+  }
+
+  static Future<void> saveScheduledReminderIds(String mode, List<int> ids) async {
+    await _prefsBox?.put('${mode}_scheduled_reminders', ids);
+  }
+
+  static Future<void> clearScheduledReminderIds(String mode) async {
+    await _prefsBox?.delete('${mode}_scheduled_reminders');
+  }
+
   // NOTIFICATION SETTINGS
   static Future<void> setNotificationsEnabled(bool enabled) async {
     await _prefsBox?.put('notifications_enabled', enabled);
