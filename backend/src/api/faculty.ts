@@ -51,9 +51,27 @@ router.get('/timetable', async (req: Request, res: Response) => {
     }
 
     const raw = await client.getFacultyTimetable(targetFacultyId);
-    const normalized = client.normalize(raw);
+    let normalized = client.normalize(raw);
     
-    // Optional: map to match what the frontend expects for batch schedules
+    // Inject any test classes from the database
+    const { data: testClasses } = await supabase
+      .from('faculty_timetable_entries')
+      .select('*')
+      .eq('faculty_id', targetFacultyId);
+      
+    if (testClasses && testClasses.length > 0) {
+      normalized = [...normalized, ...testClasses.map(tc => ({
+        day: tc.day,
+        start_time: tc.start_time,
+        end_time: tc.end_time,
+        subject: tc.subject,
+        faculty: tc.faculty,
+        room: tc.room,
+        semester: tc.semester,
+        ltp: tc.ltp
+      }))];
+    }
+    
     res.json(normalized);
   } catch (err: any) {
     res.status(500).json({ error: err.message });

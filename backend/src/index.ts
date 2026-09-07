@@ -511,7 +511,7 @@ app.delete('/api/admin/faculty-test-class', async (req: Request, res: Response) 
 });
 
 // Start Express Server
-app.listen(PORT, () => {
+app.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`Server online on port ${PORT}`);
 });
 
