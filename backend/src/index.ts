@@ -3,6 +3,7 @@ import cors from 'cors';
 import { supabase } from './db/supabase';
 import { runSync } from './sync';
 import { sendGenericBroadcast } from './notifications/fcm';
+import { runReminderWorker } from './notifications/reminderWorker';
 
 import facultyRouter from './api/faculty';
 import roomsRouter from './api/rooms';
@@ -380,71 +381,6 @@ app.get('/api/admin/announcements', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/admin/test-class
-app.post('/api/admin/test-class', async (req: Request, res: Response) => {
-  try {
-    const { password, batchId, subject, startTime, endTime } = req.body;
-    if (password !== process.env.ADMIN_PASSWORD && password !== 'SRUAdminPass2026') {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
-    if (!batchId || !subject || !startTime || !endTime) {
-      return res.status(400).json({ error: 'Missing required parameters' });
-    }
-
-    const { day } = getISTDateTime();
-
-    const { error: dbErr } = await supabase.from('timetable_entries').insert({
-      batch_id: batchId,
-      day: day,
-      start_time: startTime,
-      end_time: endTime,
-      subject: subject,
-      faculty: 'Admin Injector',
-      room: 'Test Room',
-      semester: 'N/A',
-      ltp: 'L',
-      source_hash: 'TEST_CLASS_INJECTOR'
-    });
-
-    if (dbErr) {
-      throw new Error(dbErr.message);
-    }
-
-    res.json({ success: true, day, startTime, endTime });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// DELETE /api/admin/test-class
-app.delete('/api/admin/test-class', async (req: Request, res: Response) => {
-  try {
-    const { password, batchId } = req.body;
-    if (password !== process.env.ADMIN_PASSWORD && password !== 'SRUAdminPass2026') {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
-    if (!batchId) {
-      return res.status(400).json({ error: 'Missing required parameters' });
-    }
-
-    const { error: dbErr, count } = await supabase
-      .from('timetable_entries')
-      .delete({ count: 'exact' })
-      .eq('batch_id', batchId)
-      .eq('source_hash', 'TEST_CLASS_INJECTOR');
-
-    if (dbErr) {
-      throw new Error(dbErr.message);
-    }
-
-    res.json({ success: true, deletedCount: count });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // Start Express Server
 app.listen(PORT, () => {
   console.log(`Server online on port ${PORT}`);
@@ -465,5 +401,11 @@ setInterval(() => {
   console.log('Triggering periodic sync crawl...');
   runSync().catch(err => console.error('Periodic sync crawl failed:', err));
 }, intervalMinutes * 60 * 1000);
+
+// Schedule class reminder push notifications every 1 minute
+console.log('Scheduling FCM Class Reminders to run every 1 minute.');
+setInterval(() => {
+  runReminderWorker().catch(err => console.error('Reminder worker failed:', err));
+}, 60 * 1000);
 
 

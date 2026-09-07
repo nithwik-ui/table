@@ -387,12 +387,11 @@ export async function runSync() {
     await sleep(DELAY_BETWEEN_REQUESTS_MS);
     
     const facultyName = faculty.name;
-    // Convert faculty name to an ID format (slug) for consistency
-    const facultyId = Buffer.from(facultyName).toString('base64');
+    const facultyId = String(faculty.id);
 
     try {
       // 1. Fetch raw timetable
-      const raw = await client.getFacultyTimetable(facultyName);
+      const raw = await client.getFacultyTimetable(facultyId);
       if (!raw || !raw.success) {
         throw new Error('Live portal returned unsuccessful status');
       }
