@@ -14,7 +14,7 @@ export default function FacultyTestClass() {
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    api.getFaculty().then(setFacultyList).catch(console.error);
+    api.getLiveFacultyList().then(setFacultyList).catch(console.error);
     
     // Set default times to current time + 7 minutes
     const now = new Date();

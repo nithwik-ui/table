@@ -16,11 +16,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use('/api/faculty-scraping', facultyRouter); // Renamed to avoid collision with auth routes
+app.use('/api/faculty', facultyRouter);
 app.use('/api/rooms', roomsRouter);
 app.use('/api/admin/faculty', adminFacultyRouter);
 app.use('/api/admin/holidays', adminHolidaysRouter);
-app.use('/api/faculty', authRouter);
 app.use('/api/calendar-overrides', calendarRouter);
 
 const PORT = process.env.PORT || 3000;

@@ -106,7 +106,7 @@ export const api = {
 
   // --- FACULTY MANAGEMENT ---
   getLiveFacultyList: async (): Promise<any[]> => {
-    const res = await fetch(`${API_BASE}/faculty-scraping/list`);
+    const res = await fetch(`${API_BASE}/faculty/list`);
     if (!res.ok) throw new Error('Failed to fetch live faculty list');
     return res.json();
   },
