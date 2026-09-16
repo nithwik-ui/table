@@ -127,20 +127,48 @@ export class SRUClient {
     }
   }
 
-  private async executeRoomRequest<T>(requestFn: () => Promise<T>): Promise<T> {
-    try {
-      if (!this.csrfToken) {
-        await this.initRoomSession();
+  private async executeRoomRequest<T>(requestFn: () => Promise<T>, maxRetries = 2): Promise<T> {
+    let attempt = 0;
+    while (attempt <= maxRetries) {
+      try {
+        if (!this.csrfToken) {
+          await this.initRoomSession();
+        }
+        
+        const startTime = Date.now();
+        const result = await requestFn();
+        const duration = Date.now() - startTime;
+        
+        if (attempt > 0) {
+          console.log(`[SRU Room API] Request succeeded on attempt ${attempt + 1} (${duration}ms)`);
+        }
+        return result;
+      } catch (error: any) {
+        attempt++;
+        const status = error.response?.status;
+        const errMsg = error.message;
+        console.warn(`[SRU Room API] Attempt ${attempt} failed. Status: ${status || 'Network/Timeout'}, Error: ${errMsg}`);
+        
+        if (attempt > maxRetries) {
+          console.error(`[SRU Room API] Max retries (${maxRetries}) reached. Failing.`);
+          throw error;
+        }
+
+        // Always re-initialize session on failure to be safe against expired tokens/sessions
+        if (status === 419 || status === 401 || status === 403 || !status || status >= 500) {
+          console.warn(`[SRU Room API] Re-initializing room session before retry...`);
+          try {
+            await this.initRoomSession();
+          } catch (initErr: any) {
+            console.error(`[SRU Room API] Session re-init failed during retry: ${initErr.message}`);
+          }
+        }
+        
+        // Exponential backoff
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
       }
-      return await requestFn();
-    } catch (error: any) {
-      if (error.response && error.response.status === 419) {
-        console.warn('Received HTTP 419, re-initializing room session and retrying...');
-        await this.initRoomSession();
-        return await requestFn();
-      }
-      throw error;
     }
+    throw new Error('Unreachable');
   }
 
   /**
@@ -299,7 +327,8 @@ export class SRUClient {
 
       const html = response.data;
       const $ = cheerio.load(html);
-      const rooms: Array<{ name: string; type: string }> = [];
+      
+      const uniqueRooms = new Map<string, { name: string; type: string }>();
 
       // The results are in tables with class "table"
       $('.table tbody tr').each((_, el) => {
@@ -309,17 +338,18 @@ export class SRUClient {
           const badge = roomCell.find('.badge');
           
           let type = badge.text().trim();
-          // The name is the text inside the td but excluding the badge text. 
-          // An easy way is to get the full text, remove the badge text, and trim trailing hyphens.
-          let name = roomCell.text().replace(type, '').replace('-', '').trim();
-
-          if (name) {
-            rooms.push({ name, type });
+          let rawName = roomCell.text().replace(type, '').trim();
+          
+          // Clean up only dangling trailing hyphens, preserving meaningful inner hyphens
+          let name = rawName.replace(/\s*-\s*$/, '').trim();
+          
+          if (name && !uniqueRooms.has(name)) {
+            uniqueRooms.set(name, { name, type });
           }
         }
       });
 
-      return rooms;
+      return Array.from(uniqueRooms.values());
     });
   }
 
