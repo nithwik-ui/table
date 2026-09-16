@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
+import https from 'https';
 import * as cheerio from 'cheerio';
 
 export interface TimetableEntry {
@@ -304,54 +305,93 @@ export class SRUClient {
   }
 
   /**
-   * Fetches free classrooms for a given day and time.
+   * Fetches free classrooms directly using an isolated session and clean socket agent.
+   */
+  private async fetchFreeRoomsIsolated(day: string, time: string): Promise<Array<{ name: string; type: string }>> {
+    const agent = new https.Agent({ keepAlive: false });
+    const roomAxios = axios.create({
+      baseURL: this.baseUrl,
+      httpsAgent: agent,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+      timeout: 12000,
+    });
+
+    // 1. GET fresh session and CSRF token
+    const getRes = await roomAxios.get('/room_free_slots');
+    const $ = cheerio.load(getRes.data);
+    const token = $('input[name="_token"]').val();
+    if (!token || typeof token !== 'string') {
+      throw new Error('CSRF token not found in /room_free_slots');
+    }
+
+    const setCookieHeaders = getRes.headers['set-cookie'];
+    const cookieHeader = (setCookieHeaders || []).map((c: string) => c.split(';')[0]).join('; ');
+
+    // 2. POST with isolated token and session cookies
+    const params = new URLSearchParams();
+    params.append('_token', token);
+    params.append('day', day);
+    params.append('time', time);
+
+    const postRes = await roomAxios.post('/room_free_slots', params, {
+      headers: {
+        'Cookie': cookieHeader,
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Referer': `${this.baseUrl}/room_free_slots`,
+      },
+    });
+
+    const $post = cheerio.load(postRes.data);
+    const uniqueRooms = new Map<string, { name: string; type: string }>();
+
+    // The results are in tables with class "table"
+    $post('.table tbody tr').each((_, el) => {
+      const tds = $post(el).find('td');
+      if (tds.length >= 2) {
+        const roomCell = $post(tds[1]);
+        const badge = roomCell.find('.badge');
+        
+        let type = badge.text().trim();
+        let rawName = roomCell.text().replace(type, '').trim();
+        
+        // Clean up only dangling trailing hyphens, preserving meaningful inner hyphens (e.g. 10003-B_BL10-GF)
+        let name = rawName.replace(/\s*-\s*$/, '').trim();
+        
+        if (name && !uniqueRooms.has(name)) {
+          uniqueRooms.set(name, { name, type });
+        }
+      }
+    });
+
+    return Array.from(uniqueRooms.values());
+  }
+
+  /**
+   * Fetches free classrooms for a given day and time with bounded retry.
    */
   public async getFreeRooms(day: string, time: string): Promise<Array<{ name: string; type: string }>> {
-    return this.executeRoomRequest(async () => {
-      if (!this.csrfToken) {
-        throw new Error('CSRF token not initialized');
-      }
-
-      const params = new URLSearchParams();
-      params.append('_token', this.csrfToken);
-      params.append('day', day);
-      params.append('time', time);
-
-      const response = await this.axiosInstance.post('/room_free_slots', params, {
-        headers: {
-          ...this.getRequestHeaders(),
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Referer': `${this.baseUrl}/room_free_slots`,
-        },
-        timeout: 5000,
-      });
-
-      const html = response.data;
-      const $ = cheerio.load(html);
-      
-      const uniqueRooms = new Map<string, { name: string; type: string }>();
-
-      // The results are in tables with class "table"
-      $('.table tbody tr').each((_, el) => {
-        const tds = $(el).find('td');
-        if (tds.length >= 2) {
-          const roomCell = $(tds[1]);
-          const badge = roomCell.find('.badge');
-          
-          let type = badge.text().trim();
-          let rawName = roomCell.text().replace(type, '').trim();
-          
-          // Clean up only dangling trailing hyphens, preserving meaningful inner hyphens
-          let name = rawName.replace(/\s*-\s*$/, '').trim();
-          
-          if (name && !uniqueRooms.has(name)) {
-            uniqueRooms.set(name, { name, type });
-          }
+    let lastError: any;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const startTime = Date.now();
+        const rooms = await this.fetchFreeRoomsIsolated(day, time);
+        if (attempt > 1) {
+          console.log(`[SRU Room API] Succeeded on attempt ${attempt} in ${Date.now() - startTime}ms`);
         }
-      });
-
-      return Array.from(uniqueRooms.values());
-    });
+        return rooms;
+      } catch (err: any) {
+        lastError = err;
+        console.warn(`[SRU Room API] Attempt ${attempt} failed: ${err.message}`);
+        if (attempt < 2) {
+          await new Promise(r => setTimeout(r, 1000));
+        }
+      }
+    }
+    throw lastError;
   }
 
   /**

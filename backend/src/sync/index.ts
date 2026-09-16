@@ -76,9 +76,7 @@ export async function runSync() {
   const degrees = await client.getDegrees();
   console.log(`Discovered ${degrees.length} degrees from live portal.`);
 
-  // Set all degrees to inactive first (for discovery stale detection)
-  await supabase.from('degrees').update({ active: false }).neq('id', '00000000-0000-0000-0000-000000000000');
-
+  // Discover degrees
   const degreeMap: Record<string, string> = {}; // source_value -> id
 
   for (const degreeCode of degrees) {
@@ -111,9 +109,7 @@ export async function runSync() {
 
   // --- Step 2: Years Discovery ---
   console.log('\nDiscovering years...');
-  // Mark all years as inactive
-  await supabase.from('years').update({ active: false }).neq('id', '00000000-0000-0000-0000-000000000000');
-
+  // Discover years
   const activeYearsList: { degree_id: string; degree_code: string; name: string }[] = [];
 
   await executeInPool(dbDegrees, CONCURRENCY_LIMIT, async (deg) => {
@@ -161,9 +157,7 @@ export async function runSync() {
 
   // --- Step 3: Batches Discovery ---
   console.log('\nDiscovering batches...');
-  // Mark all batches as inactive
-  await supabase.from('batches').update({ active: false }).neq('id', '00000000-0000-0000-0000-000000000000');
-
+  // Discover batches
   // We need to fetch batches for each active degree-year combination
   const { data: dbYears, error: dbYearsErr } = await supabase
     .from('years')

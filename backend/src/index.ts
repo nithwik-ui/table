@@ -3,7 +3,6 @@ import cors from 'cors';
 import { supabase } from './db/supabase';
 import { runSync } from './sync';
 import { sendGenericBroadcast } from './notifications/fcm';
-import { runReminderWorker } from './notifications/reminderWorker';
 
 import facultyRouter from './api/faculty';
 import roomsRouter from './api/rooms';
@@ -32,13 +31,20 @@ app.get('/health', (req: Request, res: Response) => {
 // GET /api/degrees
 app.get('/api/degrees', async (req: Request, res: Response) => {
   try {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('degrees')
       .select('id, name, source_value')
       .eq('active', true)
       .order('source_value', { ascending: true });
 
     if (error) throw error;
+    if (!data || data.length === 0) {
+      const fallback = await supabase
+        .from('degrees')
+        .select('id, name, source_value')
+        .order('source_value', { ascending: true });
+      data = fallback.data || [];
+    }
     res.json(data);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -49,8 +55,8 @@ app.get('/api/degrees', async (req: Request, res: Response) => {
 app.get('/api/degrees/:degree/years', async (req: Request, res: Response) => {
   try {
     const { degree } = req.params;
-    
-    const { data: deg, error: degErr } = await supabase
+
+    let { data: deg, error: degErr } = await supabase
       .from('degrees')
       .select('id')
       .eq('source_value', degree)
@@ -59,10 +65,18 @@ app.get('/api/degrees/:degree/years', async (req: Request, res: Response) => {
 
     if (degErr) throw degErr;
     if (!deg) {
-      return res.status(404).json({ error: `Degree "${degree}" not found or inactive.` });
+      const fallbackDeg = await supabase
+        .from('degrees')
+        .select('id')
+        .eq('source_value', degree)
+        .maybeSingle();
+      deg = fallbackDeg.data;
+    }
+    if (!deg) {
+      return res.status(404).json({ error: `Degree "${degree}" not found.` });
     }
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('years')
       .select('id, name')
       .eq('degree_id', deg.id)
@@ -70,6 +84,14 @@ app.get('/api/degrees/:degree/years', async (req: Request, res: Response) => {
       .order('name', { ascending: true });
 
     if (error) throw error;
+    if (!data || data.length === 0) {
+      const fallbackYears = await supabase
+        .from('years')
+        .select('id, name')
+        .eq('degree_id', deg.id)
+        .order('name', { ascending: true });
+      data = fallbackYears.data || [];
+    }
     res.json(data);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -81,7 +103,7 @@ app.get('/api/degrees/:degree/years/:year/batches', async (req: Request, res: Re
   try {
     const { degree, year } = req.params;
 
-    const { data: deg, error: degErr } = await supabase
+    let { data: deg, error: degErr } = await supabase
       .from('degrees')
       .select('id')
       .eq('source_value', degree)
@@ -90,10 +112,18 @@ app.get('/api/degrees/:degree/years/:year/batches', async (req: Request, res: Re
 
     if (degErr) throw degErr;
     if (!deg) {
+      const fallbackDeg = await supabase
+        .from('degrees')
+        .select('id')
+        .eq('source_value', degree)
+        .maybeSingle();
+      deg = fallbackDeg.data;
+    }
+    if (!deg) {
       return res.status(404).json({ error: `Degree "${degree}" not found.` });
     }
 
-    const { data: yr, error: yrErr } = await supabase
+    let { data: yr, error: yrErr } = await supabase
       .from('years')
       .select('id')
       .eq('degree_id', deg.id)
@@ -103,10 +133,19 @@ app.get('/api/degrees/:degree/years/:year/batches', async (req: Request, res: Re
 
     if (yrErr) throw yrErr;
     if (!yr) {
+      const fallbackYr = await supabase
+        .from('years')
+        .select('id')
+        .eq('degree_id', deg.id)
+        .eq('name', year)
+        .maybeSingle();
+      yr = fallbackYr.data;
+    }
+    if (!yr) {
       return res.status(404).json({ error: `Year "${year}" not found for degree "${degree}".` });
     }
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('batches')
       .select('id, batch_code')
       .eq('degree_id', deg.id)
@@ -115,6 +154,15 @@ app.get('/api/degrees/:degree/years/:year/batches', async (req: Request, res: Re
       .order('batch_code', { ascending: true });
 
     if (error) throw error;
+    if (!data || data.length === 0) {
+      const fallbackBatches = await supabase
+        .from('batches')
+        .select('id, batch_code')
+        .eq('degree_id', deg.id)
+        .eq('year_id', yr.id)
+        .order('batch_code', { ascending: true });
+      data = fallbackBatches.data || [];
+    }
     res.json(data);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -270,12 +318,12 @@ app.post('/api/devices/register', async (req: Request, res: Response) => {
     const { error } = await supabase
       .from('device_tokens')
       .upsert(
-        { 
-          fcm_token, 
-          batch_id: finalBatchId, 
+        {
+          fcm_token,
+          batch_id: finalBatchId,
           faculty_id: finalFacultyId,
-          user_mode: mode 
-        }, 
+          user_mode: mode
+        },
         { onConflict: 'fcm_token' }
       );
 
@@ -313,14 +361,14 @@ app.post('/api/admin/broadcast', async (req: Request, res: Response) => {
     if (password !== process.env.ADMIN_PASSWORD && password !== 'SRUAdminPass2026') {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    
+
     if (!title || !message) {
       return res.status(400).json({ error: 'Missing title or message' });
     }
 
     const target = 'All Users (Topic)';
     let result = { success: false, count: 0, error: '' };
-    
+
     if (isTest) {
       console.log(`[TEST MODE] Would have sent "${title}" to ${target}`);
       result = { success: true, count: 1, error: '' };
@@ -366,14 +414,14 @@ app.get('/api/admin/announcements', async (req: Request, res: Response) => {
       .select('*')
       .order('created_at', { ascending: false })
       .limit(100);
-      
+
     // If the table doesn't exist yet, we will gracefully return an empty array
     // so the UI doesn't break while waiting for the user to run the SQL command.
     if (error) {
       console.warn('Could not fetch announcement history (table might be missing):', error.message);
       return res.json([]);
     }
-    
+
     res.json(data || []);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -387,7 +435,7 @@ app.post('/api/admin/test-class', async (req: Request, res: Response) => {
     if (password !== process.env.ADMIN_PASSWORD && password !== 'SRUAdminPass2026') {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    
+
     if (!batchId || !subject || !startTime || !endTime) {
       return res.status(400).json({ error: 'Missing required parameters' });
     }
@@ -424,7 +472,7 @@ app.delete('/api/admin/test-class', async (req: Request, res: Response) => {
     if (password !== process.env.ADMIN_PASSWORD && password !== 'SRUAdminPass2026') {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    
+
     if (!batchId) {
       return res.status(400).json({ error: 'Missing required parameters' });
     }
@@ -452,7 +500,7 @@ app.post('/api/admin/faculty-test-class', async (req: Request, res: Response) =>
     if (password !== process.env.ADMIN_PASSWORD && password !== 'SRUAdminPass2026') {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    
+
     if (!facultyId || !subject || !startTime || !endTime) {
       return res.status(400).json({ error: 'Missing required parameters' });
     }
@@ -489,7 +537,7 @@ app.delete('/api/admin/faculty-test-class', async (req: Request, res: Response) 
     if (password !== process.env.ADMIN_PASSWORD && password !== 'SRUAdminPass2026') {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    
+
     if (!facultyId) {
       return res.status(400).json({ error: 'Missing required parameters' });
     }
@@ -519,22 +567,8 @@ app.listen(Number(PORT), '0.0.0.0', () => {
 const intervalMinutes = parseInt(process.env.SYNC_INTERVAL_MINUTES || '60', 10);
 console.log(`Scheduling background sync worker every ${intervalMinutes} minutes.`);
 
-// Trigger initial sync run in the background after startup
-setTimeout(() => {
-  console.log('Triggering startup sync crawl...');
-  runSync().catch(err => console.error('Startup sync crawl failed:', err));
-}, 5000);
-
 // Schedule periodic sync runs
 setInterval(() => {
   console.log('Triggering periodic sync crawl...');
   runSync().catch(err => console.error('Periodic sync crawl failed:', err));
 }, intervalMinutes * 60 * 1000);
-
-// Schedule class reminder push notifications every 1 minute
-console.log('Scheduling FCM Class Reminders to run every 1 minute.');
-setInterval(() => {
-  runReminderWorker().catch(err => console.error('Reminder worker failed:', err));
-}, 60 * 1000);
-
-
