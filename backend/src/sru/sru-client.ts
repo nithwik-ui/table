@@ -71,7 +71,7 @@ export class SRUClient {
    */
   public async initRoomSession(): Promise<{ csrfToken: string; cookies: string }> {
     try {
-      const response = await this.axiosInstance.get('/room_free_slots');
+      const response = await this.axiosInstance.get('/room_free_slots', { timeout: 5000 });
       const html = response.data;
       const $ = cheerio.load(html);
 
@@ -323,6 +323,7 @@ export class SRUClient {
           'Content-Type': 'application/x-www-form-urlencoded',
           'Referer': `${this.baseUrl}/room_free_slots`,
         },
+        timeout: 5000,
       });
 
       const html = response.data;
