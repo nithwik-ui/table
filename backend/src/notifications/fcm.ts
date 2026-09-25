@@ -43,9 +43,9 @@ async function isHolidayToday(targetMode: string): Promise<boolean> {
     .eq('override_date', dateString)
     .eq('is_active', true)
     .in('target_mode', [targetMode, 'both'])
-    .maybeSingle();
+    .limit(1);
 
-  if (error || !data) {
+  if (error || !data || data.length === 0) {
     return false;
   }
   return true;
