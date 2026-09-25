@@ -30,6 +30,42 @@ let fcmInitialized = false;
     }
   }
 
+async function isHolidayToday(targetMode: string): Promise<boolean> {
+  const dateInIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const year = dateInIST.getFullYear();
+  const month = String(dateInIST.getMonth() + 1).padStart(2, '0');
+  const day = String(dateInIST.getDate()).padStart(2, '0');
+  const dateString = `${year}-${month}-${day}`;
+
+  const { data, error } = await supabase
+    .from('calendar_overrides')
+    .select('id')
+    .eq('override_date', dateString)
+    .eq('is_active', true)
+    .in('target_mode', [targetMode, 'both'])
+    .maybeSingle();
+
+  if (error || !data) {
+    return false;
+  }
+  return true;
+}
+
+function getISTDay(): string {
+  const dateInIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  return days[dateInIST.getDay()];
+}
+
+function extractDayFromFieldName(fieldName: string | null): string | null {
+  if (!fieldName) return null;
+  const parts = fieldName.split('|');
+  if (parts.length >= 2) {
+    return parts[1];
+  }
+  return null;
+}
+
 export async function sendBatchNotifications(batchId: string, changes: TimetableChangeInsert[]) {
   if (!fcmInitialized) {
     console.warn('Skipping push notification dispatch: Firebase Admin SDK is not initialized.');
@@ -72,8 +108,17 @@ export async function sendBatchNotifications(batchId: string, changes: Timetable
 
     const fcmTokens = tokens.map(t => t.fcm_token);
 
+    const isHoliday = await isHolidayToday('student');
+    const todayDay = getISTDay();
+
     // 3. Dispatch multicast message for each change
     for (const change of changes) {
+      const changeDay = extractDayFromFieldName(change.field_name);
+      if (isHoliday && changeDay === todayDay) {
+        console.log(`Skipping FCM for ${change.change_type} on ${changeDay} because today is a holiday.`);
+        continue;
+      }
+
       const type = change.change_type;
       const oldVal = change.old_value || '';
       const newVal = change.new_value || '';
@@ -197,7 +242,16 @@ export async function sendFacultyBatchNotifications(facultyId: string, facultyNa
 
     const fcmTokens = tokens.map(t => t.fcm_token);
 
+    const isHoliday = await isHolidayToday('faculty');
+    const todayDay = getISTDay();
+
     for (const change of changes) {
+      const changeDay = extractDayFromFieldName(change.field_name);
+      if (isHoliday && changeDay === todayDay) {
+        console.log(`Skipping Faculty FCM for ${change.change_type} on ${changeDay} because today is a holiday.`);
+        continue;
+      }
+
       const type = change.change_type;
       const oldVal = change.old_value || '';
       const newVal = change.new_value || '';
@@ -327,176 +381,6 @@ export async function sendGenericBroadcast(title: string, message: string) {
   } catch (err: any) {
     console.error('Error dispatching topic broadcast:', err.message || err);
     return { success: false, error: err.message || err };
-  }
-}
-
-export async function sendClassReminderPush(batchId: string, subject: string, room: string) {
-  if (!fcmInitialized) {
-    console.warn('Skipping class reminder push: Firebase Admin SDK is not initialized.');
-    return;
-  }
-
-  try {
-    // 1. Fetch device tokens registered for this batch that have reminders enabled (using notifications_enabled flag for now)
-    const { data: tokens, error: tokensErr } = await supabase
-      .from('device_tokens')
-      .select('fcm_token')
-      .eq('batch_id', batchId)
-      .eq('notifications_enabled', true);
-
-    if (tokensErr) {
-      console.error(`Failed to retrieve device tokens for reminder (batch: ${batchId}):`, tokensErr.message);
-      return;
-    }
-
-    if (!tokens || tokens.length === 0) {
-      return; // Silently skip if no active users
-    }
-
-    const fcmTokens = tokens.map(t => t.fcm_token);
-    const roomStr = (room && room !== 'N/A' && room.trim() !== '') ? ` in ${room.split('_')[0]}` : '';
-
-    const payload = {
-      tokens: fcmTokens,
-      notification: {
-        title: 'Class starting in 5 min',
-        body: `${subject}${roomStr}`,
-      },
-      data: {
-        click_action: 'FLUTTER_NOTIFICATION_CLICK',
-        type: 'reminder',
-        batch_id: batchId,
-      },
-      android: {
-        notification: {
-          clickAction: 'FLUTTER_NOTIFICATION_CLICK',
-          sound: 'default',
-          channelId: 'class_reminders', // Map to high-importance channel if created in app
-          priority: 'high' as any,
-        }
-      },
-      apns: {
-        payload: {
-          aps: {
-            sound: 'default',
-            contentAvailable: true,
-          }
-        }
-      }
-    };
-
-    const response = await admin.messaging().sendEachForMulticast(payload);
-    console.log(`Dispatched FCM Reminder for "${subject}": ${response.successCount} succeeded, ${response.failureCount} failed.`);
-    
-    // Cleanup failed or unregistered registration tokens
-    if (response.failureCount > 0) {
-      const tokensToDelete: string[] = [];
-      response.responses.forEach((resp, idx) => {
-        if (!resp.success && resp.error) {
-          const code = resp.error.code;
-          if (
-            code === 'messaging/invalid-registration-token' ||
-            code === 'messaging/registration-token-not-registered'
-          ) {
-            tokensToDelete.push(fcmTokens[idx]);
-          }
-        }
-      });
-
-      if (tokensToDelete.length > 0) {
-        await supabase
-          .from('device_tokens')
-          .delete()
-          .in('fcm_token', tokensToDelete);
-        console.log(`Pruned ${tokensToDelete.length} stale/invalid FCM tokens during reminder dispatch.`);
-      }
-    }
-  } catch (err: any) {
-    console.error('Error dispatching class reminder push:', err.message || err);
-  }
-}
-
-export async function sendFacultyClassReminderPush(facultyId: string, subject: string, room: string) {
-  if (!fcmInitialized) {
-    console.warn('Skipping class reminder push: Firebase Admin SDK is not initialized.');
-    return;
-  }
-
-  try {
-    const { data: tokens, error: tokensErr } = await supabase
-      .from('device_tokens')
-      .select('fcm_token')
-      .eq('user_mode', 'faculty')
-      .eq('faculty_id', facultyId)
-      .eq('notifications_enabled', true);
-
-    if (tokensErr) {
-      console.error(`Failed to retrieve device tokens for reminder (faculty: ${facultyId}):`, tokensErr.message);
-      return;
-    }
-
-    if (!tokens || tokens.length === 0) {
-      return; 
-    }
-
-    const fcmTokens = tokens.map(t => t.fcm_token);
-    const roomStr = (room && room !== 'N/A' && room.trim() !== '') ? ` in ${room.split('_')[0]}` : '';
-
-    const payload = {
-      tokens: fcmTokens,
-      notification: {
-        title: 'Class starting in 5 min',
-        body: `${subject}${roomStr}`,
-      },
-      data: {
-        click_action: 'FLUTTER_NOTIFICATION_CLICK',
-        type: 'reminder',
-        faculty_id: facultyId,
-      },
-      android: {
-        notification: {
-          clickAction: 'FLUTTER_NOTIFICATION_CLICK',
-          sound: 'default',
-          channelId: 'class_reminders', 
-          priority: 'high' as any,
-        }
-      },
-      apns: {
-        payload: {
-          aps: {
-            sound: 'default',
-            contentAvailable: true,
-          }
-        }
-      }
-    };
-
-    const response = await admin.messaging().sendEachForMulticast(payload);
-    console.log(`Dispatched FCM Reminder for "${subject}": ${response.successCount} succeeded, ${response.failureCount} failed.`);
-    
-    if (response.failureCount > 0) {
-      const tokensToDelete: string[] = [];
-      response.responses.forEach((resp, idx) => {
-        if (!resp.success && resp.error) {
-          const code = resp.error.code;
-          if (
-            code === 'messaging/invalid-registration-token' ||
-            code === 'messaging/registration-token-not-registered'
-          ) {
-            tokensToDelete.push(fcmTokens[idx]);
-          }
-        }
-      });
-
-      if (tokensToDelete.length > 0) {
-        await supabase
-          .from('device_tokens')
-          .delete()
-          .in('fcm_token', tokensToDelete);
-      }
-    }
-  } catch (err: any) {
-    console.error('Error dispatching faculty class reminder push:', err.message || err);
   }
 }
 
