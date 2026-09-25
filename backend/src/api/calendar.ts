@@ -25,7 +25,15 @@ router.get('/', async (req: Request, res: Response) => {
         const { data, error } = await query.order('override_date', { ascending: false });
 
         if (error) throw error;
-        res.json(data || []);
+
+        // Add backward compatibility for old mobile app versions
+        const mappedData = (data || []).map(item => ({
+            ...item,
+            date: item.override_date,
+            isHoliday: true
+        }));
+
+        res.json(mappedData);
     } catch (err: any) {
         res.status(500).json({ error: 'Internal server error' });
     }
