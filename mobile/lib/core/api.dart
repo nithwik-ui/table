@@ -1,9 +1,30 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'constants.dart';
+import 'timetable_normalizer.dart';
+
+abstract class FreeRoomsException implements Exception {
+  final String message;
+  const FreeRoomsException(this.message);
+  @override
+  String toString() => message;
+}
+
+class FreeRoomsNetworkException extends FreeRoomsException {
+  const FreeRoomsNetworkException([super.message = "Couldn't load free classrooms. Check your connection and try again."]);
+}
+
+class FreeRoomsServerException extends FreeRoomsException {
+  const FreeRoomsServerException([super.message = "Couldn't load free classrooms. Check your connection and try again."]);
+}
+
+class FreeRoomsMalformedException extends FreeRoomsException {
+  const FreeRoomsMalformedException([super.message = "Received invalid data from server. Please try again."]);
+}
 
 class ApiService {
-  static const Duration timeoutDuration = Duration(seconds: 15);
+  static const Duration timeoutDuration = Duration(seconds: 60);
 
   static Future<List<dynamic>> fetchDegrees() async {
     final response = await http
@@ -48,7 +69,8 @@ class ApiService {
         .timeout(timeoutDuration);
 
     if (response.statusCode == 200) {
-      return json.decode(response.body) as List<dynamic>;
+      final list = json.decode(response.body) as List<dynamic>;
+      return TimetableNormalizer.normalize(list);
     } else {
       throw Exception('Failed to load timetable (HTTP ${response.statusCode})');
     }
@@ -60,7 +82,8 @@ class ApiService {
         .timeout(timeoutDuration);
 
     if (response.statusCode == 200) {
-      return json.decode(response.body) as List<dynamic>;
+      final list = json.decode(response.body) as List<dynamic>;
+      return TimetableNormalizer.normalize(list);
     } else {
       throw Exception('Failed to load today\'s classes (HTTP ${response.statusCode})');
     }
@@ -169,7 +192,8 @@ class ApiService {
         .timeout(timeoutDuration);
 
     if (response.statusCode == 200) {
-      return json.decode(response.body) as List<dynamic>;
+      final list = json.decode(response.body) as List<dynamic>;
+      return TimetableNormalizer.normalize(list);
     } else {
       throw Exception('Failed to load faculty timetable');
     }
@@ -187,17 +211,62 @@ class ApiService {
   }
 
   // FREE ROOMS ENDPOINTS
-  static Future<List<dynamic>> fetchFreeRooms(String day, String time) async {
-    final response = await http
-        .get(Uri.parse('${AppConstants.apiBaseUrl}/api/rooms/free?day=${Uri.encodeComponent(day)}&time=${Uri.encodeComponent(time)}'))
-        .timeout(timeoutDuration);
-
-    if (response.statusCode == 200) {
-      final decoded = json.decode(response.body) as Map<String, dynamic>;
-      return decoded['rooms'] as List<dynamic>;
-    } else {
-      throw Exception('Failed to load free rooms (HTTP ${response.statusCode})');
+  static Future<List<Map<String, dynamic>>> fetchFreeRooms(String day, String time) async {
+    http.Response response;
+    try {
+      final uri = Uri.parse(
+        '${AppConstants.apiBaseUrl}/api/rooms/free?day=${Uri.encodeComponent(day)}&time=${Uri.encodeComponent(time)}',
+      );
+      response = await http.get(uri).timeout(timeoutDuration);
+    } catch (e) {
+      if (e is TimeoutException) {
+        throw const FreeRoomsNetworkException();
+      }
+      final eStr = e.toString().toLowerCase();
+      if (eStr.contains('socketexception') || eStr.contains('clientexception') || eStr.contains('xmlhttprequest')) {
+        throw const FreeRoomsNetworkException();
+      }
+      if (e is FreeRoomsException) rethrow;
+      throw const FreeRoomsNetworkException();
     }
+
+    if (response.statusCode != 200) {
+      throw FreeRoomsServerException(
+        "Couldn't load free classrooms. Check your connection and try again. (HTTP ${response.statusCode})",
+      );
+    }
+
+    dynamic decoded;
+    try {
+      decoded = json.decode(response.body);
+    } catch (_) {
+      throw const FreeRoomsMalformedException();
+    }
+
+    if (decoded is! Map<String, dynamic>) {
+      throw const FreeRoomsMalformedException();
+    }
+
+    final rawRooms = decoded['rooms'];
+    if (rawRooms is! List) {
+      throw const FreeRoomsMalformedException();
+    }
+
+    final List<Map<String, dynamic>> validRooms = [];
+    for (final item in rawRooms) {
+      if (item is Map) {
+        final name = item['name']?.toString().trim();
+        final type = item['type']?.toString().trim() ?? 'Classroom';
+        if (name != null && name.isNotEmpty) {
+          validRooms.add({
+            'name': name,
+            'type': type.isEmpty ? 'Classroom' : type,
+          });
+        }
+      }
+    }
+
+    return validRooms;
   }
 
   static Future<Map<String, dynamic>> fetchLatestGithubRelease() async {

@@ -1,0 +1,307 @@
+<!DOCTYPE html><html lang="en" style=""><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><meta content="mobile_stack" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"on-secondary-fixed-variant":"#404754","outline-variant":"#c2c6d2","on-error-container":"#93000a","on-tertiary":"#ffffff","on-error":"#ffffff","on-tertiary-fixed-variant":"#753400","on-primary-container":"#9fc3ff","on-primary-fixed":"#001b3c","inverse-primary":"#a8c8ff","on-background":"#141b2b","error-container":"#ffdad6","tertiary-fixed":"#ffdbc8","inverse-on-surface":"#edf0ff","surface-container-high":"#e1e8fd","on-secondary-container":"#5e6572","tertiary":"#5f2900","on-tertiary-container":"#ffaf7f","on-surface-variant":"#424751","on-primary":"#ffffff","on-surface":"#141b2b","primary":"#003870","error":"#ba1a1a","surface-container-highest":"#dce2f7","surface-variant":"#dce2f7","surface-container-lowest":"#ffffff","on-tertiary-fixed":"#321200","surface-bright":"#f9f9ff","on-secondary":"#ffffff","primary-fixed-dim":"#a8c8ff","tertiary-fixed-dim":"#ffb68b","secondary":"#585f6c","on-secondary-fixed":"#151c27","primary-fixed":"#d5e3ff","surface-dim":"#d3daef","surface-tint":"#265ea6","surface-container":"#e9edff","on-primary-fixed-variant":"#00468a","surface-container-low":"#f1f3ff","inverse-surface":"#293040","secondary-fixed-dim":"#c0c7d6","outline":"#727782","secondary-fixed":"#dce2f3","background":"#f9f9ff","secondary-container":"#dce2f3","primary-container":"#0b4f96","surface":"#f9f9ff","tertiary-container":"#823b00"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"stack-gap":"12px","sm":"8px","container-padding":"16px","xs":"4px","md":"16px","base":"8px","lg":"24px","xl":"32px"},"fontFamily":{"display":["Inter"],"mono-label":["Geist"],"headline":["Inter"],"body-md":["Inter"],"body-lg":["Inter"],"label-sm":["Geist"]},"fontSize":{"display":["28px",{"lineHeight":"34px","letterSpacing":"-0.02em","fontWeight":"700"}],"mono-label":["13px",{"lineHeight":"16px","letterSpacing":"0.01em","fontWeight":"500"}],"headline":["18px",{"lineHeight":"24px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"label-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.02em","fontWeight":"500"}]}}}}</script><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-background font-body-md text-body-md text-on-background flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-md flex items-center justify-between"><div class="flex items-center gap-xs"><button aria-label="Go back" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container-high transition-colors" onclick="history.back()"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><h1 class="text-headline font-headline text-on-surface truncate max-w-[210px]">Course Detail</h1></div><div class="flex items-center gap-xs"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1VChkT5AE9g8OUufGbpE7OkxaAZ-sUwI_eRClsgMnpA7t1hQrYc_4-KapHGMkA0jYsXaK95lnkp1ouWQlPC4bldoGLAylJ9Op8OrnTyRWBsX0jea43rELi_D7evChPJkraAIKXE_0g9cJxeWYUIS-UBOBC29v6vRw9GLZiTZhB-pKm61ldBB_om6AM6zfKAmtTv8rlEnhq9NLwSd0SnXmYeiTsKPYKibbp3_VFcN-xAodwyn9Bsn7JkcVVX8hiVNb-2ohgfxmaNkQ"></div></div></header><main class="flex flex-col relative w-full pt-16 pb-safe bg-surface min-h-screen"><div class="flex flex-col w-full pb-10">
+<!-- State Switcher Header Chips -->
+
+<!-- Live Dynamic Alert Banner -->
+<div class="px-md pt-md">
+<div class="flex items-start gap-3 p-3.5 rounded-xl bg-error-container text-on-error-container transition-all duration-300" id="status-banner">
+<span class="material-symbols-outlined text-[20px] text-error flex-shrink-0 mt-0.5" id="banner-icon">error</span>
+<div class="flex-1 min-w-0">
+<p class="text-body-md font-headline font-semibold text-on-error-container" id="banner-title">Incorrect CAPTCHA</p>
+<p class="text-label-sm font-label-sm opacity-90 mt-0.5" id="banner-desc">The verification phrase did not match the security image. Please request a new code.</p>
+</div>
+<button class="text-on-error-container/60 hover:text-on-error-container p-1 rounded-full" onclick="dismissBanner()">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+</div>
+<!-- SRAAP Integration Card Container -->
+<main class="px-md pt-4 flex flex-col gap-4">
+<!-- University Academic Sync Card -->
+<div class="relative bg-surface-container-lowest rounded-2xl shadow-sm overflow-hidden p-md flex flex-col gap-5">
+<!-- Top Portal Status Sub-header -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-primary font-headline font-bold text-body-md">
+            SRU
+          </div>
+<div>
+<h2 class="text-headline font-headline text-on-surface leading-tight">Student Academic Portal</h2>
+<p class="text-label-sm font-label-sm text-secondary">SRAAP v4.2.1 Sync Engine</p>
+</div>
+</div>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm font-label-sm bg-error-container text-on-error-container font-medium" id="portal-status-badge">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+          Auth Disrupted
+        </span>
+</div>
+<!-- Form Inputs Group -->
+<div class="flex flex-col gap-3.5">
+<!-- Enrollment Field -->
+<div class="flex flex-col gap-1.5">
+<label class="text-label-sm font-label-sm text-on-surface-variant flex items-center justify-between">
+<span class="">Enrollment Number / Roll ID</span>
+<span class="text-secondary text-[11px]">SRU-2023-CS-0842</span>
+</label>
+<div class="relative flex items-center bg-surface-container-low rounded-xl px-3.5 py-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+<span class="material-symbols-outlined text-secondary text-[20px] mr-2.5">badge</span>
+<input class="bg-transparent text-body-md font-headline text-on-surface w-full focus:outline-none cursor-default font-medium" readonly="" type="text" value="2301010842">
+<span class="material-symbols-outlined text-primary text-[18px]">verified</span>
+</div>
+</div>
+<!-- Password Field -->
+<div class="flex flex-col gap-1.5">
+<label class="text-label-sm font-label-sm text-on-surface-variant">Portal Password</label>
+<div class="relative flex items-center bg-surface-container-low rounded-xl px-3.5 py-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+<span class="material-symbols-outlined text-secondary text-[20px] mr-2.5">lock</span>
+<input class="bg-transparent text-body-md font-headline text-on-surface w-full focus:outline-none cursor-default tracking-widest" readonly="" type="password" value="••••••••••••">
+<button class="text-secondary hover:text-on-surface p-1" type="button">
+<span class="material-symbols-outlined text-[18px]">visibility_off</span>
+</button>
+</div>
+</div>
+<!-- Dynamic CAPTCHA Section -->
+<div class="flex flex-col gap-1.5 pt-1">
+<div class="flex items-center justify-between">
+<label class="text-label-sm font-label-sm text-on-surface-variant">Security Verification</label>
+<span class="text-label-sm font-label-sm text-primary" id="captcha-helper-text">Code reloaded</span>
+</div>
+<!-- CAPTCHA Interactive Box -->
+<div class="rounded-xl p-3 bg-surface-container-high/60 flex flex-col gap-2.5 transition-all duration-200" id="captcha-box-container">
+<!-- Box Content State A: Error Box -->
+<div class="flex items-center justify-between gap-3 hidden" id="captcha-content-error">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-9 h-9 rounded-lg bg-error-container text-error flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">sync_problem</span>
+</div>
+<div class="flex flex-col">
+<span class="text-body-md font-headline font-medium text-on-surface leading-tight">Unable to load CAPTCHA</span>
+<span class="text-label-sm font-label-sm text-secondary truncate">Gateway timeout from sraap.sru.edu.in</span>
+</div>
+</div>
+<button class="px-3 py-1.5 bg-primary text-on-primary rounded-lg text-label-sm font-label-sm font-medium hover:bg-primary-container shadow-sm flex items-center gap-1 flex-shrink-0 transition-colors" onclick="retryCaptcha()">
+<span class="material-symbols-outlined text-[16px]">refresh</span>
+                Try Again
+              </button>
+</div>
+<!-- Box Content State B: Active Image State (Hidden in initial captcha error) -->
+<div class="items-center justify-between gap-2 bg-surface-container-lowest p-2 rounded-lg flex" id="captcha-content-active">
+<div class="relative flex items-center justify-center bg-surface-container px-3 py-1.5 rounded select-none">
+<span class="font-mono-label font-bold text-lg tracking-widest text-primary blur-[0.4px] line-through decoration-tertiary">7 K W 9 B</span>
+</div>
+<div class="flex-1">
+<input class="w-full bg-surface-container-low px-2.5 py-1.5 rounded-lg text-body-md font-mono-label text-on-surface focus:outline-none uppercase" id="captcha-input-field" maxlength="5" placeholder="Type text above" type="text">
+</div>
+<button class="p-1.5 text-secondary hover:text-primary rounded-lg" onclick="retryCaptcha()">
+<span class="material-symbols-outlined text-[20px]">cached</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Button Group -->
+<div class="flex flex-col gap-2 pt-2">
+<button class="w-full py-3.5 rounded-xl bg-primary text-on-primary font-headline text-body-md font-semibold shadow-none transition-all flex items-center justify-center gap-2 opacity-100 cursor-pointer" id="btn-submit-main">
+<span class="">Connect to SRAAP</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+<p class="text-center text-label-sm font-label-sm text-secondary">
+          Having trouble? <button class="text-primary font-medium hover:underline inline">Reset session cookies</button>
+</p>
+</div>
+</div>
+<!-- Security Credential Badge -->
+<div class="rounded-xl bg-surface-container-high/40 p-3.5 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-on-primary-fixed flex-shrink-0">
+<span class="material-symbols-outlined text-[18px]">shield</span>
+</div>
+<p class="text-label-sm font-label-sm text-on-surface-variant leading-relaxed">
+<span class="font-semibold text-on-surface">Encrypted direct session.</span> No student passwords or biometric hashes are stored on external proxy servers.
+      </p>
+</div>
+<!-- Telemetry Diagnostic Log (Subtle Card) -->
+
+</main>
+<!-- Full Frame Backdrop Connecting / Loading Overlay Modal (Interactive Toggle) -->
+<div class="fixed inset-0 z-50 bg-inverse-surface/40 backdrop-blur-sm hidden items-center justify-center px-md" id="modal-connecting">
+<div class="w-full max-w-xs bg-surface-container-lowest rounded-2xl p-6 shadow-2xl flex flex-col items-center text-center gap-4 animate-in fade-in zoom-in-95 duration-200">
+<!-- Animated Circular Progress -->
+<div class="relative w-16 h-16 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90 animate-spin text-primary" viewBox="0 0 48 48">
+<circle class="text-surface-container-high" cx="24" cy="24" fill="none" r="20" stroke="currentColor" stroke-width="4.5"></circle>
+<circle cx="24" cy="24" fill="none" r="20" stroke="currentColor" stroke-dasharray="100" stroke-dashoffset="65" stroke-linecap="round" stroke-width="4.5"></circle>
+</svg>
+<span class="material-symbols-outlined text-primary text-[24px] absolute">cloud_sync</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="text-headline font-headline font-semibold text-on-surface">Connecting to SRAAP...</h3>
+<p class="text-label-sm font-label-sm text-secondary">Negotiating student session handshake &amp; timetable registry.</p>
+</div>
+<!-- Duplicate Request Protection Notice -->
+<div class="w-full py-2 px-3 rounded-lg bg-surface-container-low flex items-center justify-center gap-1.5 text-label-sm font-label-sm text-secondary">
+<span class="material-symbols-outlined text-[16px] text-primary animate-pulse">lock_clock</span>
+<span class="">Concurrent requests disabled</span>
+</div>
+<button class="w-full mt-1 py-2 text-label-sm font-label-sm text-secondary hover:text-on-surface font-medium transition-colors" onclick="cancelLoading()">
+        Cancel Attempt
+      </button>
+</div>
+</div>
+</div>
+<script>
+  function switchState(state) {
+    const pills = document.querySelectorAll('.state-pill');
+    pills.forEach(p => {
+      p.classList.remove('bg-primary', 'text-on-primary', 'shadow-sm');
+      p.classList.add('bg-surface-container-highest', 'text-on-surface-variant');
+    });
+
+    const banner = document.getElementById('status-banner');
+    const bannerIcon = document.getElementById('banner-icon');
+    const bannerTitle = document.getElementById('banner-title');
+    const bannerDesc = document.getElementById('banner-desc');
+    const badge = document.getElementById('portal-status-badge');
+    const submitBtn = document.getElementById('btn-submit-main');
+    const captchaContainer = document.getElementById('captcha-box-container');
+    const captchaError = document.getElementById('captcha-content-error');
+    const captchaActive = document.getElementById('captcha-content-active');
+    const captchaHelper = document.getElementById('captcha-helper-text');
+    const diagCause = document.getElementById('diagnostic-cause');
+    const diagTime = document.getElementById('diagnostic-time');
+    const modalConnecting = document.getElementById('modal-connecting');
+
+    const now = new Date();
+    const timeStr = 'HTTP 403 • ' + now.toTimeString().split(' ')[0];
+    diagTime.innerText = timeStr;
+
+    // Reset modals
+    modalConnecting.classList.add('hidden');
+    modalConnecting.classList.remove('flex');
+
+    if (state === 'captcha') {
+      document.getElementById('btn-state-captcha').classList.add('bg-primary', 'text-on-primary', 'shadow-sm');
+      document.getElementById('btn-state-captcha').classList.remove('bg-surface-container-highest', 'text-on-surface-variant');
+
+      banner.className = "flex items-start gap-3 p-3.5 rounded-xl bg-error-container text-on-error-container transition-all duration-300";
+      bannerIcon.innerText = "error";
+      bannerTitle.innerText = "Incorrect CAPTCHA";
+      bannerDesc.innerText = "The verification phrase did not match the security image. Please request a new code.";
+      
+      badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm font-label-sm bg-error-container text-on-error-container font-medium";
+      badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-error"></span> Auth Disrupted';
+
+      captchaError.classList.remove('hidden');
+      captchaActive.classList.add('hidden');
+      captchaActive.classList.remove('flex');
+      captchaHelper.innerText = "Validation failed";
+      captchaHelper.className = "text-label-sm font-label-sm text-error";
+
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      submitBtn.classList.remove('opacity-100', 'cursor-pointer');
+
+      diagCause.innerText = "CAPTCHA_VALIDATION_MISMATCH";
+    } 
+    else if (state === 'loading') {
+      document.getElementById('btn-state-loading').classList.add('bg-primary', 'text-on-primary', 'shadow-sm');
+      document.getElementById('btn-state-loading').classList.remove('bg-surface-container-highest', 'text-on-surface-variant');
+
+      modalConnecting.classList.remove('hidden');
+      modalConnecting.classList.add('flex');
+
+      banner.className = "flex items-start gap-3 p-3.5 rounded-xl bg-surface-container-high text-on-surface transition-all duration-300";
+      bannerIcon.innerText = "cloud_sync";
+      bannerTitle.innerText = "Sync in Progress";
+      bannerDesc.innerText = "Contacting SR University SRAAP server gateway. Do not close the application.";
+
+      badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm font-label-sm bg-surface-container text-primary font-medium";
+      badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span> Connecting';
+
+      diagCause.innerText = "HANDSHAKE_INITIALIZING";
+    }
+    else if (state === 'creds') {
+      document.getElementById('btn-state-creds').classList.add('bg-primary', 'text-on-primary', 'shadow-sm');
+      document.getElementById('btn-state-creds').classList.remove('bg-surface-container-highest', 'text-on-surface-variant');
+
+      banner.className = "flex items-start gap-3 p-3.5 rounded-xl bg-error-container text-on-error-container transition-all duration-300";
+      bannerIcon.innerText = "lock_reset";
+      bannerTitle.innerText = "Invalid Credentials";
+      bannerDesc.innerText = "The roll ID or portal password entered is unrecognized by SRU Authentication Services.";
+
+      badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm font-label-sm bg-error-container text-on-error-container font-medium";
+      badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-error"></span> Login Failed';
+
+      captchaError.classList.add('hidden');
+      captchaActive.classList.remove('hidden');
+      captchaActive.classList.add('flex');
+      captchaHelper.innerText = "Valid token verified";
+      captchaHelper.className = "text-label-sm font-label-sm text-secondary";
+
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      submitBtn.classList.add('opacity-100', 'cursor-pointer');
+
+      diagCause.innerText = "CREDENTIAL_REJECT_INVALID_PWD";
+    }
+    else if (state === 'expired') {
+      document.getElementById('btn-state-expired').classList.add('bg-primary', 'text-on-primary', 'shadow-sm');
+      document.getElementById('btn-state-expired').classList.remove('bg-surface-container-highest', 'text-on-surface-variant');
+
+      banner.className = "flex items-start gap-3 p-3.5 rounded-xl bg-tertiary-fixed text-on-tertiary-fixed transition-all duration-300";
+      bannerIcon.innerText = "timer_off";
+      bannerTitle.innerText = "Session Expired";
+      bannerDesc.innerText = "SRAAP authorization token has reached its 24-hour limit. Re-verification required.";
+
+      badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm font-label-sm bg-tertiary-fixed-dim text-on-tertiary-fixed-variant font-medium";
+      badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Expired';
+
+      captchaError.classList.remove('hidden');
+      captchaActive.classList.add('hidden');
+      captchaActive.classList.remove('flex');
+      captchaHelper.innerText = "Token expired";
+      captchaHelper.className = "text-label-sm font-label-sm text-tertiary";
+
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+      diagCause.innerText = "AUTH_BEARER_TIMEOUT_EXPIRED";
+    }
+  }
+
+  function retryCaptcha() {
+    const errorSection = document.getElementById('captcha-content-error');
+    const activeSection = document.getElementById('captcha-content-active');
+    const helper = document.getElementById('captcha-helper-text');
+    const submitBtn = document.getElementById('btn-submit-main');
+
+    // Simulate instant refresh delight
+    errorSection.classList.add('hidden');
+    activeSection.classList.remove('hidden');
+    activeSection.classList.add('flex');
+    helper.innerText = "Code reloaded";
+    helper.className = "text-label-sm font-label-sm text-primary";
+
+    submitBtn.disabled = false;
+    submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    submitBtn.classList.add('opacity-100', 'cursor-pointer');
+  }
+
+  function cancelLoading() {
+    switchState('captcha');
+  }
+
+  function dismissBanner() {
+    const banner = document.getElementById('status-banner');
+    banner.classList.add('opacity-0', 'scale-95');
+    setTimeout(() => {
+      banner.style.display = 'none';
+    }, 250);
+  }
+</script></main>
+
+</body></html>

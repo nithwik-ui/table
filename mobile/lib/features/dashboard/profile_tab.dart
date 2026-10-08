@@ -1,19 +1,18 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'dart:io';
 import 'dart:async';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
 import '../../core/api.dart';
-import '../../core/updater.dart';
 import '../../core/notifications.dart';
 import '../../core/sync.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import '../onboarding/degree_screen.dart';
-import '../onboarding/faculty_selection_screen.dart';
 import '../onboarding/mode_selection_screen.dart';
+import 'sync_center_screen.dart';
+import '../../core/sraap/sraap_academic_service.dart';
+import '../../core/auth/auth_repository.dart';
 
 class ProfileTab extends StatefulWidget {
   const ProfileTab({super.key});
@@ -27,12 +26,20 @@ class _ProfileTabState extends State<ProfileTab> {
   String _displayName = 'Student';
   String _degreeYearText = '';
   String _batchCode = '';
+  String _rollNumber = '';
+  String _registeredContact = '';
   String _lastSyncedText = 'Never';
   
   bool _notificationsEnabled = true;
   bool _remindersEnabled = true;
   bool _isRefreshing = false;
   String _currentVersion = AppConstants.currentVersion;
+
+  bool _timetableChangesEnabled = true;
+  bool _roomChangesEnabled = true;
+  bool _facultyChangesEnabled = true;
+  bool _cancelledClassesEnabled = true;
+  bool _generalAnnouncementsEnabled = true;
 
   @override
   void initState() {
@@ -70,12 +77,11 @@ class _ProfileTabState extends State<ProfileTab> {
     final userMode = StorageService.getUserMode();
 
     if (userMode == 'faculty') {
-      final selection = StorageService.getFacultySelection();
-      
+      final profile = StorageService.getProfile();
       String initials = 'F';
       String dispName = 'Faculty';
-      if (selection != null && selection['facultyName'] != null) {
-        dispName = selection['facultyName']!.trim();
+      if (profile != null && profile['name'] != null) {
+        dispName = profile['name']!.trim();
         initials = dispName.substring(0, 1).toUpperCase();
       }
 
@@ -91,25 +97,41 @@ class _ProfileTabState extends State<ProfileTab> {
         _lastSyncedText = lastText;
         _notificationsEnabled = StorageService.isNotificationsEnabled();
         _remindersEnabled = StorageService.isClassRemindersEnabled();
+        
+        _timetableChangesEnabled = StorageService.isTimetableChangesEnabled();
+        _roomChangesEnabled = StorageService.isRoomChangesEnabled();
+        _facultyChangesEnabled = StorageService.isFacultyChangesEnabled();
+        _cancelledClassesEnabled = StorageService.isCancelledClassesEnabled();
+        _generalAnnouncementsEnabled = StorageService.isGeneralAnnouncementsEnabled();
 
-        if (selection != null) {
+        if (profile != null) {
+          _degreeYearText = profile['department'] ?? 'Faculty Mode';
+          _batchCode = profile['id'] ?? '';
+        } else {
           _degreeYearText = 'Faculty Mode';
           _batchCode = '';
         }
       });
     } else {
-      final name = StorageService.getUserName();
-      final selection = StorageService.getSelection();
+      final profile = StorageService.getProfile();
       
-      // Initials calculation
-      String initials = 'S';
-      String dispName = 'Student';
-      if (name != null && name.trim().isNotEmpty) {
-        dispName = name.trim();
-        initials = dispName.substring(0, 1).toUpperCase();
+      String dispName = profile?['name']?.toString().trim() ?? StorageService.getUserName() ?? 'Student';
+      if (dispName.isEmpty) dispName = 'Student';
+      String initials = dispName.isNotEmpty ? dispName.substring(0, 1).toUpperCase() : 'S';
+
+      String roll = profile?['roll_number'] ?? profile?['id'] ?? StorageService.getStudentRollNumber() ?? '';
+      if (roll == 'Unknown' || roll.isEmpty) {
+        final id = StorageService.getUserIdentifier() ?? '';
+        if (RegExp(r'\b2[0-9][0-9A-Za-z]{2}[A-Za-z0-9]{6}\b').hasMatch(id)) {
+          roll = id;
+        }
       }
 
-      // Last synced calculation
+      String batch = profile?['batch'] ?? profile?['department'] ?? 'Student Mode';
+      if (batch == 'Unknown') batch = 'Student Mode';
+
+      final contact = StorageService.getUserIdentifier() ?? profile?['mobile'] ?? '';
+
       final lastSynced = StorageService.getLastSyncedAt();
       String lastText = 'Never';
       if (lastSynced != null) {
@@ -119,58 +141,23 @@ class _ProfileTabState extends State<ProfileTab> {
       setState(() {
         _displayName = dispName;
         _initials = initials;
+        _rollNumber = roll;
+        _degreeYearText = batch;
+        _batchCode = batch;
+        _registeredContact = contact;
         _lastSyncedText = lastText;
         _notificationsEnabled = StorageService.isNotificationsEnabled();
         _remindersEnabled = StorageService.isClassRemindersEnabled();
-
-        if (selection != null) {
-          _degreeYearText = '${selection['degree']} · ${selection['year']} Year';
-          _batchCode = selection['batchCode']!;
-        }
+        
+        _timetableChangesEnabled = StorageService.isTimetableChangesEnabled();
+        _roomChangesEnabled = StorageService.isRoomChangesEnabled();
+        _facultyChangesEnabled = StorageService.isFacultyChangesEnabled();
+        _cancelledClassesEnabled = StorageService.isCancelledClassesEnabled();
+        _generalAnnouncementsEnabled = StorageService.isGeneralAnnouncementsEnabled();
       });
     }
   }
 
-  void _onChangeTimetable() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Change Timetable?'),
-          content: const Text('This will remove your currently saved timetable and let you select a new one.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel', style: TextStyle(color: AppConstants.textSecondary)),
-            ),
-            TextButton(
-              onPressed: () async {
-                final navigator = Navigator.of(context);
-                navigator.pop();
-                
-                if (StorageService.getUserMode() == 'faculty') {
-                  await NotificationService.clearModeReminders('faculty');
-                  await StorageService.clearFacultySelection();
-                  navigator.pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const FacultySelectionScreen()),
-                    (route) => false,
-                  );
-                } else {
-                  await NotificationService.clearModeReminders('student');
-                  await StorageService.clearSelection();
-                  navigator.pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const DegreeScreen()),
-                    (route) => false,
-                  );
-                }
-              },
-              child: const Text('Change', style: TextStyle(color: AppConstants.primary)),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   void _onSwitchMode() {
     showDialog(
@@ -210,17 +197,14 @@ class _ProfileTabState extends State<ProfileTab> {
     setState(() => _notificationsEnabled = val);
     await StorageService.setNotificationsEnabled(val);
     
-    // Attempt to update preferences on server if selection exists
-    final selection = StorageService.getSelection();
-    if (selection != null) {
-      try {
-        final fcmToken = await FirebaseMessaging.instance.getToken();
-        if (fcmToken != null) {
-          await ApiService.updatePreferences(fcmToken, val);
-        }
-      } catch (e) {
-        debugPrint('Failed to update FCM preferences: $e');
+    // Update FCM preferences
+    try {
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      if (fcmToken != null) {
+        await ApiService.updatePreferences(fcmToken, val);
       }
+    } catch (e) {
+      debugPrint('Failed to update FCM preferences: $e');
     }
   }
 
@@ -230,7 +214,7 @@ class _ProfileTabState extends State<ProfileTab> {
     if (val) {
       final list = StorageService.getTimetableCache();
       if (list.isNotEmpty) {
-        await NotificationService.scheduleClassReminders(list);
+        await NotificationService.reconcileReminders();
       }
     } else {
       if (StorageService.getUserMode() == 'faculty') {
@@ -240,9 +224,30 @@ class _ProfileTabState extends State<ProfileTab> {
       }
     }
   }
-
-  Future<void> _refreshTimetable() async {
-    SyncService.instance.syncTimetable();
+  
+  void _toggleSetting(String key, bool val) async {
+    switch (key) {
+      case 'timetable':
+        setState(() => _timetableChangesEnabled = val);
+        await StorageService.setTimetableChangesEnabled(val);
+        break;
+      case 'room':
+        setState(() => _roomChangesEnabled = val);
+        await StorageService.setRoomChangesEnabled(val);
+        break;
+      case 'faculty':
+        setState(() => _facultyChangesEnabled = val);
+        await StorageService.setFacultyChangesEnabled(val);
+        break;
+      case 'cancelled':
+        setState(() => _cancelledClassesEnabled = val);
+        await StorageService.setCancelledClassesEnabled(val);
+        break;
+      case 'general':
+        setState(() => _generalAnnouncementsEnabled = val);
+        await StorageService.setGeneralAnnouncementsEnabled(val);
+        break;
+    }
   }
 
 
@@ -254,28 +259,14 @@ class _ProfileTabState extends State<ProfileTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Simple Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer, vertical: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Image.asset(
-                        'assets/logo.png',
-                        height: 28,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
+            const SizedBox(height: 4),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer),
+                padding: const EdgeInsets.only(
+                  left: AppConstants.paddingContainer,
+                  right: AppConstants.paddingContainer,
+                  bottom: 20,
+                ),
                 children: [
                   const SizedBox(height: 12),
                   // Profile Card
@@ -302,30 +293,46 @@ class _ProfileTabState extends State<ProfileTab> {
                         Text(
                           _displayName,
                           style: AppConstants.getHeadline().copyWith(fontSize: 20),
+                          textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _degreeYearText,
-                          style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _batchCode,
-                          style: AppConstants.getMonoLabel(color: AppConstants.primary),
-                        ),
-                        const SizedBox(height: 16),
-                        // Ghost Link: Change Timetable
-                        TextButton(
-                          onPressed: _onChangeTimetable,
-                          style: TextButton.styleFrom(foregroundColor: AppConstants.primary),
-                          child: Text(
-                            'Change timetable',
-                            style: AppConstants.getBodyLarge(color: AppConstants.primary).copyWith(
-                              fontWeight: FontWeight.bold,
-                              decoration: TextDecoration.underline,
+                        if (_rollNumber.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppConstants.primaryContainer.withOpacity(0.35),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppConstants.primary.withOpacity(0.25)),
+                            ),
+                            child: Text(
+                              'Roll No: $_rollNumber',
+                              style: AppConstants.getMonoLabel(color: AppConstants.primary).copyWith(
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
                             ),
                           ),
-                        ),
+                        ],
+                        if (_batchCode.isNotEmpty && _batchCode != 'Student Mode') ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            'Batch: $_batchCode',
+                            style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
+                          ),
+                        ] else if (_degreeYearText.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            _degreeYearText,
+                            style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
+                          ),
+                        ],
+                        if (_registeredContact.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            'Registered: $_registeredContact',
+                            style: AppConstants.getLabelSmall(color: AppConstants.textSecondary),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -346,7 +353,6 @@ class _ProfileTabState extends State<ProfileTab> {
                     ),
                     child: Column(
                       children: [
-                        // Notifications row
                         SwitchListTile(
                           value: _notificationsEnabled,
                           onChanged: _toggleNotifications,
@@ -354,8 +360,40 @@ class _ProfileTabState extends State<ProfileTab> {
                           subtitle: Text('Get notified of timetable updates.', style: AppConstants.getBodyMedium(color: AppConstants.textSecondary)),
                           activeThumbColor: AppConstants.primary,
                         ),
+                        if (_notificationsEnabled) ...[
+                          const Divider(height: 1, indent: 16, endIndent: 16, color: AppConstants.outline),
+                          SwitchListTile(
+                            value: _timetableChangesEnabled,
+                            onChanged: (val) => _toggleSetting('timetable', val),
+                            title: Text('Timetable Changes', style: AppConstants.getBodyLarge()),
+                            activeThumbColor: AppConstants.primary,
+                          ),
+                          SwitchListTile(
+                            value: _roomChangesEnabled,
+                            onChanged: (val) => _toggleSetting('room', val),
+                            title: Text('Room Changes', style: AppConstants.getBodyLarge()),
+                            activeThumbColor: AppConstants.primary,
+                          ),
+                          SwitchListTile(
+                            value: _facultyChangesEnabled,
+                            onChanged: (val) => _toggleSetting('faculty', val),
+                            title: Text('Faculty Changes', style: AppConstants.getBodyLarge()),
+                            activeThumbColor: AppConstants.primary,
+                          ),
+                          SwitchListTile(
+                            value: _cancelledClassesEnabled,
+                            onChanged: (val) => _toggleSetting('cancelled', val),
+                            title: Text('Cancelled Classes', style: AppConstants.getBodyLarge()),
+                            activeThumbColor: AppConstants.primary,
+                          ),
+                          SwitchListTile(
+                            value: _generalAnnouncementsEnabled,
+                            onChanged: (val) => _toggleSetting('general', val),
+                            title: Text('General Announcements', style: AppConstants.getBodyLarge()),
+                            activeThumbColor: AppConstants.primary,
+                          ),
+                        ],
                         const Divider(height: 1, indent: 16, endIndent: 16, color: AppConstants.outline),
-                        // Class reminders row
                         SwitchListTile(
                           value: _remindersEnabled,
                           onChanged: _toggleReminders,
@@ -367,6 +405,85 @@ class _ProfileTabState extends State<ProfileTab> {
                     ),
                   ),
                   const SizedBox(height: 24),
+
+                  // Academic Account Section (Student Only)
+                  if (StorageService.getUserMode() != 'faculty') ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'ACADEMIC ACCOUNT',
+                          style: AppConstants.getLabelSmall().copyWith(fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                        if (StorageService.isSraapConnected())
+                          Text(
+                            'Connected',
+                            style: AppConstants.getLabelSmall(color: AppConstants.success).copyWith(fontSize: 11),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppConstants.surface,
+                        borderRadius: BorderRadius.circular(AppConstants.radiusCard),
+                        boxShadow: AppConstants.shadowLevel1,
+                        border: Border.all(color: AppConstants.outline),
+                      ),
+                      child: Column(
+                        children: [
+                          if (!StorageService.isSraapConnected())
+                            ListTile(
+                              leading: const Icon(Icons.school_outlined, color: AppConstants.textSecondary),
+                              title: Text('SRAAP Not Connected', style: AppConstants.getBodyLarge(color: AppConstants.textSecondary)),
+                              subtitle: Text('Connect in Academic tab', style: AppConstants.getBodyMedium(color: AppConstants.textSecondary)),
+                            )
+                          else ...[
+                            ListTile(
+                              leading: const Icon(Icons.sync, color: AppConstants.primary),
+                              title: Text('Refresh Academic Data', style: AppConstants.getBodyLarge()),
+                              trailing: const Icon(Icons.chevron_right, color: AppConstants.textSecondary),
+                              onTap: () async {
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Refreshing...')));
+                                await SraapAcademicService.instance.getAcademicData(forceRefresh: true);
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Refreshed.')));
+                                  setState(() {});
+                                }
+                              },
+                            ),
+                            const Divider(height: 1, color: AppConstants.outline),
+                            ListTile(
+                              leading: const Icon(Icons.logout, color: AppConstants.error),
+                              title: Text('Disconnect SRAAP', style: AppConstants.getBodyLarge(color: AppConstants.error)),
+                              onTap: () async {
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Disconnect SRAAP?'),
+                                    content: const Text('This will clear your academic cache and disconnect your SRAAP session. Timetable and app settings will not be affected.'),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context, true),
+                                        child: const Text('Disconnect', style: TextStyle(color: AppConstants.error)),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirm == true) {
+                                  await SraapAcademicService.instance.disconnect();
+                                  if (mounted) setState(() {});
+                                }
+                              },
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
 
                   // Data Sync Section
                   Row(
@@ -392,28 +509,23 @@ class _ProfileTabState extends State<ProfileTab> {
                     ),
                     child: Column(
                       children: [
-                        // Refresh timetable
                         ListTile(
                           leading: const Icon(Icons.sync, color: AppConstants.primary),
-                          title: Text('Refresh timetable', style: AppConstants.getBodyLarge()),
-                          trailing: _isRefreshing
-                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppConstants.primary))
-                              : const Icon(Icons.chevron_right, color: AppConstants.textSecondary),
-                          onTap: _isRefreshing ? null : _refreshTimetable,
+                          title: Text('Sync Center', style: AppConstants.getBodyLarge()),
+                          trailing: const Icon(Icons.chevron_right, color: AppConstants.textSecondary),
+                          onTap: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => const SyncCenterScreen()));
+                          },
                         ),
                         const Divider(height: 1, color: AppConstants.outline),
-                        // Check for updates
                         ListTile(
-                          leading: const Icon(Icons.update, color: AppConstants.primary),
-                          title: Text('Check for updates', style: AppConstants.getBodyLarge()),
-                          trailing: _isCheckingUpdates
-                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppConstants.primary))
-                              : const Icon(Icons.chevron_right, color: AppConstants.textSecondary),
-                          onTap: _isRefreshing || _isCheckingUpdates ? null : () => _checkForUpdates(context),
+                          leading: const Icon(Icons.shop, color: AppConstants.primary),
+                          title: Text('Check for app update', style: AppConstants.getBodyLarge()),
+                          subtitle: Text('Get the latest version from Google Play', style: AppConstants.getBodyMedium(color: AppConstants.textSecondary)),
+                          trailing: const Icon(Icons.open_in_new, color: AppConstants.textSecondary, size: 20),
+                          onTap: _onCheckAppUpdate,
                         ),
                         const Divider(height: 1, color: AppConstants.outline),
-                        const Divider(height: 1, color: AppConstants.outline),
-                        // Switch mode
                         ListTile(
                           leading: Icon(
                             StorageService.getUserMode() == 'faculty' ? Icons.school_outlined : Icons.person_outline,
@@ -426,6 +538,12 @@ class _ProfileTabState extends State<ProfileTab> {
                           trailing: const Icon(Icons.chevron_right, color: AppConstants.textSecondary),
                           onTap: _isRefreshing ? null : _onSwitchMode,
                         ),
+                        const Divider(height: 1, color: AppConstants.outline),
+                        ListTile(
+                          leading: const Icon(Icons.logout, color: AppConstants.error),
+                          title: Text('Logout', style: AppConstants.getBodyLarge(color: AppConstants.error)),
+                          onTap: _isRefreshing ? null : _onLogout,
+                        ),
                       ],
                     ),
                   ),
@@ -436,10 +554,20 @@ class _ProfileTabState extends State<ProfileTab> {
                     child: Column(
                       children: [
                         Text(
-                          'SRU Timetable v$_currentVersion',
-                          style: AppConstants.getLabelSmall(color: AppConstants.textSecondary),
+                          'SRU Timetable 3.0',
+                          style: AppConstants.getLabelSmall(color: AppConstants.primary).copyWith(fontWeight: FontWeight.bold, fontSize: 13),
                         ),
                         const SizedBox(height: 4),
+                        Text(
+                          'Build: Production',
+                          style: AppConstants.getLabelSmall(color: AppConstants.textSecondary),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Version: $_currentVersion',
+                          style: AppConstants.getLabelSmall(color: AppConstants.textSecondary),
+                        ),
+                        const SizedBox(height: 8),
                         Text(
                           'Open-source dashboard updates',
                           style: AppConstants.getLabelSmall(color: AppConstants.textSecondary).copyWith(fontSize: 10),
@@ -457,91 +585,49 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 
-  bool _isCheckingUpdates = false;
-
-  Future<void> _checkForUpdates(BuildContext context, {bool showToast = true}) async {
-    final messenger = ScaffoldMessenger.of(context);
-    setState(() => _isCheckingUpdates = true);
-    
-    final release = await UpdateService.checkForUpdates();
-    setState(() => _isCheckingUpdates = false);
-
-    if (release['status'] == 'timeout') {
-      if (showToast && mounted) {
-        messenger.showSnackBar(
-          const SnackBar(content: Text('Update check timed out.')),
-        );
-      }
-      return;
-    }
-    if (release['status'] == 'no_internet') {
-      if (showToast && mounted) {
-        messenger.showSnackBar(
-          const SnackBar(content: Text('You\'re offline.')),
-        );
-      }
-      return;
-    }
-    if (release['status'] == 'no_release' || release['status'] == 'up_to_date') {
-      if (showToast && mounted) {
-        messenger.showSnackBar(
-          const SnackBar(content: Text('App is up to date!')),
-        );
-      }
-      return;
-    }
-    if (release['status'] == 'error') {
-      if (showToast && mounted) {
-        messenger.showSnackBar(
-          SnackBar(content: Text(release['message'] ?? 'Unable to check for updates right now.')),
-        );
-      }
-      return;
-    }
-
-    if (release['status'] == 'update_available') {
+  Future<void> _onLogout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Sign out of SRU Timetable?'),
+        content: const Text('Your locally cached timetable will be removed from this device.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Sign out', style: TextStyle(color: AppConstants.error)),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      await AuthRepository.instance.logout();
+      await StorageService.fullLogout();
+      
       if (mounted) {
-        _showUpdateDialog(release['latestTag'], release['downloadUrl']);
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const ModeSelectionScreen()),
+          (route) => false,
+        );
       }
     }
   }
 
-
-
-  void _showUpdateDialog(String latestTag, String downloadUrl) {
-    final messenger = ScaffoldMessenger.of(context);
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Update Available'),
-          content: Text('A new version of SRU Timetable ($latestTag) is available on GitHub. Would you like to download it now?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Later', style: TextStyle(color: AppConstants.textSecondary)),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(dialogContext).pop();
-                try {
-                  final uri = Uri.parse(downloadUrl);
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                  }
-                } catch (_) {
-                  messenger.showSnackBar(
-                    const SnackBar(content: Text('Could not open download link.')),
-                  );
-                }
-              },
-              child: const Text('Download', style: TextStyle(color: AppConstants.primary, fontWeight: FontWeight.bold)),
-            ),
-          ],
+  Future<void> _onCheckAppUpdate() async {
+    const url = 'https://play.google.com/store/apps/details?id=com.srutimetable.mobile';
+    final uri = Uri.parse(url);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open Google Play Store.')),
         );
-      },
-    );
+      }
+    }
   }
 }
-

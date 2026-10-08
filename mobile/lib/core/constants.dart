@@ -6,7 +6,7 @@ class AppConstants {
   // Replace this URL with your live deployed Render REST API URL when ready.
   // When testing with local server on emulator, use 'http://10.0.2.2:3000'.
   static const String apiBaseUrl = 'https://table-ij9g.onrender.com';
-  static const String currentVersion = '1.0.4';
+  static const String currentVersion = '3.0.0';
   static const String githubRepo = 'nithwik-ui/table';
   
   // DESIGN PALETTE (Academic Precision)

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -8,6 +9,10 @@ import 'core/storage.dart';
 import 'core/api.dart';
 import 'core/notifications.dart';
 import 'core/sync.dart';
+import 'core/auth/auth_repository.dart';
+import 'core/auth/auth_state.dart';
+import 'core/auth/secure_session_store.dart';
+import 'core/sraap/sraap_session_manager.dart';
 import 'features/onboarding/mode_selection_screen.dart';
 import 'features/dashboard/dashboard_screen.dart';
 
@@ -35,35 +40,20 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         await NotificationService.reconcileReminders();
       }
     } else if (message.data['change_type'] != null) {
-      // Backend fcm.ts sends change_type and batch_id
+      // Backend fcm.ts sends change_type
       final currentMode = StorageService.getUserMode();
+      final profile = StorageService.getProfile();
       
       if (currentMode == 'student' && message.data['batch_id'] != null) {
-        final selection = StorageService.getSelection();
-        if (selection != null && selection['batchId'] == message.data['batch_id']) {
-          // Fetch updated timetable and changes directly
+        if (profile != null && profile['id'] == message.data['batch_id']) {
           try {
-            final list = await ApiService.fetchTimetable(selection['batchId']!);
-            await StorageService.saveTimetableCache(list);
-            
-            final changesList = await ApiService.fetchChanges(selection['batchId']!);
-            await StorageService.saveChangesCache(changesList);
-            
-            if (StorageService.isClassRemindersEnabled()) {
-              await NotificationService.scheduleClassReminders(list);
-            }
+            await SyncService.instance.syncTimetable();
           } catch (_) {}
         }
       } else if (currentMode == 'faculty' && message.data['faculty_id'] != null) {
-        final selection = StorageService.getFacultySelection();
-        if (selection != null && selection['facultyId'] == message.data['faculty_id']) {
+        if (profile != null && profile['id'] == message.data['faculty_id']) {
           try {
-            final list = await ApiService.fetchFacultyTimetable(selection['facultyId']!);
-            await StorageService.saveFacultyTimetableCache(list);
-            
-            if (StorageService.isClassRemindersEnabled()) {
-              await NotificationService.scheduleClassReminders(list);
-            }
+            await SyncService.instance.syncTimetable();
           } catch (_) {}
         }
       }
@@ -75,17 +65,65 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 Future<void> _initFirebaseSafely() async {
   try {
-    await Firebase.initializeApp();
+    if (kIsWeb) {
+      await Firebase.initializeApp(
+        options: const FirebaseOptions(
+          apiKey: "AIzaSyD9_WzJsEJSi-0ke0rdZVdA6ohgX_yib-Q",
+          appId: "1:712842876134:web:6a81c13779ec2828949727",
+          messagingSenderId: "712842876134",
+          projectId: "timetable-77a7d",
+          authDomain: "timetable-77a7d.firebaseapp.com",
+          storageBucket: "timetable-77a7d.firebasestorage.app",
+          measurementId: "G-WRP2DM4ZRL",
+        ),
+      );
+    } else {
+      await Firebase.initializeApp();
+    }
     
     final messaging = FirebaseMessaging.instance;
     
-    // Subscribe to global topic for broadcasts
-    try {
-      await messaging.subscribeToTopic('sru_all_users');
-      debugPrint('Subscribed to sru_all_users FCM topic');
-    } catch (_) {}
+    // Subscribe to global topic for broadcasts (mobile only)
+    if (!kIsWeb) {
+      try {
+        await messaging.subscribeToTopic('sru_all_users');
+        debugPrint('Subscribed to sru_all_users FCM topic');
+      } catch (_) {}
 
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    } else {
+      // Web FCM setup
+      try {
+        final settings = await messaging.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+        if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+            settings.authorizationStatus == AuthorizationStatus.provisional) {
+          final webToken = await messaging.getToken(
+            vapidKey: "BLfXNackp6Rs_phEfbaIPWdKm7HADbl3RYGEhjU2qocshKk7CbeIX0Gb5zLQ9EH84nkSaZSiJCcENw4wWf7e12M",
+          );
+          if (webToken != null && webToken.isNotEmpty) {
+            debugPrint('Web FCM token obtained: $webToken');
+            final userMode = StorageService.getUserMode() ?? 'student';
+            final profile = StorageService.getProfile();
+            final id = profile?['id']?.toString() ?? 
+                profile?['roll_no']?.toString() ?? 
+                StorageService.getStudentRollNumber() ?? 
+                StorageService.getUserIdentifier() ?? '';
+            await ApiService.registerDevice(
+              webToken,
+              userMode == 'student' ? id : '',
+              userMode: userMode,
+              facultyId: userMode == 'faculty' ? id : null,
+            );
+          }
+        }
+      } catch (e) {
+        debugPrint('Web FCM registration error: $e');
+      }
+    }
 
     // Foreground message handler using local notifications
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -93,6 +131,7 @@ Future<void> _initFirebaseSafely() async {
         NotificationService.showForegroundNotification(
           message.notification!.title,
           message.notification!.body,
+          message.data,
         );
       }
     });
@@ -108,15 +147,18 @@ Future<void> _initFirebaseSafely() async {
     // Auto-refresh token if server rotates it
     messaging.onTokenRefresh.listen((fcmToken) async {
       final userMode = StorageService.getUserMode() ?? 'student';
-      final batchId = StorageService.getSelection()?['batchId'] ?? '';
-      final facultyId = StorageService.getFacultySelection()?['facultyId'];
+      final profile = StorageService.getProfile();
+      final id = profile?['id']?.toString() ?? 
+          profile?['roll_no']?.toString() ?? 
+          StorageService.getStudentRollNumber() ?? 
+          StorageService.getUserIdentifier() ?? '';
 
       try {
         await ApiService.registerDevice(
           fcmToken,
-          batchId,
+          userMode == 'student' ? id : '',
           userMode: userMode,
-          facultyId: facultyId,
+          facultyId: userMode == 'faculty' ? id : null,
         );
       } catch (_) {}
     });
@@ -228,19 +270,18 @@ class _SplashControllerState extends State<SplashController> {
   Future<void> _initApp() async {
     try {
       await StorageService.init();
-      // Safely schedule reminders based on stored state on app startup
+      await SraapSessionManager.instance.restoreSession();
       await NotificationService.reconcileReminders();
       
-      // Trigger background sync on startup
+      await AuthRepository.instance.restoreSession();
+      
       SyncService.instance.syncTimetable();
     } catch (e) {
       debugPrint('Local storage initialization failed: $e');
     }
 
     if (mounted) {
-      final userMode = StorageService.getUserMode();
-      final hasStudent = StorageService.hasSelection();
-      final hasFaculty = StorageService.hasFacultySelection();
+      final authState = AuthRepository.instance.state;
       
       bool launchedFromNotification = false;
       try {
@@ -251,14 +292,26 @@ class _SplashControllerState extends State<SplashController> {
       } catch (_) {}
       
       Widget nextScreen;
-      if (userMode == 'student' && hasStudent) {
-        nextScreen = DashboardScreen(initialTab: launchedFromNotification ? 0 : 0); // Always default to 0
-      } else if (userMode == 'faculty' && hasFaculty) {
-        nextScreen = DashboardScreen(initialTab: launchedFromNotification ? 0 : 0);
+      
+      final session = await SecureSessionStore.getSession();
+      final hasCachedStudentTimetable = StorageService.getTimetableCache().isNotEmpty;
+      final hasCachedFacultyTimetable = StorageService.getFacultyTimetableCache().isNotEmpty;
+      final hasRollNo = StorageService.getStudentRollNumber() != null || StorageService.getUserIdentifier() != null;
+      final hasSession = session != null;
+
+      if (authState == AuthState.ready || 
+          authState == AuthState.authenticated || 
+          authState == AuthState.networkError ||
+          hasSession ||
+          hasCachedStudentTimetable || 
+          hasCachedFacultyTimetable || 
+          hasRollNo) {
+         nextScreen = DashboardScreen(initialTab: launchedFromNotification ? 0 : 0);
       } else {
         nextScreen = const ModeSelectionScreen();
       }
 
+      if (!mounted) return;
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => nextScreen,

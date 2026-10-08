@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
-import 'ad_banner.dart';
-import '../../core/api.dart';
-import '../notifications/notifications_screen.dart';
+import '../../core/sync.dart';
 
 class ChangesTab extends StatefulWidget {
   const ChangesTab({super.key});
@@ -56,41 +54,25 @@ class _ChangesTabState extends State<ChangesTab> {
   }
 
   Future<void> _fetchChanges() async {
-    final isFaculty = StorageService.getUserMode() == 'faculty';
-
     try {
-      List<dynamic> list = [];
-      if (isFaculty) {
-        final selection = StorageService.getFacultySelection();
-        if (selection == null) return;
-        final facultyId = selection['facultyId'];
-        if (facultyId != null) {
-          list = await ApiService.fetchFacultyChanges(facultyId);
-          await StorageService.saveFacultyChangesCache(list);
-        }
-      } else {
-        final selection = StorageService.getSelection();
-        if (selection == null) return;
-        final batchId = selection['batchId']!;
-        list = await ApiService.fetchChanges(batchId);
-        await StorageService.saveChangesCache(list);
-      }
-
+      if (mounted) setState(() => _isLoading = true);
+      
+      // Trigger a sync which will fetch the latest timetable and detect changes locally
+      await SyncService.instance.syncTimetable();
+      
+      _loadLocalData();
+      
       if (mounted) {
         setState(() {
-          _changes = list;
           _isLoading = false;
-          _isOffline = false;
+          _isOffline = SyncService.instance.syncState == SyncState.offline;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          // Only show offline banner if it's a network issue
-          if (e.toString().contains('SocketException') || e.toString().contains('TimeoutException')) {
-            _isOffline = true;
-          }
+          _isOffline = true;
         });
       }
     }
@@ -209,39 +191,12 @@ class _ChangesTabState extends State<ChangesTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppConstants.background,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer, vertical: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Image.asset(
-                        'assets/logo.png',
-                        height: 32,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.notifications_none, color: AppConstants.textPrimary, size: 24),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => const NotificationsScreen()),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            
+    return ColoredBox(
+      color: AppConstants.background,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // (Header is now in SruAppBar / ChangesScreen AppBar)
             // Offline banner
             if (_isOffline) ...[
               Padding(
@@ -287,30 +242,33 @@ class _ChangesTabState extends State<ChangesTab> {
             ],
             
             // Headline & stats chip
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer, vertical: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text(
-                    'Changes',
-                    style: AppConstants.getDisplay().copyWith(fontSize: 24),
-                  ),
-                  const SizedBox(width: 12),
-                  if (_changes.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppConstants.secondaryContainer,
-                        borderRadius: BorderRadius.circular(AppConstants.radiusTag),
-                      ),
-                      child: Text(
-                        '${_changes.length} updates this week',
-                        style: AppConstants.getLabelSmall(color: AppConstants.onSecondaryContainer).copyWith(fontWeight: FontWeight.bold),
-                      ),
+            SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(AppConstants.paddingContainer, 16, AppConstants.paddingContainer, 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      'Changes',
+                      style: AppConstants.getDisplay().copyWith(fontSize: 28),
                     ),
-                ],
+                    const SizedBox(width: 12),
+                    if (_changes.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppConstants.secondaryContainer,
+                          borderRadius: BorderRadius.circular(AppConstants.radiusTag),
+                        ),
+                        child: Text(
+                          '${_changes.length} updates this week',
+                          style: AppConstants.getLabelSmall(color: AppConstants.onSecondaryContainer).copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 8),
@@ -324,7 +282,11 @@ class _ChangesTabState extends State<ChangesTab> {
                           color: AppConstants.primary,
                           onRefresh: _fetchChanges,
                           child: ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer),
+                            padding: const EdgeInsets.only(
+                              left: AppConstants.paddingContainer,
+                              right: AppConstants.paddingContainer,
+                              bottom: 20,
+                            ),
                             itemCount: _changes.length,
                             itemBuilder: (context, index) {
                               final change = _changes[index];
@@ -398,7 +360,7 @@ class _ChangesTabState extends State<ChangesTab> {
                                           'Added: $newVal',
                                           style: AppConstants.getBodyMedium(color: AppConstants.success).copyWith(fontWeight: FontWeight.w500),
                                         ),
-                                      ] else if (type == 'FACULTY_CHANGED') ...[
+                                      ] else if (type == 'FACULTY_CHANGED' || type == 'ROOM_CHANGED') ...[
                                           // Enhanced Faculty Change UI
                                           Builder(
                                             builder: (context) {
@@ -522,9 +484,31 @@ class _ChangesTabState extends State<ChangesTab> {
                           ),
                         ),
             ),
-          ],
-        ),
+        ],
       ),
+    );
+  }
+}
+
+/// A routable screen that wraps [ChangesTab] with a back button so it can be
+/// pushed from the top-right app bar. All existing Changes logic is unchanged.
+class ChangesScreen extends StatelessWidget {
+  const ChangesScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppConstants.background,
+      appBar: AppBar(
+        backgroundColor: AppConstants.background,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: AppConstants.textPrimary, size: 20),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text('Changes', style: AppConstants.getHeadline().copyWith(fontSize: 18)),
+      ),
+      body: const ChangesTab(),
     );
   }
 }

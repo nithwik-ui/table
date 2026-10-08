@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/api.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
-import 'package:intl/intl.dart';
+
 import 'ad_banner.dart';
 class FreeRoomsScreen extends StatefulWidget {
   const FreeRoomsScreen({super.key});
@@ -165,7 +165,7 @@ class _FreeRoomsScreenState extends State<FreeRoomsScreen> {
       });
     } catch (e) {
       setState(() {
-        _error = 'Failed to find free rooms. Please try again.';
+        _error = e is FreeRoomsException ? e.message : e.toString();
         _isLoading = false;
       });
     }

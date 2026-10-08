@@ -29,8 +29,8 @@ class ReminderManager {
     final dateString = _formatDate(targetDate);
     
     try {
-      final dayOverride = overrides.firstWhere((ov) => ov['override_date'] == dateString, orElse: () => null);
-      if (dayOverride != null) return false;
+      final matchingOverrides = overrides.where((ov) => ov['override_date'] == dateString);
+      if (matchingOverrides.isNotEmpty) return false;
     } catch (_) {}
 
     final startTimeStr = event['start_time']?.toString();
@@ -58,6 +58,7 @@ class ReminderManager {
     required List<dynamic> overrides,
     required String mode,
   }) async {
+    if (kIsWeb) return;
     if (!_initialized) return;
     debugPrint('[ReminderManager] reconcile started for mode: $mode');
 
@@ -205,6 +206,7 @@ class ReminderManager {
   }
 
   Future<void> clearAllForMode(String mode) async {
+    if (kIsWeb) return;
     if (!_initialized) return;
     final pendingRequests = await _notificationsPlugin.pendingNotificationRequests();
     for (var pending in pendingRequests) {

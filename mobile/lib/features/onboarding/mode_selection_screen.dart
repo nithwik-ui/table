@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../core/constants.dart';
-import '../../core/api.dart';
 import '../../core/storage.dart';
-import '../../core/notifications.dart';
-import '../../core/sync.dart';
-import 'welcome_screen.dart';
-import 'faculty_selection_screen.dart';
-import '../dashboard/dashboard_screen.dart';
+import 'sru_login_screen.dart';
+
 
 class ModeSelectionScreen extends StatelessWidget {
   final bool isSwitching;
@@ -15,68 +10,20 @@ class ModeSelectionScreen extends StatelessWidget {
   const ModeSelectionScreen({super.key, this.isSwitching = false});
 
   void _selectStudent(BuildContext context) async {
-    if (StorageService.hasSelection()) {
-      await NotificationService.clearModeReminders('faculty');
-      await StorageService.setUserMode('student');
-      await NotificationService.reconcileReminders();
-      
-      // Trigger background sync for the newly selected mode
-      SyncService.instance.syncTimetable();
-
-      // Re-register device as student
-      final batchId = StorageService.getSelection()?['batchId'] ?? '';
-      try {
-        final token = await FirebaseMessaging.instance.getToken().timeout(const Duration(seconds: 3));
-        if (token != null) {
-          await ApiService.registerDevice(token, batchId, userMode: 'student');
-        }
-      } catch (_) {}
-
-      if (context.mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const DashboardScreen()),
-          (route) => false,
-        );
-      }
-    } else {
-      if (context.mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-        );
-      }
+    await StorageService.setUserMode('student');
+    if (context.mounted) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => const SruLoginScreen(role: 'student')),
+      );
     }
   }
 
   void _selectFaculty(BuildContext context) async {
-    if (StorageService.hasFacultySelection()) {
-      await NotificationService.clearModeReminders('student');
-      await StorageService.setUserMode('faculty');
-      await NotificationService.reconcileReminders();
-      
-      // Trigger background sync for the newly selected mode
-      SyncService.instance.syncTimetable();
-
-      // Re-register device as faculty
-      final facultyId = StorageService.getFacultySelection()?['facultyId'];
-      try {
-        final token = await FirebaseMessaging.instance.getToken().timeout(const Duration(seconds: 3));
-        if (token != null) {
-          await ApiService.registerDevice(token, '', userMode: 'faculty', facultyId: facultyId);
-        }
-      } catch (_) {}
-
-      if (context.mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const DashboardScreen()),
-          (route) => false,
-        );
-      }
-    } else {
-      if (context.mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => const FacultySelectionScreen()),
-        );
-      }
+    await StorageService.setUserMode('faculty');
+    if (context.mounted) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => const SruLoginScreen(role: 'faculty')),
+      );
     }
   }
 
@@ -163,23 +110,29 @@ class ModeSelectionScreen extends StatelessWidget {
                 ),
               const Spacer(flex: 1),
               Text(
-                'Choose your timetable',
+                'Welcome to SRU Timetable',
                 style: AppConstants.getHeadline().copyWith(fontSize: 28),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Choose how you use SRU Timetable',
+                style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
               _buildCard(
                 context: context,
-                title: '🎓 Student',
-                subtitle: 'View your class timetable',
+                title: 'Student',
+                subtitle: 'View your classes, attendance and timetable',
                 icon: Icons.school,
                 onTap: () => _selectStudent(context),
               ),
               const SizedBox(height: 16),
               _buildCard(
                 context: context,
-                title: '👨‍🏫 Faculty',
-                subtitle: 'View your faculty timetable',
+                title: 'Faculty',
+                subtitle: 'View your teaching schedule and timetable',
                 icon: Icons.person,
                 onTap: () => _selectFaculty(context),
               ),

@@ -1,0 +1,1921 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="icon" type="image/png" href="https://www.sruniv.com/assets/admin/img/favicon.png">
+  
+  <!-- iPhone / iPad icon -->
+  <link rel="apple-touch-icon" href="https://www.sruniv.com/assets/admin/img/favicon.png">
+  
+  <!-- iPhone with Retina display -->
+  <link rel="apple-touch-icon" sizes="180x180" href="https://www.sruniv.com/assets/admin/img/favicon.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="https://www.sruniv.com/assets/admin/img/favicon.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="https://www.sruniv.com/assets/admin/img/favicon.png">
+  
+  <title>SR University</title>
+
+  <!-- Fonts & Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,900|Roboto+Slab:400,700">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
+  <!-- CSS -->
+  <link href="https://www.sruniv.com/assets/css/datatables.min.css" rel="stylesheet">
+  <link href="https://www.sruniv.com/assets/admin/css/material-dashboard.css?v=3.1.0" rel="stylesheet">
+  <link href="https://www.sruniv.com/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+
+  <!-- Optional: Trumbowyg editor -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Trumbowyg/2.27.3/ui/trumbowyg.min.css" integrity="sha512-Fm8kRNVGCBZn0sPmwJbVXlqfJmPC13zRsMElZenX6v721g/H7OukJd8XzDEBRQ2FSATK8xNF9UYvzsCtUpfeJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!--     Fonts and icons     -->
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700,900|Roboto+Slab:400,700" />
+    
+    <!-- Font Awesome Icons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/js/all.min.js" integrity="sha512-6sSYJqDreZRZGkJ3b+YfdhB3MzmuP9R7X1QZ6g5aIXhRvR1Y/N/P47jmnkENm7YL3oqsmI6AK+V6AD99uWDnIw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <!-- CSS Files -->
+    <link id="pagestyle" href="https://www.sruniv.com/assets/admin/css/material-dashboard.css?v=3.1.0" rel="stylesheet" />
+    <link href="https://www.sruniv.com/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="https://www.sruniv.com/assets/js/multiselect-dropdown.js"></script>
+    <link href="https://www.sruniv.com/assets/css/student-style.css" rel="stylesheet">
+    <script src="https://www.sruniv.com/assets/admin/js/fontawesome-cdn.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.20/dist/sweetalert2.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.20/dist/sweetalert2.all.min.js"></script>
+
+    <style>
+        .multiselect-dropdown {
+            width: 100% !important;
+        }
+
+
+        #profile {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: #ecebef;
+            font-size: 35px;
+            color: #fff;
+            text-align: center;
+            line-height: 70px;
+            margin: 20px 0;
+        }
+        
+        .mand{color:red;font-weight:bold;}
+    
+        .collapse.show {
+            visibility: visible;
+            display: block;
+        }
+        </style>
+       <script>
+        $(document).ready(function(){
+            $('.nav-link').click(function(){
+                $($(this).attr('data-target')).toggleClass('show');
+            });
+        });
+        
+        $(document).ready(function(){
+            $(document).on("contextmenu", function(e){
+                return false; // Disables right-click
+            });
+            $(document).keydown(function (e) {
+                if (e.ctrlKey && (e.key === "u" || e.key === "U")) { // Prevent Ctrl+U
+                    return false;
+                }
+                if (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "i")) { // Prevent Ctrl+Shift+I
+                    return false;
+                }
+                if (e.key === "F12") { // Prevent F12
+                    return false;
+                }
+            });
+        });
+        </script>
+  <!-- Custom CSS -->
+  <style>
+    /* ================================
+       Catchy Blue Navbar Theme
+    ================================ */
+
+    /* CSS variables that will be updated by JS */
+    :root {
+      --navbar-height: 56px;
+      --topbar-height: 30px;
+    }
+
+    .navbar {
+      background: linear-gradient(90deg, #264E8C, #264E8C); /* blue gradient */
+      padding: 0.6rem 1rem;
+      position: fixed; /* fixed at top */
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1100;
+    }
+
+    /* make sure brand area doesn't collapse visually */
+    .navbar .navbar-brand img { display: inline-block; }
+
+    /* Main nav links */
+    .navbar .nav-link,
+    .navbar .dropdown-item {
+      color: #ffc110 !important;
+      font-weight: 500;
+    }
+
+    /* Hover, focus & active states */
+    .navbar .nav-link:hover,
+    .navbar .dropdown-item:hover,
+    .navbar .dropdown-item:focus,
+    .navbar .dropdown-item.active,
+    .submenu .dropdown-item:hover,
+    .submenu .dropdown-item:focus,
+    .submenu .dropdown-item.active {
+      color: #ffc110 !important;
+      background: linear-gradient(90deg, #3399ff, #3399ff) !important;
+    }
+
+    /* Dropdown & submenu backgrounds */
+    .dropdown-menu,
+    .submenu {
+      background: linear-gradient(90deg, #264E8C, #264E8C) !important;
+      border: none !important;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Submenu items text */
+    .submenu .dropdown-item {
+      color: #ffc110 !important;
+    }
+
+    /* Caret icons styled */
+    .nav-link i.fas,
+    .dropdown-item i.fas {
+      color: #ffc110 !important;
+    }
+
+    /* Fix multi-line menu item alignment */
+    .dropdown-menu .dropdown-item,
+    .submenu .dropdown-item {
+      display: flex;
+      align-items: center;
+      white-space: normal;
+      line-height: 1.3em;
+      min-height: 2.5rem;
+    }
+
+    /* Fixed height + scrollbars for dropdowns (desktop defaults) */
+    .dropdown-menu {
+      max-height: 350px;
+      min-width: 220px;
+      max-width: 260px;
+      width: 230px;
+      text-align: left;
+      word-wrap: break-word;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .dropdown-menu::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .dropdown-menu::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .dropdown-menu::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 3px;
+    }
+
+    /* Dropdown hover on desktop */
+    @media (min-width: 992px) {
+      .nav-item.dropdown:hover > .dropdown-menu {
+        display: block;
+        margin-top: 0;
+        padding-top: 0.25rem;
+      }
+
+      .dropdown-menu {
+        margin-top: 0 !important;
+        padding-top: 0.25rem;
+        padding-bottom: 0.25rem;
+      }
+    }
+
+    /* Dropdown in mobile (override widths + fixed height + scroll) */
+    @media (max-width: 992px) {
+      .navbar-collapse .dropdown-menu {
+        position: static !important;
+        float: none !important;
+        margin: 0 !important;
+        padding: 0.25rem 0 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        box-sizing: border-box !important;
+        border: none !important;
+        box-shadow: none !important;
+        background: linear-gradient(90deg, #264E8C, #264E8C) !important;
+
+        /* FIXED HEIGHT + SCROLL for mobile as requested */
+        max-height: 350px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+      }
+
+      .navbar-collapse .dropdown-menu .dropdown-item,
+      .navbar-collapse .submenu .dropdown-item {
+        display: block !important;
+        width: 100% !important;
+        padding: 0.6rem 1rem !important;
+        white-space: normal !important;
+      }
+
+      .navbar-collapse .submenu {
+        display: none;
+        padding-left: 1rem;
+        width: 100%;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .navbar-collapse .nav-item > .nav-link {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        color: #ffc110 !important;
+      }
+    }
+
+    /* Structure */
+    .submenu {
+      display: none;
+      padding-left: 0.5rem;
+    }
+
+    .navbar,
+    .navbar-nav {
+      overflow: visible !important;
+    }
+
+    .dropdown-toggle::after {
+      display: none !important;
+    }
+
+    .nav-item {
+      display: inline-block;
+      margin-right: 0.9rem;
+      font-size: 1.5rem;
+    }
+
+    .nav-link {
+      white-space: nowrap;
+      padding: 0.5rem;
+      font-size: 1.5em;
+      position: relative;
+    }
+
+    .nav-item.dropdown > .nav-link {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-item.dropdown > .nav-link i.fas.fa-caret-down {
+      margin-left: 0.6rem;
+      font-size: 0.8rem;
+    }
+
+    .dropdown-item,
+    .submenu .dropdown-item {
+      font-size: 0.9rem;
+      padding: 0.25rem 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    /* ========== Top-bar (welcome/logout) fixed under navbar ========== */
+    .top-bar {
+      position: fixed;
+      top: calc(var(--navbar-height) - 1px);
+      left: 0;
+      right: 0;
+      z-index: 990;
+      min-height: var(--topbar-height);
+      padding-top: 0.1rem;
+      padding-bottom: 0.1rem;
+      background: linear-gradient(90deg, #264E8C, #264E8C);
+    }
+
+    /* ensure main content clears both fixed bars */
+    .main-content {
+      overflow-x: auto;
+      max-width: 100vw;
+      padding-top: calc(var(--navbar-height) + var(--topbar-height) + 0.5rem);
+    }
+
+    /* optional small-screen tweak */
+    @media (max-width: 576px) {
+      :root {
+        --topbar-height: 36px;
+      }
+    }
+    .mand{color:red;font-weight:bold;}
+
+    /* ---------- MOBILE NAVBAR FIXES (minimal, safe edits) ---------- */
+    /* Prevent the navbar from creating horizontal scroll on small screens */
+    .navbar {
+      overflow-x: hidden;
+    }
+
+    /* Ensure toggler sits above other elements and is always clickable */
+    .navbar .navbar-toggler {
+      z-index: 1300;      /* higher than navbar/top-bar */
+      position: relative;
+    }
+
+    /* On small screens make nav items stack and shrink so they don't push toggler */
+    @media (max-width: 991.98px) {
+      .nav-item {
+        display: block;   /* stack items vertically in collapsed area */
+        margin-right: 0;  /* remove right spacing that causes overflow */
+        font-size: 1rem;  /* reduce font-size on mobile to save width */
+      }
+
+      .nav-link {
+        font-size: 1rem;  /* keep nav links compact on mobile */
+        padding: 0.5rem 0.75rem;
+      }
+
+      /* Ensure the brand + toggler fit in one line */
+      .navbar .navbar-brand {
+        white-space: nowrap;
+        flex: 0 0 auto;
+        margin-right: 0.5rem; /* small gap - replace &nbsp; usage */
+      }
+
+      /* Force collapse area to occupy full width without forcing navbar width */
+      .navbar-collapse {
+        width: 100%;
+        overflow-x: hidden;
+        /* push the expanded mobile menu below both fixed navbar and top-bar */
+        margin-top: var(--topbar-height);
+      }
+    }
+
+    /* Optional: if anything still goes out of bounds, clip horizontal overflow globally */
+    html, body {
+      overflow-x: hidden;
+    }
+/* Fee message + Welcome + Logout */
+.top-bar {
+    position: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.top-bar-user {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.welcome-user {
+    margin-left: 20px;
+}
+
+.logout-user {
+    margin-right: 20px;
+}
+
+.fee-notice {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: #ffc107;
+    font-size: 13px;
+    font-weight: bold;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.fee-notice a {
+    color: #ffc107;
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+
+/* Mobile */
+@media (max-width: 576px) {
+
+    .top-bar {
+        display: block !important;
+        height: auto !important;
+        min-height: 70px !important;
+        padding: 4px 0 !important;
+    }
+
+    .top-bar-user {
+        height: 32px;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .welcome-user {
+        margin-left: 12px;
+    }
+
+    .logout-user {
+        margin-right: 12px;
+    }
+
+    .fee-notice {
+        position: static !important;
+        transform: none !important;
+        width: 100%;
+        padding: 2px 8px 4px;
+        text-align: center;
+        white-space: normal !important;
+        font-size: 11px;
+        line-height: 15px;
+    }
+}
+</style>
+
+  <!-- JS (libs) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://www.sruniv.com/assets/vendor/bootstrap/js/bootstrap.min.js"></script>
+  <script src="https://www.sruniv.com/assets/js/multiselect-dropdown.js"></script>
+  <script src="https://www.sruniv.com/assets/js/datatables.min.js"></script>
+
+  <!-- Dropdown hover & submenu script (keeps your behavior) -->
+  <script>
+    $(function () {
+      function bindInteractions() {
+        $('.nav-item.dropdown, .dropdown-menu, .leave-toggle, .submenu')
+          .off('mouseenter mouseleave click');
+
+        if (window.innerWidth >= 992) {
+          /* desktop hover handlers */
+          $('.nav-item.dropdown').hover(
+            function () {
+              $(this).addClass('show').find('> .dropdown-menu').addClass('show');
+              $(this).find('> .dropdown-toggle').attr('aria-expanded', 'true');
+            },
+            function () {
+              const _this = $(this);
+              setTimeout(function () {
+                if (!_this.is(':hover') && !_this.find('.dropdown-menu').is(':hover')) {
+                  _this.removeClass('show').find('> .dropdown-menu').removeClass('show');
+                  _this.find('> .dropdown-toggle').attr('aria-expanded', 'false');
+                  _this.find('.submenu').stop(true, true).hide().removeClass('show');
+                  _this.find('.leave-toggle i.fas').removeClass('fa-caret-up').addClass('fa-caret-down');
+                }
+              }, 50);
+            }
+          );
+
+          $('.dropdown-menu').hover(
+            function () {
+              $(this).addClass('show').parent('.nav-item.dropdown').addClass('show')
+                .find('> .dropdown-toggle').attr('aria-expanded','true');
+            },
+            function () {
+              const _parent = $(this).parent('.nav-item.dropdown');
+              setTimeout(function () {
+                if (!_parent.is(':hover') && !_parent.find('.dropdown-menu').is(':hover')) {
+                  _parent.removeClass('show').find('> .dropdown-menu').removeClass('show');
+                  _parent.find('> .dropdown-toggle').attr('aria-expanded','false');
+                  _parent.find('.submenu').stop(true, true).hide().removeClass('show');
+                  _parent.find('.leave-toggle i.fas').removeClass('fa-caret-up').addClass('fa-caret-down');
+                }
+              }, 50);
+            }
+          );
+          
+            $('.leave-toggle').on('click', function(e) {
+                e.preventDefault();
+                var submenu = $(this).next('.submenu');
+            
+                // Close all other submenus
+                $('.submenu').not(submenu).slideUp(200).removeClass('show');
+                $('.leave-toggle i.fas').not($(this).find('i.fas'))
+                    .removeClass('fa-caret-up')
+                    .addClass('fa-caret-down');
+            
+                // Toggle the clicked one
+                submenu.slideToggle(200).toggleClass('show');
+                $(this).find('i.fas').toggleClass('fa-caret-down fa-caret-up');
+            });
+
+
+          /*$('.leave-toggle').hover(
+            function () {
+              $(this).next('.submenu').stop(true, true).slideDown(200).addClass('show');
+              $(this).find('i.fas').removeClass('fa-caret-down').addClass('fa-caret-up');
+            },
+            function () {
+              const _this = $(this), submenu = _this.next('.submenu');
+              setTimeout(function () {
+                if (!_this.is(':hover') && !submenu.is(':hover')) {
+                  submenu.stop(true, true).slideUp(200).removeClass('show');
+                  _this.find('i.fas').removeClass('fa-caret-up').addClass('fa-caret-down');
+                }
+              }, 50);
+            }
+          );
+
+          $('.submenu').hover(
+            function () {
+              $(this).stop(true, true).slideDown(200).addClass('show');
+              $(this).prev('.leave-toggle').find('i.fas').removeClass('fa-caret-down').addClass('fa-caret-up');
+            },
+            function () {
+              $(this).stop(true, true).slideUp(200).removeClass('show');
+              $(this).prev('.leave-toggle').find('i.fas').removeClass('fa-caret-up').addClass('fa-caret-down');
+            }
+          );*/
+
+        } else {
+          /* mobile tap handlers */
+          $('.nav-item.dropdown > .nav-link').on('click', function (e) {
+            e.preventDefault();
+            const menu = $(this).next('.dropdown-menu');
+
+            $('.dropdown-menu.show').not(menu).each(function () {
+              $(this).find('.submenu').hide().removeClass('show');
+              $(this).prev('.leave-toggle').find('i.fas').removeClass('fa-caret-up').addClass('fa-caret-down');
+            }).slideUp(200).removeClass('show');
+
+            $('.nav-item.dropdown > .nav-link i.fas').removeClass('fa-caret-up').addClass('fa-caret-down');
+
+            menu.stop(true, true).slideToggle(200).toggleClass('show');
+            $(this).find('i.fas').toggleClass('fa-caret-down fa-caret-up');
+          });
+
+          $(document).on('click', '.leave-toggle', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const submenu = $(this).next('.submenu');
+            const container = $(this).closest('.dropdown-menu');
+
+            container.find('.submenu.show').not(submenu).each(function () {
+              $(this).stop(true, true).slideUp(200).removeClass('show');
+              $(this).prev('.leave-toggle').find('i.fas').removeClass('fa-caret-up').addClass('fa-caret-down');
+            });
+
+            submenu.stop(true, true).slideToggle(200).toggleClass('show');
+            $(this).find('i.fas').toggleClass('fa-caret-down fa-caret-up');
+          });
+
+          $(document).on('click', function (e) {
+            if (!$(e.target).closest('.dropdown-menu').length) {
+              $('.submenu.show').slideUp(200).removeClass('show');
+              $('.leave-toggle i.fas').removeClass('fa-caret-up').addClass('fa-caret-down');
+            }
+          });
+        }
+      }
+
+      bindInteractions();
+      $(window).on('resize', bindInteractions);
+
+      $('.navbar-toggler').on('click', function () {
+        $('#topNav').toggleClass('show');
+      });
+    });
+    (function() {
+      function updateHeaderHeights() {
+        try {
+          var navbar = document.querySelector('.navbar');
+          var topbar = document.querySelector('.top-bar');
+
+          var navH = navbar ? Math.ceil(navbar.getBoundingClientRect().height) : 56;
+          var topH = topbar ? Math.ceil(topbar.getBoundingClientRect().height) : 30;
+
+          document.documentElement.style.setProperty('--navbar-height', navH + 'px');
+          document.documentElement.style.setProperty('--topbar-height', topH + 'px');
+
+          // also ensure main-content has the updated padding in case other CSS overrides exist
+          var main = document.querySelector('.main-content');
+          if (main) {
+            main.style.paddingTop = 'calc(' + navH + 'px + ' + topH + 'px + 0.5rem)';
+          }
+        } catch (e) {
+          console.warn('Header height update failed', e);
+        }
+      }
+
+      window.addEventListener('load', updateHeaderHeights);
+      var rTimer;
+      window.addEventListener('resize', function() {
+        clearTimeout(rTimer);
+        rTimer = setTimeout(updateHeaderHeights, 120);
+      });
+
+      // MutationObserver for any dynamic content changes in headers
+      var obs = new MutationObserver(function() { updateHeaderHeights(); });
+      var target = document.querySelector('body');
+      if (target) obs.observe(target, { childList: true, subtree: true, attributes: true });
+
+      // initial call
+      updateHeaderHeights();
+    })();
+    
+    </script>
+
+</head>
+
+<body>
+  <!-- Main Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <a class="navbar-brand m-1" href="/dashboard">
+      <img src="https://www.sruniv.com/./assets/img/sru_logo_white.png" height="35" alt="SR University">
+    </a>
+    <!-- removed excessive non-breaking spaces to avoid pushing toggler off-screen on mobile -->
+    <!-- Mobile hamburger menu using Font Awesome -->
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#topNav" aria-controls="topNav"
+      aria-expanded="false" aria-label="Toggle navigation">
+      <i class="fas fa-bars"></i>
+    </button>
+        <div class="collapse navbar-collapse" id="topNav">
+      <ul class="navbar-nav mr-auto">
+        <li><a class="nav-link text-white" href="/dashboard"><b>Dashboard</b></a></li>
+        <li><a class="nav-link text-white" href="/student/details"><b>Personal Details</b></a></li>
+        <li><a class="nav-link text-white" href="/student/fee-details"><b>Fee Details</b></a></li>
+        <li><a class="nav-link text-white" href="/student/employee_search"><b>Employee Directory</b></a></li>
+        <li><a class="nav-link text-white" href="/student/timetable"><b>My Timetable</b></a></li>
+        
+        
+                <li class="nav-item dropdown">
+          <a class="nav-link text-warning d-flex align-items-center justify-content-between" href="#" id="ssmDropdown">
+            <b>SSM</b> <i class="fas fa-caret-down ms-2"></i>
+          </a>
+          <ul class="dropdown-menu bg-dark" aria-labelledby="ssmDropdown">
+
+            
+                        <li>
+              <a class="dropdown-item text-white" href="https://www.sruniv.com/student/ssm/document" target="_blank" rel="noopener noreferrer">
+                <b>Document</b>
+              </a>
+            </li>
+            
+            
+                        <li>
+              <a class="dropdown-item text-white" href="https://www.sruniv.com/student/ssm/leaderboard">
+                <b>Leaderboard</b>
+              </a>
+            </li>
+            
+            
+                        <li>
+              <a class="dropdown-item text-white" href="https://www.sruniv.com/student/ssm/alpha-coins">
+                <b>Alpha Coins</b>
+              </a>
+            </li>
+            
+            
+                        <li>
+              <a class="dropdown-item text-white" href="https://www.sruniv.com/student/ssm/sigma-coins">
+                <b>Sigma Coins</b>
+              </a>
+            </li>
+            
+            
+            
+            
+                        <li>
+              <a class="dropdown-item text-white" href="https://www.sruniv.com/student/ssm/penalty-coins">
+                <b>Penalty Coins</b>
+              </a>
+            </li>
+            
+            
+                        <li>
+              <a class="dropdown-item text-white" href="https://www.sruniv.com/student/ssm/redeem">
+                <b>Redeem Coins</b>
+              </a>
+            </li>
+            
+          </ul>
+        </li>
+                
+
+        
+                                        
+                                      </ul>
+    </div>
+    <div class="container-fluid d-flex justify-content-between align-items-center bg-dark top-bar">
+        <div class="text-start ms-3">
+              <h6 class="mb-0 text-white text-sm fw-bold">
+                    Welcome: KURRE NITHWIK REDDY
+              </h6>
+        </div>
+        <div class="text-end me-3">
+            <a href="/logout" class="text-sm px-2 d-inline-flex align-items-center text-white" style="line-height:1;text-decoration:none;">
+                <i class="fa fa-user me-1"></i>
+                <b>Logout</b>
+            </a>
+        </div>
+    </div>
+    
+<!--    <div class="container-fluid bg-dark top-bar">
+
+    <div class="top-bar-user">
+        <div class="welcome-user">
+            <h6 class="mb-0 text-white text-sm fw-bold">
+                Welcome: KURRE NITHWIK REDDY
+            </h6>
+        </div>
+
+        <div class="logout-user">
+            <a href="/logout"
+               class="text-sm px-2 d-inline-flex align-items-center text-white"
+               style="line-height:1;text-decoration:none;">
+                <i class="fa fa-user me-1"></i>
+                <b>Logout</b>
+            </a>
+        </div>
+    </div>
+
+    <div class="fee-notice">
+        For any fee-related issue, please email
+        <a href="mailto:srufee@sru.edu.in">
+            srufee@sru.edu.in
+        </a>
+    </div>
+
+</div>-->
+
+    </nav>
+
+    <main class="main-content position-relative max-height-vh-100 h-100">
+        <div class="container-fluid py-4">
+            
+<style>
+    .stt {
+        --stt-ink: #1f2a44;
+        --stt-muted: #5b6478;
+        --stt-cell: #f6f7fa;
+        --stt-navy: #264e8c;
+        --stt-gold: #ffc110;
+        --stt-lecture: #2459c7;
+        --stt-lecture-bg: #edf2fd;
+        --stt-lab: #9a4a06;
+        --stt-lab-bar: #e08a1e;
+        --stt-lab-bg: #fff4e3;
+        --stt-tutorial: #6336b8;
+        --stt-tutorial-bg: #f2eefc;
+        --stt-other: #4a5568;
+        --stt-other-bg: #eef0f4;
+        color: var(--stt-ink);
+        font-variant-numeric: tabular-nums;
+    }
+    .stt-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+    .stt-empty { margin: 1.5rem 0 0.5rem; text-align: center; font-weight: 500; color: #1f2a44; }
+
+    /* One class. */
+    .stt-class { padding: 8px 10px 9px 13px; border-radius: 8px; background: var(--kind-bg); box-shadow: inset 3px 0 0 var(--kind-bar); text-align: left; }
+    .is-other { --kind: var(--stt-other); --kind-bar: var(--stt-other); --kind-bg: var(--stt-other-bg); }
+    .is-lecture { --kind: var(--stt-lecture); --kind-bar: var(--stt-lecture); --kind-bg: var(--stt-lecture-bg); }
+    .is-lab { --kind: var(--stt-lab); --kind-bar: var(--stt-lab-bar); --kind-bg: var(--stt-lab-bg); }
+    .is-tutorial { --kind: var(--stt-tutorial); --kind-bar: var(--stt-tutorial); --kind-bg: var(--stt-tutorial-bg); }
+    .stt-subject { display: block; font-weight: 600; line-height: 1.3; color: var(--stt-ink); overflow-wrap: break-word; }
+    .stt-meta { display: flex; flex-wrap: wrap; align-items: center; column-gap: 10px; margin-top: 3px; line-height: 1.4; }
+    .stt-type { font-weight: 600; color: var(--kind); }
+    .stt-room, .stt-person { display: flex; align-items: flex-start; gap: 4px; line-height: 1.4; }
+    .stt-person { margin-top: 2px; color: var(--stt-muted); }
+    .stt-icon { flex: none; width: 13px; height: 13px; margin-top: 2px; fill: currentColor; opacity: .7; }
+    .stt-people { margin-top: 2px; color: var(--stt-muted); line-height: 1.4; }
+    .stt-people summary { cursor: pointer; border-radius: 4px; }
+    .stt-people[open] summary { margin-bottom: 2px; }
+    .stt-people summary:focus-visible, .stt-tab:focus-visible, .stt-more:focus-visible, .stt-panel:focus-visible { outline: 2px solid var(--stt-navy); outline-offset: 2px; }
+    .stt-tag { display: none; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; line-height: 1.5; }
+    .stt-tag-now { background: var(--stt-gold); color: #1c2f55; }
+    .stt-tag-next { background: #fff; color: var(--stt-navy); box-shadow: inset 0 0 0 1.5px var(--stt-navy); }
+    .is-now > .stt-tag-now, .is-now > .stt-when > .stt-tag-now, .is-next > .stt-tag-next, .is-next > .stt-when > .stt-tag-next { display: inline-block; }
+
+    /* The class going on right now: the one loud thing on the page. */
+    .is-single.is-now .stt-class, td.is-single.is-now { --kind: var(--stt-gold); --kind-bar: var(--stt-gold); --kind-bg: var(--stt-navy); }
+    .is-single.is-now .stt-subject, .is-single.is-now .stt-room { color: #fff; }
+    .is-single.is-now .stt-person, .is-single.is-now .stt-people { color: rgba(255, 255, 255, .86); }
+
+    /* Four or more classes in the same period (a set of electives): one line each until opened. */
+    .stt-more { display: none; margin: 2px 0 0 auto; padding: 5px 8px; border: 0; border-radius: 4px; background: none; color: var(--stt-navy); font-size: 12px; font-weight: 600; line-height: 1.4; }
+    .stt-js .stt-more { display: block; }
+    .stt-js .is-brief > .stt-class { display: flex; align-items: baseline; gap: 10px; padding-top: 5px; padding-bottom: 5px; }
+    .stt-js .is-brief > .stt-class .stt-subject { flex: 1 1 0; min-width: 40%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .stt-js .is-brief > .stt-class .stt-meta { flex: 0 1 auto; max-width: 60%; margin-top: 0; }
+    .stt-js .is-brief > .stt-class .stt-type { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+    .stt-js .is-brief > .stt-class .stt-person, .stt-js .is-brief > .stt-class .stt-people { display: none; }
+
+    /* Phones and tablets: one day at a time. */
+    .stt-tabs { display: none; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; margin-bottom: 14px; }
+    .stt-js .stt-tabs { display: grid; }
+    .stt-tab { position: relative; padding: 11px 0 13px; border: 0; border-radius: 10px; background: var(--stt-cell); color: var(--stt-ink); font-size: 14px; font-weight: 600; line-height: 1.2; }
+    .stt-tab[aria-selected="true"] { background: var(--stt-navy); color: #fff; }
+    .stt-tab.is-today::after { content: ""; position: absolute; left: 50%; bottom: 5px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--stt-navy); }
+    .stt-tab.is-today[aria-selected="true"]::after { background: var(--stt-gold); }
+    .stt-js .stt-panel:not(.is-active), .stt-js .stt-panel-title { display: none; }
+    .stt-panel-title { margin: 18px 0 8px; font-size: 16px; font-weight: 600; color: var(--stt-ink); }
+    .stt-none { margin: 1.25rem 0; text-align: center; font-size: 14px; font-weight: 500; color: var(--stt-muted); }
+    .stt-agenda { list-style: none; margin: 0; padding: 0; }
+    .stt-slot { display: grid; grid-template-columns: 46px minmax(0, 1fr); column-gap: 12px; }
+    .stt-slot + .stt-slot { margin-top: 10px; }
+    .stt-when { padding-top: 7px; text-align: right; line-height: 1.25; }
+    .stt-start { display: block; font-size: 15px; font-weight: 600; }
+    .stt-end { display: block; font-size: 12.5px; color: var(--stt-muted); }
+    .stt-when .stt-tag { margin-top: 5px; padding: 1px 7px; }
+    .stt-slot.is-now .stt-start { color: var(--stt-navy); }
+    .stt-slot.is-single.is-next .stt-class { box-shadow: inset 3px 0 0 var(--kind-bar), inset 0 0 0 1.5px var(--stt-navy); }
+    .stt-stack > .stt-class + .stt-class { margin-top: 6px; }
+    .stt-stack.is-brief > .stt-class + .stt-class { margin-top: 4px; }
+    .stt-days .stt-subject { font-size: 15px; }
+    .stt-days .stt-meta, .stt-days .stt-person, .stt-days .stt-people { font-size: 13.5px; }
+    .stt-days .stt-icon { width: 14px; height: 14px; }
+    .stt-days .stt-more { font-size: 13px; }
+    .stt-js .stt-days .is-brief > .stt-class { display: block; }
+    .stt-js .stt-days .is-brief > .stt-class .stt-subject { white-space: normal; }
+    .stt-js .stt-days .is-brief > .stt-class .stt-meta { margin-top: 2px; }
+    .stt-free { margin: 10px 0 10px 58px; padding: 2px 0 2px 13px; border-left: 3px dotted #c5ccd9; font-size: 12.5px; color: var(--stt-muted); }
+
+    /* Wide screens: the whole week. */
+    .stt-week { display: none; }
+    .stt-grid { width: calc(100% + 8px); margin: 0 -4px; table-layout: fixed; border-collapse: separate; border-spacing: 4px; }
+    .stt-grid th, .stt-grid td { white-space: normal; font-size: 12.5px; }
+    /* The day names stay in view while the page scrolls: .main-content is the scrolling box and
+       keeps 0.5rem of padding under the fixed blue bars, which the negative top closes
+       (4px more, so that nothing shows between the bars and the names). */
+    .stt-grid thead th { position: sticky; top: calc(-0.5rem - 4px); z-index: 3; padding: 4px 0; background: #fff; box-shadow: -4px 0 0 #fff, 4px 0 0 #fff; text-align: left; font-weight: 600; }
+    .stt-grid .stt-corner { width: 56px; }
+    .stt-dayhead > span { display: flex; align-items: baseline; justify-content: space-between; padding: 8px 12px; border-radius: 8px; background: var(--stt-cell); font-size: 13.5px; color: var(--stt-ink); }
+    .stt-dayhead .stt-today { display: none; font-size: 11.5px; font-weight: 600; color: var(--stt-gold); }
+    .stt-dayhead.is-today > span { background: var(--stt-navy); color: #fff; }
+    .stt-dayhead.is-today .stt-today { display: inline; }
+    .stt-grid tbody tr { height: 74px; }
+    .stt-grid tbody tr.is-free { height: 26px; }
+    .stt-hour { padding: 5px 4px 0 0; vertical-align: top; text-align: right; font-weight: 600; color: var(--stt-muted); }
+    .stt-hour > span { display: inline-block; padding: 1px 7px; border-radius: 999px; }
+    tr.is-current .stt-hour > span { background: var(--stt-navy); color: #fff; }
+    .stt-cell { padding: 0; border-radius: 8px; vertical-align: top; }
+    .stt-cell.is-blank { background: var(--stt-cell); }
+    .stt-cell.is-blank.is-today { background: #e9effa; }
+    tr.is-free .stt-cell.is-blank { background: repeating-linear-gradient(-45deg, var(--stt-cell) 0 5px, #fff 5px 10px); }
+    td.is-single { background: var(--kind-bg); box-shadow: inset 3px 0 0 var(--kind-bar); }
+    td.is-single > .stt-class { background: none; box-shadow: none; }
+    td.is-single.is-next { box-shadow: inset 3px 0 0 var(--kind-bar), inset 0 0 0 1.5px var(--stt-navy); }
+    td.is-single > .stt-tag { float: right; margin: 8px 8px 2px 6px; }
+    td.is-multi > .stt-class + .stt-class { margin-top: 4px; }
+    td.is-multi.is-now, td.is-multi.is-next { outline: 2px solid var(--stt-navy); outline-offset: 1px; text-align: right; }
+    td.is-multi > .stt-tag { margin: 4px 4px 6px; }
+    .stt-grid .stt-subject { font-size: 13px; }
+
+    @media (min-width: 992px) {
+        .stt-days { display: none; }
+        .stt-week { display: block; }
+    }
+    @media (max-width: 575.98px) {
+        .stt-card { padding: 1rem 0.75rem; }
+        .stt-card > .card-header h3 { padding: 0 0.5rem !important; font-size: 1.15rem; }
+    }
+    @media (max-width: 359.98px) {
+        .stt-tabs { gap: 4px; }
+        .stt-tab { font-size: 13px; }
+        .stt-card > .card-header h3 { font-size: 1rem; }
+    }
+    /* Windows high-contrast mode drops the background colours the blocks are drawn with. */
+    @media (forced-colors: active) {
+        .stt-class, .stt-cell, .stt-tab, .stt-tag, .stt-dayhead > span { outline: 1px solid; outline-offset: -1px; }
+    }
+    /* Printing gives the whole week on one landscape sheet, whatever the screen was showing. */
+    @media  print {
+        @page  { size: A4 landscape; margin: 10mm; }
+        .navbar, .top-bar, .footer, #scrollTopBtn { display: none !important; }
+        .main-content { max-height: none !important; height: auto !important; overflow: visible !important; padding: 0 !important; }
+        .main-content > .container-fluid, .main-content > .container-fluid > .container-fluid { padding: 0 !important; }
+        .stt-card { padding: 0 !important; border: 0; box-shadow: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .stt-card > .card-header { margin: 0 !important; }
+        .stt-days, .stt-js .stt-more { display: none; }
+        .stt-week { display: block; zoom: 0.8; }
+        .stt-grid thead th { position: static; }
+        .stt-grid tbody tr { break-inside: avoid; }
+        .stt-js .is-brief > .stt-class .stt-subject { white-space: normal; }
+    }
+</style>
+
+<div class="container-fluid px-2 px-md-4">
+    <div class="card card-body stt-card">
+        <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2 bg-transparent border-0">
+            <div class="bg-gradient-primary shadow-primary border-radius-lg pt-1 pb-1">
+                <h3 class="text-white text-capitalize ps-3 text-center">My Timetable - 24BTCAICYB02</h3>
+            </div>
+        </div>
+
+                <div class="stt mt-4">
+            <svg class="stt-sprite" aria-hidden="true" focusable="false">
+                <symbol id="stt-icon-room" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 1.5A4.5 4.5 0 0 0 3.5 6c0 3.2 3.6 7.4 4.1 8a.5.5 0 0 0 .8 0c.5-.6 4.1-4.8 4.1-8A4.5 4.5 0 0 0 8 1.5zm0 6.2a1.7 1.7 0 1 1 0-3.4 1.7 1.7 0 0 1 0 3.4z"/></symbol>
+                <symbol id="stt-icon-person" viewBox="0 0 16 16"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm0 1.5c-2.7 0-5.5 1.3-5.5 3.3V14h11v-1.2c0-2-2.8-3.3-5.5-3.3z"/></symbol>
+            </svg>
+
+            
+            <div class="stt-days">
+                <div class="stt-tabs" role="tablist" aria-label="Day">
+                                        <button type="button" class="stt-tab" role="tab" id="stt-tab-monday" aria-controls="stt-panel-monday" aria-selected="true" tabindex="0" data-day="Monday" aria-label="Monday">Mon</button>
+                                        <button type="button" class="stt-tab" role="tab" id="stt-tab-tuesday" aria-controls="stt-panel-tuesday" aria-selected="false" tabindex="-1" data-day="Tuesday" aria-label="Tuesday">Tue</button>
+                                        <button type="button" class="stt-tab" role="tab" id="stt-tab-wednesday" aria-controls="stt-panel-wednesday" aria-selected="false" tabindex="-1" data-day="Wednesday" aria-label="Wednesday">Wed</button>
+                                        <button type="button" class="stt-tab" role="tab" id="stt-tab-thursday" aria-controls="stt-panel-thursday" aria-selected="false" tabindex="-1" data-day="Thursday" aria-label="Thursday">Thu</button>
+                                        <button type="button" class="stt-tab" role="tab" id="stt-tab-friday" aria-controls="stt-panel-friday" aria-selected="false" tabindex="-1" data-day="Friday" aria-label="Friday">Fri</button>
+                                    </div>
+                                <section class="stt-panel is-active" role="tabpanel" tabindex="0" id="stt-panel-monday" aria-labelledby="stt-tab-monday" data-day="Monday">
+                    <h4 class="stt-panel-title">Monday</h4>
+                                        <ol class="stt-agenda">
+                                                                        <li class="stt-slot is-single" data-day="Monday" data-from="570" data-to="690">
+                            <div class="stt-when">
+                                <span class="stt-start">09:30</span>
+                                <span class="stt-end">11:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-lab">
+                                    <span class="stt-subject">Algorithms</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lab</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1106-B_BL1-FF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Mr. Srinivas Komakula</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                                                <li class="stt-slot is-single" data-day="Monday" data-from="690" data-to="750">
+                            <div class="stt-when">
+                                <span class="stt-start">11:30</span>
+                                <span class="stt-end">12:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject">Algorithms</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1102-BL1-FF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Nageswararao Naik Bhookya</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                                                <li class="stt-free">Free 12:30 &ndash; 13:30</li>
+                                                                                                <li class="stt-slot is-single" data-day="Monday" data-from="810" data-to="870">
+                            <div class="stt-when">
+                                <span class="stt-start">13:30</span>
+                                <span class="stt-end">14:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject">Software Engineering and System Design</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1202-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Ms. Faiza Iram</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                                                <li class="stt-slot is-single" data-day="Monday" data-from="870" data-to="930">
+                            <div class="stt-when">
+                                <span class="stt-start">14:30</span>
+                                <span class="stt-end">15:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject">Statistics for Computer Science</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1215-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Kiran Kumar Thula</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                    </ol>
+                                    </section>
+                                <section class="stt-panel" role="tabpanel" tabindex="0" id="stt-panel-tuesday" aria-labelledby="stt-tab-tuesday" data-day="Tuesday">
+                    <h4 class="stt-panel-title">Tuesday</h4>
+                                        <ol class="stt-agenda">
+                                                                        <li class="stt-slot is-single" data-day="Tuesday" data-from="570" data-to="690">
+                            <div class="stt-when">
+                                <span class="stt-start">09:30</span>
+                                <span class="stt-end">11:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-lab">
+                                    <span class="stt-subject">Critical Thinking and Interpersonal Skills</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lab</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1206-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Parvathy Das</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                                                <li class="stt-slot is-single" data-day="Tuesday" data-from="690" data-to="750">
+                            <div class="stt-when">
+                                <span class="stt-start">11:30</span>
+                                <span class="stt-end">12:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject">Artificial Intelligence and Deep Learning</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1202-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Mr. Lade Gunakar Rao</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                                                <li class="stt-free">Free 12:30 &ndash; 13:30</li>
+                                                                                                <li class="stt-slot is-single" data-day="Tuesday" data-from="810" data-to="870">
+                            <div class="stt-when">
+                                <span class="stt-start">13:30</span>
+                                <span class="stt-end">14:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject">Algorithms</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1202-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Nageswararao Naik Bhookya</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                                                <li class="stt-free">Free 14:30 &ndash; 15:30</li>
+                                                                                                <li class="stt-slot is-single" data-day="Tuesday" data-from="930" data-to="1050">
+                            <div class="stt-when">
+                                <span class="stt-start">15:30</span>
+                                <span class="stt-end">17:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-lab">
+                                    <span class="stt-subject">Algorithms</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lab</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>8003-B_BL8-GF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Ms. Anusha Vajjakeshavulu</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                    </ol>
+                                    </section>
+                                <section class="stt-panel" role="tabpanel" tabindex="0" id="stt-panel-wednesday" aria-labelledby="stt-tab-wednesday" data-day="Wednesday">
+                    <h4 class="stt-panel-title">Wednesday</h4>
+                                        <ol class="stt-agenda">
+                                                                        <li class="stt-slot is-single" data-day="Wednesday" data-from="690" data-to="750">
+                            <div class="stt-when">
+                                <span class="stt-start">11:30</span>
+                                <span class="stt-end">12:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject">Software Engineering and System Design</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1210-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Ms. Faiza Iram</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                                                <li class="stt-free">Free 12:30 &ndash; 13:30</li>
+                                                                                                <li class="stt-slot is-single" data-day="Wednesday" data-from="810" data-to="930">
+                            <div class="stt-when">
+                                <span class="stt-start">13:30</span>
+                                <span class="stt-end">15:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-lab">
+                                    <span class="stt-subject">Artificial Intelligence and Deep Learning</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lab</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1106-B_BL1-FF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Ms. Jyoshnadevi Kusumba</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                                                <li class="stt-slot is-single" data-day="Wednesday" data-from="930" data-to="1050">
+                            <div class="stt-when">
+                                <span class="stt-start">15:30</span>
+                                <span class="stt-end">17:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-lab">
+                                    <span class="stt-subject">Critical Thinking and Interpersonal Skills</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lab</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1206-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Parvathy Das</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                    </ol>
+                                    </section>
+                                <section class="stt-panel" role="tabpanel" tabindex="0" id="stt-panel-thursday" aria-labelledby="stt-tab-thursday" data-day="Thursday">
+                    <h4 class="stt-panel-title">Thursday</h4>
+                                        <ol class="stt-agenda">
+                                                                        <li class="stt-slot is-single" data-day="Thursday" data-from="570" data-to="630">
+                            <div class="stt-when">
+                                <span class="stt-start">09:30</span>
+                                <span class="stt-end">10:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject">Artificial Intelligence and Deep Learning</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1202-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Mr. Lade Gunakar Rao</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                                                <li class="stt-slot is-single" data-day="Thursday" data-from="630" data-to="690">
+                            <div class="stt-when">
+                                <span class="stt-start">10:30</span>
+                                <span class="stt-end">11:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-tutorial">
+                                    <span class="stt-subject">Algorithms</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Tutorial</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1107-BL1-FF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Nageswararao Naik Bhookya</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                                                <li class="stt-slot is-single" data-day="Thursday" data-from="690" data-to="750">
+                            <div class="stt-when">
+                                <span class="stt-start">11:30</span>
+                                <span class="stt-end">12:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject">Statistics for Computer Science</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1216-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Kiran Kumar Thula</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                                                <li class="stt-free">Free 12:30 &ndash; 13:30</li>
+                                                                                                <li class="stt-slot is-single" data-day="Thursday" data-from="810" data-to="930">
+                            <div class="stt-when">
+                                <span class="stt-start">13:30</span>
+                                <span class="stt-end">15:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-lab">
+                                    <span class="stt-subject">Software Engineering and System Design</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lab</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>8003-B_BL8-GF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Ms.Thoutam Srinidhi</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                                                <li class="stt-slot is-single" data-day="Thursday" data-from="930" data-to="990">
+                            <div class="stt-when">
+                                <span class="stt-start">15:30</span>
+                                <span class="stt-end">16:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-tutorial">
+                                    <span class="stt-subject">Artificial Intelligence and Deep Learning</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Tutorial</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1107-BL1-FF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Mr. Lade Gunakar Rao</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                                                <li class="stt-slot is-single" data-day="Thursday" data-from="990" data-to="1050">
+                            <div class="stt-when">
+                                <span class="stt-start">16:30</span>
+                                <span class="stt-end">17:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject">Software Engineering and System Design</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1205-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Ms. Faiza Iram</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                    </ol>
+                                    </section>
+                                <section class="stt-panel" role="tabpanel" tabindex="0" id="stt-panel-friday" aria-labelledby="stt-tab-friday" data-day="Friday">
+                    <h4 class="stt-panel-title">Friday</h4>
+                                        <ol class="stt-agenda">
+                                                                        <li class="stt-slot is-single" data-day="Friday" data-from="570" data-to="630">
+                            <div class="stt-when">
+                                <span class="stt-start">09:30</span>
+                                <span class="stt-end">10:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject">Algorithms</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1205-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Nageswararao Naik Bhookya</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                                                <li class="stt-slot is-single" data-day="Friday" data-from="630" data-to="690">
+                            <div class="stt-when">
+                                <span class="stt-start">10:30</span>
+                                <span class="stt-end">11:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject">Critical Thinking and Interpersonal Skills</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1202-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Parvathy Das</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                                                <li class="stt-slot is-single" data-day="Friday" data-from="690" data-to="810">
+                            <div class="stt-when">
+                                <span class="stt-start">11:30</span>
+                                <span class="stt-end">13:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-lab">
+                                    <span class="stt-subject">Artificial Intelligence and Deep Learning</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lab</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1105-B_BL1-FF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Mr. Muduthanapelli Kiran</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                                                <li class="stt-free">Free 13:30 &ndash; 14:30</li>
+                                                                                                <li class="stt-slot is-single" data-day="Friday" data-from="870" data-to="930">
+                            <div class="stt-when">
+                                <span class="stt-start">14:30</span>
+                                <span class="stt-end">15:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject">Artificial Intelligence and Deep Learning</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1202-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Mr. Lade Gunakar Rao</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                                                <li class="stt-slot is-single" data-day="Friday" data-from="930" data-to="990">
+                            <div class="stt-when">
+                                <span class="stt-start">15:30</span>
+                                <span class="stt-end">16:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-tutorial">
+                                    <span class="stt-subject">Statistics for Computer Science</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Tutorial</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1115-BL1-FF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Kiran Kumar Thula</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                                                <li class="stt-slot is-single" data-day="Friday" data-from="990" data-to="1050">
+                            <div class="stt-when">
+                                <span class="stt-start">16:30</span>
+                                <span class="stt-end">17:30</span>
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                            </div>
+                            <div class="stt-stack">
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject">Statistics for Computer Science</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1206-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Kiran Kumar Thula</span></span>
+                                                                    </div>
+                                                                                            </div>
+                        </li>
+                                                                    </ol>
+                                    </section>
+                            </div>
+
+            
+            <div class="stt-week">
+                <table class="stt-grid">
+                    <caption class="visually-hidden">Weekly timetable of batch 24BTCAICYB02</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col" class="stt-corner"><span class="visually-hidden">Time</span></th>
+                                                        <th scope="col" class="stt-dayhead" data-day="Monday"><span>Monday<span class="stt-today">Today</span></span></th>
+                                                        <th scope="col" class="stt-dayhead" data-day="Tuesday"><span>Tuesday<span class="stt-today">Today</span></span></th>
+                                                        <th scope="col" class="stt-dayhead" data-day="Wednesday"><span>Wednesday<span class="stt-today">Today</span></span></th>
+                                                        <th scope="col" class="stt-dayhead" data-day="Thursday"><span>Thursday<span class="stt-today">Today</span></span></th>
+                                                        <th scope="col" class="stt-dayhead" data-day="Friday"><span>Friday<span class="stt-today">Today</span></span></th>
+                                                    </tr>
+                    </thead>
+                    <tbody>
+                                                <tr class="" data-from="570" data-to="630">
+                            <th scope="row" class="stt-hour"><span>09:30</span></th>
+                                                                                                                <td class="stt-cell is-single is-lab" rowspan="2" data-day="Monday" data-from="570" data-to="690">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-lab">
+                                    <span class="stt-subject" >Algorithms</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lab</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1106-B_BL1-FF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Mr. Srinivas Komakula</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                                                                            <td class="stt-cell is-single is-lab" rowspan="2" data-day="Tuesday" data-from="570" data-to="690">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-lab">
+                                    <span class="stt-subject" >Critical Thinking and Interpersonal Skills</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lab</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1206-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Parvathy Das</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                                                                            <td class="stt-cell is-blank" data-day="Wednesday"></td>
+                                                                                                                                            <td class="stt-cell is-single is-lecture" rowspan="1" data-day="Thursday" data-from="570" data-to="630">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject" >Artificial Intelligence and Deep Learning</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1202-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Mr. Lade Gunakar Rao</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                                                                            <td class="stt-cell is-single is-lecture" rowspan="1" data-day="Friday" data-from="570" data-to="630">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject" >Algorithms</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1205-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Nageswararao Naik Bhookya</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                </tr>
+                                                <tr class="" data-from="630" data-to="690">
+                            <th scope="row" class="stt-hour"><span>10:30</span></th>
+                                                                                                                                                                                                                                                                                        <td class="stt-cell is-blank" data-day="Wednesday"></td>
+                                                                                                                                            <td class="stt-cell is-single is-tutorial" rowspan="1" data-day="Thursday" data-from="630" data-to="690">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-tutorial">
+                                    <span class="stt-subject" >Algorithms</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Tutorial</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1107-BL1-FF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Nageswararao Naik Bhookya</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                                                                            <td class="stt-cell is-single is-lecture" rowspan="1" data-day="Friday" data-from="630" data-to="690">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject" >Critical Thinking and Interpersonal Skills</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1202-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Parvathy Das</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                </tr>
+                                                <tr class="" data-from="690" data-to="750">
+                            <th scope="row" class="stt-hour"><span>11:30</span></th>
+                                                                                                                <td class="stt-cell is-single is-lecture" rowspan="1" data-day="Monday" data-from="690" data-to="750">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject" >Algorithms</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1102-BL1-FF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Nageswararao Naik Bhookya</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                                                                            <td class="stt-cell is-single is-lecture" rowspan="1" data-day="Tuesday" data-from="690" data-to="750">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject" >Artificial Intelligence and Deep Learning</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1202-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Mr. Lade Gunakar Rao</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                                                                            <td class="stt-cell is-single is-lecture" rowspan="1" data-day="Wednesday" data-from="690" data-to="750">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject" >Software Engineering and System Design</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1210-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Ms. Faiza Iram</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                                                                            <td class="stt-cell is-single is-lecture" rowspan="1" data-day="Thursday" data-from="690" data-to="750">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject" >Statistics for Computer Science</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1216-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Kiran Kumar Thula</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                                                                            <td class="stt-cell is-single is-lab" rowspan="2" data-day="Friday" data-from="690" data-to="810">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-lab">
+                                    <span class="stt-subject" >Artificial Intelligence and Deep Learning</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lab</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1105-B_BL1-FF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Mr. Muduthanapelli Kiran</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                </tr>
+                                                <tr class="" data-from="750" data-to="810">
+                            <th scope="row" class="stt-hour"><span>12:30</span></th>
+                                                                                                                <td class="stt-cell is-blank" data-day="Monday"></td>
+                                                                                                                                            <td class="stt-cell is-blank" data-day="Tuesday"></td>
+                                                                                                                                            <td class="stt-cell is-blank" data-day="Wednesday"></td>
+                                                                                                                                            <td class="stt-cell is-blank" data-day="Thursday"></td>
+                                                                                                                                                                    </tr>
+                                                <tr class="" data-from="810" data-to="870">
+                            <th scope="row" class="stt-hour"><span>13:30</span></th>
+                                                                                                                <td class="stt-cell is-single is-lecture" rowspan="1" data-day="Monday" data-from="810" data-to="870">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject" >Software Engineering and System Design</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1202-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Ms. Faiza Iram</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                                                                            <td class="stt-cell is-single is-lecture" rowspan="1" data-day="Tuesday" data-from="810" data-to="870">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject" >Algorithms</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1202-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Nageswararao Naik Bhookya</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                                                                            <td class="stt-cell is-single is-lab" rowspan="2" data-day="Wednesday" data-from="810" data-to="930">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-lab">
+                                    <span class="stt-subject" >Artificial Intelligence and Deep Learning</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lab</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1106-B_BL1-FF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Ms. Jyoshnadevi Kusumba</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                                                                            <td class="stt-cell is-single is-lab" rowspan="2" data-day="Thursday" data-from="810" data-to="930">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-lab">
+                                    <span class="stt-subject" >Software Engineering and System Design</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lab</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>8003-B_BL8-GF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Ms.Thoutam Srinidhi</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                                                                            <td class="stt-cell is-blank" data-day="Friday"></td>
+                                                                                </tr>
+                                                <tr class="" data-from="870" data-to="930">
+                            <th scope="row" class="stt-hour"><span>14:30</span></th>
+                                                                                                                <td class="stt-cell is-single is-lecture" rowspan="1" data-day="Monday" data-from="870" data-to="930">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject" >Statistics for Computer Science</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1215-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Kiran Kumar Thula</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                                                                            <td class="stt-cell is-blank" data-day="Tuesday"></td>
+                                                                                                                                                                                                                                                                                                                    <td class="stt-cell is-single is-lecture" rowspan="1" data-day="Friday" data-from="870" data-to="930">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject" >Artificial Intelligence and Deep Learning</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1202-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Mr. Lade Gunakar Rao</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                </tr>
+                                                <tr class="" data-from="930" data-to="990">
+                            <th scope="row" class="stt-hour"><span>15:30</span></th>
+                                                                                                                <td class="stt-cell is-blank" data-day="Monday"></td>
+                                                                                                                                            <td class="stt-cell is-single is-lab" rowspan="2" data-day="Tuesday" data-from="930" data-to="1050">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-lab">
+                                    <span class="stt-subject" >Algorithms</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lab</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>8003-B_BL8-GF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Ms. Anusha Vajjakeshavulu</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                                                                            <td class="stt-cell is-single is-lab" rowspan="2" data-day="Wednesday" data-from="930" data-to="1050">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-lab">
+                                    <span class="stt-subject" >Critical Thinking and Interpersonal Skills</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lab</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1206-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Parvathy Das</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                                                                            <td class="stt-cell is-single is-tutorial" rowspan="1" data-day="Thursday" data-from="930" data-to="990">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-tutorial">
+                                    <span class="stt-subject" >Artificial Intelligence and Deep Learning</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Tutorial</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1107-BL1-FF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Mr. Lade Gunakar Rao</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                                                                            <td class="stt-cell is-single is-tutorial" rowspan="1" data-day="Friday" data-from="930" data-to="990">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-tutorial">
+                                    <span class="stt-subject" >Statistics for Computer Science</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Tutorial</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1115-BL1-FF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Kiran Kumar Thula</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                </tr>
+                                                <tr class="" data-from="990" data-to="1050">
+                            <th scope="row" class="stt-hour"><span>16:30</span></th>
+                                                                                                                <td class="stt-cell is-blank" data-day="Monday"></td>
+                                                                                                                                                                                                                                                                                                                    <td class="stt-cell is-single is-lecture" rowspan="1" data-day="Thursday" data-from="990" data-to="1050">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject" >Software Engineering and System Design</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1205-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Ms. Faiza Iram</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                                                                            <td class="stt-cell is-single is-lecture" rowspan="1" data-day="Friday" data-from="990" data-to="1050">
+                                <span class="stt-tag stt-tag-now">Now</span>
+                                <span class="stt-tag stt-tag-next">Next</span>
+                                                                <div class="stt-class is-lecture">
+                                    <span class="stt-subject" >Statistics for Computer Science</span>
+                                    <span class="stt-meta">
+                                        <span class="stt-type">Lecture</span>
+                                                                                <span class="stt-room"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-room"/></svg><span><span class="visually-hidden">Room </span>1206-BL1-SF</span></span>
+                                                                            </span>
+                                                                        <span class="stt-person"><svg class="stt-icon" aria-hidden="true"><use href="#stt-icon-person"/></svg><span><span class="visually-hidden">Faculty </span>Dr. Kiran Kumar Thula</span></span>
+                                                                    </div>
+                                                                                            </td>
+                                                                                </tr>
+                                            </tbody>
+                </table>
+            </div>
+        </div>
+
+        <script>
+            (function () {
+                var root = document.querySelector('.stt');
+                if (!root) return;
+                root.classList.add('stt-js');
+
+                var weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                var tabs = Array.prototype.slice.call(root.querySelectorAll('.stt-tab'));
+                var panels = Array.prototype.slice.call(root.querySelectorAll('.stt-panel'));
+                var picked = false;
+                var printing = false;
+
+                function show(day, focus) {
+                    tabs.forEach(function (tab) {
+                        var on = tab.getAttribute('data-day') === day;
+                        tab.setAttribute('aria-selected', on ? 'true' : 'false');
+                        tab.tabIndex = on ? 0 : -1;
+                        if (on && focus) tab.focus();
+                    });
+                    panels.forEach(function (panel) {
+                        panel.classList.toggle('is-active', panel.getAttribute('data-day') === day);
+                    });
+                }
+
+                tabs.forEach(function (tab, at) {
+                    tab.addEventListener('click', function () {
+                        picked = true;
+                        show(tab.getAttribute('data-day'));
+                    });
+                    tab.addEventListener('keydown', function (event) {
+                        var to = { ArrowRight: at + 1, ArrowLeft: at - 1, Home: 0, End: tabs.length - 1 }[event.key];
+                        if (to === undefined) return;
+                        event.preventDefault();
+                        picked = true;
+                        show(tabs[(to + tabs.length) % tabs.length].getAttribute('data-day'), true);
+                    });
+                });
+
+                // A period with many classes lists one line each; its button opens the full details.
+                root.addEventListener('click', function (event) {
+                    var button = event.target.closest ? event.target.closest('.stt-more') : null;
+                    if (!button) return;
+                    var brief = button.parentNode.classList.toggle('is-brief');
+                    button.setAttribute('aria-expanded', brief ? 'false' : 'true');
+                    button.textContent = brief ? 'Show details' : 'Hide details';
+                });
+
+                // Marks today, the class going on and the one after it. Classes run on
+                // Indian Standard Time (UTC+5:30) whatever zone the device clock is set to.
+                function mark() {
+                    if (printing) return;
+                    var ist = new Date(Date.now() + 19800000);
+                    var today = weekdays[ist.getUTCDay()];
+                    var minute = ist.getUTCHours() * 60 + ist.getUTCMinutes();
+                    var shown = false;
+                    var next = null;
+
+                    Array.prototype.forEach.call(root.querySelectorAll('[data-day]'), function (el) {
+                        var mine = el.getAttribute('data-day') === today;
+                        shown = shown || mine;
+                        el.classList.toggle('is-today', mine);
+                    });
+                    var timed = root.querySelectorAll('[data-day][data-from]');
+                    Array.prototype.forEach.call(timed, function (el) {
+                        var mine = el.getAttribute('data-day') === today;
+                        var from = +el.getAttribute('data-from');
+                        el.classList.toggle('is-now', mine && from <= minute && minute < +el.getAttribute('data-to'));
+                        if (mine && from > minute && (next === null || from < next)) next = from;
+                    });
+                    Array.prototype.forEach.call(timed, function (el) {
+                        el.classList.toggle('is-next', el.getAttribute('data-day') === today && +el.getAttribute('data-from') === next);
+                    });
+                    Array.prototype.forEach.call(root.querySelectorAll('tr[data-from]'), function (row) {
+                        row.classList.toggle('is-current', shown && +row.getAttribute('data-from') <= minute && minute < +row.getAttribute('data-to'));
+                    });
+                    if (shown && !picked) show(today);
+                }
+
+                mark();
+                setInterval(mark, 30000);
+
+                // A printed timetable is for the whole term: leave today's markers off the paper.
+                window.addEventListener('beforeprint', function () {
+                    printing = true;
+                    Array.prototype.forEach.call(root.querySelectorAll('.is-today, .is-now, .is-next, .is-current'), function (el) {
+                        el.classList.remove('is-today', 'is-now', 'is-next', 'is-current');
+                    });
+                });
+                window.addEventListener('afterprint', function () {
+                    printing = false;
+                    mark();
+                });
+            })();
+        </script>
+            </div>
+</div>
+<footer class="footer py-4 ">
+    <div class="container-fluid">
+      <div class="row align-items-center justify-content-lg-between">
+        <div class="col-lg-12 mb-lg-0 mb-4">
+          <div class="copyright text-center text-sm text-muted">
+            Â© Center for Software Development and Digital Learning, SR University.
+                      </div>
+        </div>
+        <!--<div class="col-lg-6">
+          <ul class="nav nav-footer justify-content-center justify-content-lg-end">
+            <li class="nav-item">
+              <a href="https://www.creative-tim.com" class="nav-link text-muted" target="_blank">Creative Tim</a>
+            </li>
+            <li class="nav-item">
+              <a href="https://www.creative-tim.com/presentation" class="nav-link text-muted" target="_blank">About Us</a>
+            </li>
+            <li class="nav-item">
+              <a href="https://www.creative-tim.com/blog" class="nav-link text-muted" target="_blank">Blog</a>
+            </li>
+            <li class="nav-item">
+              <a href="https://www.creative-tim.com/license" class="nav-link pe-0 text-muted" target="_blank">License</a>
+            </li>
+          </ul>
+        </div>-->
+      </div>
+    </div>
+  </footer>
+  <button id="scrollTopBtn" title="Go to top">
+    <i class="fas fa-arrow-up"></i>
+  </button>
+</div>
+</main>
+<!--   Core JS Files   -->
+<script src="https://www.sruniv.com/./assets/js/core/popper.min.js"></script>
+<script src="https://www.sruniv.com/./assets/js/core/bootstrap.min.js"></script>
+<script src="https://www.sruniv.com/./assets/js/plugins/perfect-scrollbar.min.js"></script>
+<script src="https://www.sruniv.com/./assets/js/plugins/smooth-scrollbar.min.js"></script>
+<script src="https://www.sruniv.com/./assets/js/plugins/chartjs.min.js"></script>
+<!-- Github buttons -->
+<script async defer src="https://buttons.github.io/buttons.js"></script>
+<!-- Control Center for Material Dashboard: parallax effects, scripts for the example pages etc -->
+<script src="https://www.sruniv.com/./assets/js/material-dashboard.min.js?v=3.1.0"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+
+<script>
+$(function() {
+  var $btn = $('#scrollTopBtn');
+  var $mainContent = $('.main-content');
+
+  $mainContent.on('scroll', function() {
+    if ($mainContent.scrollTop() > 150) {
+      $btn.show();
+    } else {
+      $btn.hide();
+    }
+  });
+
+  $btn.on('click', function() {
+    $mainContent.animate({ scrollTop: 0 }, 500);
+  });
+});
+</script>
+
+<style>
+  #scrollTopBtn {
+      display: none;
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      z-index: 99999;
+      background: #264e8c;
+      color: #fff;
+      border: none;
+      outline: none;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      font-size: 24px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    #scrollTopBtn:hover {
+      background: #154e91;
+    }
+    
+    .main-content {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+</style>
+</body>
+
+</html>        </div>
+    </main>
+
+    
+                
+  <!-- Material Dashboard JS -->
+  <script src="https://www.sruniv.com/assets/admin/js/core/popper.min.js"></script>
+  <script src="https://www.sruniv.com/assets/admin/js/core/bootstrap.min.js"></script>
+  <script src="https://www.sruniv.com/assets/admin/js/plugins/perfect-scrollbar.min.js"></script>
+  <script src="https://www.sruniv.com/assets/admin/js/plugins/chartjs.min.js"></script>
+  <script src="https://www.sruniv.com/assets/admin/js/material-dashboard.min.js?v=3.1.0"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Trumbowyg/2.27.3/trumbowyg.min.js"></script>

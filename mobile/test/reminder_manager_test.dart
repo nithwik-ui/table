@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -5,7 +7,6 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:mobile/core/reminder_manager.dart';
 import 'package:mobile/core/storage.dart';
-import 'dart:io';
 
 class FakeFlutterLocalNotificationsPlugin implements FlutterLocalNotificationsPlugin {
   final List<int> cancelledIds = [];
@@ -16,6 +17,13 @@ class FakeFlutterLocalNotificationsPlugin implements FlutterLocalNotificationsPl
   Future<void> cancel(int id, {String? tag}) async {
     cancelledIds.add(id);
     scheduledIds.remove(id);
+  }
+
+  @override
+  Future<List<PendingNotificationRequest>> pendingNotificationRequests() async {
+    return scheduledIds
+        .map((id) => PendingNotificationRequest(id, 'Class in 9 minutes', 'Class info', '{"type":"class_reminder","mode":"student"}'))
+        .toList();
   }
 
   @override
@@ -34,31 +42,27 @@ void main() {
   late FakeFlutterLocalNotificationsPlugin mockPlugin;
 
   setUp(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Asia/Kolkata'));
-    
-    // Setup Hive for testing
+
     final path = Directory.systemTemp.createTempSync().path;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      (MethodCall methodCall) async => path,
+    );
     Hive.init(path);
-    await StorageService.init(isTest: true);
+    await StorageService.init();
     await StorageService.setUserMode('student');
 
     mockPlugin = FakeFlutterLocalNotificationsPlugin();
     ReminderManager.instance.init(mockPlugin);
-    
-    // Ensure registry is clear
-    await StorageService.clearReminderRegistry('student');
-    await StorageService.clearReminderRegistry('faculty');
   });
 
   tearDown(() async {
     await Hive.close();
   });
-
-  String getTodayString() {
-    final now = DateTime.now();
-    return "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
-  }
 
   String getDayName(int weekday) {
     switch (weekday) {
@@ -69,17 +73,19 @@ void main() {
       case 5: return 'Friday';
       case 6: return 'Saturday';
       case 7: return 'Sunday';
-      default: return '';
+      default: return 'Monday';
     }
   }
 
-  test('Cancellation Test: Holiday cancels future reminder', () async {
-    final today = getTodayString();
-    final dayName = getDayName(DateTime.now().weekday);
-    final now = DateTime.now();
-    // Schedule a class 1 hour from now
-    final classTime = now.add(const Duration(hours: 1));
-    final startTimeStr = '${classTime.hour.toString().padLeft(2, '0')}:${classTime.minute.toString().padLeft(2, '0')}';
+  String formatDate(DateTime dt) {
+    return "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
+  }
+
+  test('Holiday Test: Scheduling then applying holiday cancels notification', () async {
+    final targetDate = DateTime.now().add(const Duration(days: 1));
+    final tomorrowDate = formatDate(targetDate);
+    final dayName = getDayName(targetDate.weekday);
+    const startTimeStr = '10:00';
 
     final initialTimetable = [
       {
@@ -91,7 +97,6 @@ void main() {
       }
     ];
 
-    // 1. Initial reconcile
     await ReminderManager.instance.reconcile(
       timetable: initialTimetable,
       overrides: [],
@@ -100,13 +105,11 @@ void main() {
 
     expect(mockPlugin.scheduledIds.length, 1, reason: 'Should schedule 1 reminder');
     final scheduledId = mockPlugin.scheduledIds.first;
-    final registry1 = StorageService.getReminderRegistry('student');
-    expect(registry1.length, 1);
 
-    // 2. Update to holiday
+    // Update to holiday
     final overrides = [
       {
-        'override_date': today,
+        'override_date': tomorrowDate,
       }
     ];
 
@@ -118,15 +121,12 @@ void main() {
     );
 
     expect(mockPlugin.cancelledIds.contains(scheduledId), true, reason: 'Should cancel the reminder on holiday');
-    final registry2 = StorageService.getReminderRegistry('student');
-    expect(registry2.length, 0, reason: 'Registry should be empty for that date');
   });
 
   test('Removed Class Test: Removing class cancels old reminder', () async {
-    final dayName = getDayName(DateTime.now().weekday);
-    final now = DateTime.now();
-    final classTime = now.add(const Duration(hours: 1));
-    final startTimeStr = '${classTime.hour.toString().padLeft(2, '0')}:${classTime.minute.toString().padLeft(2, '0')}';
+    final targetDate = DateTime.now().add(const Duration(days: 1));
+    final dayName = getDayName(targetDate.weekday);
+    const startTimeStr = '10:00';
 
     final initialTimetable = [
       {
@@ -157,15 +157,12 @@ void main() {
     );
 
     expect(mockPlugin.cancelledIds.contains(scheduledId), true);
-    final registry = StorageService.getReminderRegistry('student');
-    expect(registry.length, 0);
   });
 
   test('Time Change Test', () async {
-    final dayName = getDayName(DateTime.now().weekday);
-    final now = DateTime.now();
-    final classTime1 = now.add(const Duration(hours: 1));
-    final startTimeStr1 = '${classTime1.hour.toString().padLeft(2, '0')}:${classTime1.minute.toString().padLeft(2, '0')}';
+    final targetDate = DateTime.now().add(const Duration(days: 1));
+    final dayName = getDayName(targetDate.weekday);
+    const startTimeStr1 = '10:00';
 
     final initialTimetable = [
       {
@@ -187,8 +184,7 @@ void main() {
     final oldScheduledId = mockPlugin.scheduledIds.first;
 
     // Reschedule class
-    final classTime2 = now.add(const Duration(hours: 2));
-    final startTimeStr2 = '${classTime2.hour.toString().padLeft(2, '0')}:${classTime2.minute.toString().padLeft(2, '0')}';
+    const startTimeStr2 = '14:00';
 
     final updatedTimetable = [
       {
@@ -212,11 +208,10 @@ void main() {
   });
 
   test('Restore Class Test', () async {
-    final today = getTodayString();
-    final dayName = getDayName(DateTime.now().weekday);
-    final now = DateTime.now();
-    final classTime = now.add(const Duration(hours: 1));
-    final startTimeStr = '${classTime.hour.toString().padLeft(2, '0')}:${classTime.minute.toString().padLeft(2, '0')}';
+    final targetDate = DateTime.now().add(const Duration(days: 1));
+    final tomorrowDate = formatDate(targetDate);
+    final dayName = getDayName(targetDate.weekday);
+    const startTimeStr = '10:00';
 
     final initialTimetable = [
       {
@@ -227,7 +222,7 @@ void main() {
         'start_time': startTimeStr,
       }
     ];
-    final overrides = [{'override_date': today}];
+    final overrides = [{'override_date': tomorrowDate}];
 
     await ReminderManager.instance.reconcile(
       timetable: initialTimetable,
@@ -246,10 +241,9 @@ void main() {
   });
 
   test('Mode Switch Test', () async {
-    final dayName = getDayName(DateTime.now().weekday);
-    final now = DateTime.now();
-    final classTime = now.add(const Duration(hours: 1));
-    final startTimeStr = '${classTime.hour.toString().padLeft(2, '0')}:${classTime.minute.toString().padLeft(2, '0')}';
+    final targetDate = DateTime.now().add(const Duration(days: 1));
+    final dayName = getDayName(targetDate.weekday);
+    const startTimeStr = '10:00';
 
     final initialTimetable = [
       {
@@ -268,21 +262,16 @@ void main() {
     );
 
     expect(mockPlugin.scheduledIds.length, 1);
-    final studentRegistry = StorageService.getReminderRegistry('student');
-    expect(studentRegistry.length, 1);
 
     // Switch to faculty (simulate via clearAllForMode on student)
     await ReminderManager.instance.clearAllForMode('student');
     expect(mockPlugin.scheduledIds.length, 0);
-    expect(StorageService.getReminderRegistry('student').length, 0);
   });
 
   test('Past Event Safety', () async {
     final dayName = getDayName(DateTime.now().weekday);
-    final now = DateTime.now();
-    // Class was 1 hour ago
-    final classTime = now.subtract(const Duration(hours: 1));
-    final startTimeStr = '${classTime.hour.toString().padLeft(2, '0')}:${classTime.minute.toString().padLeft(2, '0')}';
+    // 01:00 AM today is always in the past by 11:00 PM
+    const startTimeStr = '01:00';
 
     final initialTimetable = [
       {

@@ -2,8 +2,15 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'storage.dart';
-import 'utils.dart';
 import 'dart:math';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import '../main.dart';
+import '../features/dashboard/dashboard_screen.dart';
+
+import 'reminder_manager.dart';
+import 'analytics_service.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -12,6 +19,11 @@ class NotificationService {
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Asia/Kolkata'));
 
+    if (kIsWeb) {
+      ReminderManager.instance.init(_notificationsPlugin);
+      return;
+    }
+
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@drawable/ic_notification');
 
@@ -19,12 +31,31 @@ class NotificationService {
       android: initializationSettingsAndroid,
     );
 
-    await _notificationsPlugin.initialize(initializationSettings);
+    await _notificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        bool isReminder = false;
+        if (response.payload != null && response.payload!.isNotEmpty) {
+          try {
+            final map = jsonDecode(response.payload!);
+            if (map['type'] == 'class_reminder') isReminder = true;
+          } catch (_) {
+            if (response.payload == 'class_reminder') isReminder = true;
+          }
+        }
+        if (isReminder) {
+          AnalyticsService.instance.logClassReminderOpened();
+          navigatorKey.currentState?.pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const DashboardScreen(initialTab: 0)),
+            (route) => false,
+          );
+        }
+      },
+    );
 
     final androidPlugin = _notificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     if (androidPlugin != null) {
       await androidPlugin.requestNotificationsPermission();
-      await androidPlugin.requestExactAlarmsPermission();
       await androidPlugin.createNotificationChannel(const AndroidNotificationChannel(
         'fcm_default_channel',
         'Timetable Updates',
@@ -39,16 +70,31 @@ class NotificationService {
       await androidPlugin.createNotificationChannel(const AndroidNotificationChannel(
         'class_reminders',
         'Class Reminders',
-        description: 'Notifications before a class starts.',
+        description: 'Reminders 9 minutes before class starts',
         importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
       ));
     }
+    
+    ReminderManager.instance.init(_notificationsPlugin);
   }
 
-  static Future<void> showForegroundNotification(String? title, String? body) async {
+  static Future<void> showForegroundNotification(String? title, String? body, Map<String, dynamic> data) async {
+    if (kIsWeb) return;
+    if (!StorageService.isNotificationsEnabled()) return;
+
+    final type = data['type']?.toString();
+    if (type == 'timetable_change' && !StorageService.isTimetableChangesEnabled()) return;
+    if (type == 'room_change' && !StorageService.isRoomChangesEnabled()) return;
+    if (type == 'faculty_change' && !StorageService.isFacultyChangesEnabled()) return;
+    if (type == 'class_cancelled' && !StorageService.isCancelledClassesEnabled()) return;
+    if (type == 'general_announcement' && !StorageService.isGeneralAnnouncementsEnabled()) return;
+
     const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
-      'fcm_foreground_channel',
-      'Important Updates',
+      'fcm_default_channel',
+      'Timetable Updates',
+      channelDescription: 'Important Updates',
       importance: Importance.max,
       priority: Priority.high,
       icon: '@drawable/ic_notification',
@@ -60,72 +106,49 @@ class NotificationService {
       title ?? 'SRU Update',
       body,
       platformChannelSpecifics,
+      payload: jsonEncode(data),
     );
   }
 
+  static Future<int> getPendingCount() async {
+    if (kIsWeb) return 0;
+    final pending = await _notificationsPlugin.pendingNotificationRequests();
+    return pending.length;
+  }
+
   static Future<void> clearModeReminders(String mode) async {
-    final oldIds = StorageService.getScheduledReminderIds(mode);
-    for (final id in oldIds) {
-      await _notificationsPlugin.cancel(id);
-    }
-    await StorageService.clearScheduledReminderIds(mode);
+    await ReminderManager.instance.clearAllForMode(mode);
   }
 
   static Future<void> reconcileReminders() async {
-    print('========== DIAGNOSTIC: BEGIN RECONCILE REMINDERS ==========');
     final userMode = StorageService.getUserMode();
     
     if (userMode == null || userMode.isEmpty) {
-      // Clear all state for both modes if no mode is selected
-      await clearModeReminders('student');
-      await clearModeReminders('faculty');
+      // Complete teardown if no mode is selected
+      await ReminderManager.instance.clearAllForMode('student');
+      await ReminderManager.instance.clearAllForMode('faculty');
       return;
     }
 
+    // Always clear the inactive mode
+    final inactiveMode = userMode == 'student' ? 'faculty' : 'student';
+    await ReminderManager.instance.clearAllForMode(inactiveMode);
+
     List<dynamic> timetable = [];
+    List<dynamic> overrides = [];
     if (userMode == 'faculty') {
       timetable = StorageService.getFacultyTimetableCache();
     } else {
       timetable = StorageService.getTimetableCache();
+      overrides = StorageService.getStudentCalendarOverridesCache();
     }
 
     if (timetable.isNotEmpty) {
-      await scheduleClassReminders(timetable);
-    }
-  }
-
-  static Future<void> scheduleClassReminders(List<dynamic> weekTimetable) async {
-    print('========== DIAGNOSTIC: FCM HANDLES REMINDERS REMOTELY ==========');
-  }
-
-  static Future<void> cancelStudentClassReminders() async {
-    final pendingRequests = await _notificationsPlugin.pendingNotificationRequests();
-    for (final request in pendingRequests) {
-      if (request.payload == 'student') {
-        await _notificationsPlugin.cancel(request.id);
-      }
-    }
-  }
-
-  static Future<void> cancelFacultyClassReminders() async {
-    final pendingRequests = await _notificationsPlugin.pendingNotificationRequests();
-    for (final request in pendingRequests) {
-      if (request.payload == 'faculty') {
-        await _notificationsPlugin.cancel(request.id);
-      }
-    }
-  }
-
-  static int _getWeekdayNumber(String dayName) {
-    switch (dayName.toLowerCase()) {
-      case 'monday': return 1;
-      case 'tuesday': return 2;
-      case 'wednesday': return 3;
-      case 'thursday': return 4;
-      case 'friday': return 5;
-      case 'saturday': return 6;
-      case 'sunday': return 7;
-      default: return 0;
+      await ReminderManager.instance.reconcile(
+        timetable: timetable,
+        overrides: overrides,
+        mode: userMode,
+      );
     }
   }
 }

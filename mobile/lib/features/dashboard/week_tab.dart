@@ -3,10 +3,46 @@ import 'package:intl/intl.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
 import '../../core/utils.dart';
-import 'ad_banner.dart';
 import '../../core/sync.dart';
 import '../notifications/notifications_screen.dart';
+import 'changes_tab.dart';
 import 'widgets/live_class_progress.dart';
+import '../../widgets/class_details_bottom_sheet.dart';
+
+enum ScheduleBlockType {
+  classBlock,
+  freeTime,
+  lunch,
+}
+
+class ScheduleBlock {
+  final ScheduleBlockType type;
+  final Map<String, dynamic>? classEvent;
+  final String startTime;
+  final String endTime;
+  final int durationMinutes;
+
+  ScheduleBlock.classBlock({
+    required this.classEvent,
+    required this.startTime,
+    required this.endTime,
+    required this.durationMinutes,
+  }) : type = ScheduleBlockType.classBlock;
+
+  ScheduleBlock.freeTime({
+    required this.startTime,
+    required this.endTime,
+    required this.durationMinutes,
+  })  : type = ScheduleBlockType.freeTime,
+        classEvent = null;
+
+  ScheduleBlock.lunch({
+    required this.startTime,
+    required this.endTime,
+    required this.durationMinutes,
+  })  : type = ScheduleBlockType.lunch,
+        classEvent = null;
+}
 
 class WeekTab extends StatefulWidget {
   const WeekTab({super.key});
@@ -104,7 +140,70 @@ class _WeekTabState extends State<WeekTab> {
     });
   }
 
+  int _toMinutes(String timeStr) {
+    if (timeStr.isEmpty) return 0;
+    try {
+      final parts = timeStr.split(':').map(int.parse).toList();
+      return parts[0] * 60 + (parts.length > 1 ? parts[1] : 0);
+    } catch (_) {
+      return 0;
+    }
+  }
 
+  List<ScheduleBlock> _buildTimeline(List<dynamic> classes) {
+    final List<ScheduleBlock> blocks = [];
+    if (classes.isEmpty) return blocks;
+
+    int prevEndMinutes = -1;
+    String prevEndTimeStr = '';
+
+    for (int i = 0; i < classes.length; i++) {
+      final c = classes[i];
+      final startStr = c['start_time'] as String? ?? '';
+      final endStr = c['end_time'] as String? ?? '';
+
+      final startMins = _toMinutes(startStr);
+      final endMins = _toMinutes(endStr);
+
+      // Check for gap between previous class and current class
+      if (prevEndMinutes != -1 && startMins > prevEndMinutes) {
+        final gapDuration = startMins - prevEndMinutes;
+        if (gapDuration >= 10) {
+          // Detect lunch: Standard university interval between 12:00 and 13:30 with duration >= 30 mins
+          final isLunch = (prevEndMinutes >= 12 * 60 && prevEndMinutes <= 13 * 60 + 15) && gapDuration >= 30;
+          if (isLunch) {
+            blocks.add(ScheduleBlock.lunch(
+              startTime: prevEndTimeStr,
+              endTime: startStr,
+              durationMinutes: gapDuration,
+            ));
+          } else {
+            blocks.add(ScheduleBlock.freeTime(
+              startTime: prevEndTimeStr,
+              endTime: startStr,
+              durationMinutes: gapDuration,
+            ));
+          }
+        }
+      }
+
+      // Add the class block
+      final classDuration = (endMins > startMins) ? (endMins - startMins) : 50;
+      blocks.add(ScheduleBlock.classBlock(
+        classEvent: c,
+        startTime: startStr,
+        endTime: endStr,
+        durationMinutes: classDuration,
+      ));
+
+      if (endMins > prevEndMinutes) {
+        prevEndMinutes = endMins;
+        prevEndTimeStr = endStr;
+      }
+    }
+
+    return blocks;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,6 +215,7 @@ class _WeekTabState extends State<WeekTab> {
     final subHeadlineText = DateFormat('EEEE, d MMMM').format(selectedDate);
     final formattedDate = "${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}";
     final userMode = StorageService.getUserMode() ?? 'student';
+    final isStudent = userMode == 'student';
     final overrides = userMode == 'faculty' 
         ? StorageService.getFacultyCalendarOverridesCache() 
         : StorageService.getStudentCalendarOverridesCache();
@@ -153,13 +253,15 @@ class _WeekTabState extends State<WeekTab> {
     }
     dayClasses.sort((a, b) => (a['start_time'] as String).compareTo(b['start_time'] as String));
 
+    final timelineBlocks = _buildTimeline(dayClasses);
+
     return Scaffold(
       backgroundColor: AppConstants.background,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header
+            // Header with SRU logo, Changes icon (Student only), and Notification Bell
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer, vertical: 8),
               child: Row(
@@ -174,8 +276,26 @@ class _WeekTabState extends State<WeekTab> {
                       ),
                     ),
                   ),
+                  // Changes Icon (Student Only)
+                  if (isStudent)
+                    IconButton(
+                      icon: const Icon(Icons.history_outlined, color: AppConstants.textPrimary, size: 24),
+                      tooltip: 'Changes',
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => Scaffold(
+                              appBar: AppBar(title: const Text('Changes'), backgroundColor: AppConstants.surface),
+                              body: const SafeArea(child: ChangesTab()),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  // Notification Bell
                   IconButton(
                     icon: const Icon(Icons.notifications_none, color: AppConstants.textPrimary, size: 24),
+                    tooltip: 'Notifications',
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(builder: (context) => const NotificationsScreen()),
@@ -317,7 +437,7 @@ class _WeekTabState extends State<WeekTab> {
                       child: Text(
                         holidayMessage != null && holidayMessage.isNotEmpty 
                             ? '$holidayTitle - $holidayMessage'
-                            : holidayTitle!,
+                            : holidayTitle,
                         style: AppConstants.getBodyMedium(color: AppConstants.info).copyWith(fontWeight: FontWeight.bold),
                         textAlign: TextAlign.right,
                         overflow: TextOverflow.ellipsis,
@@ -328,14 +448,14 @@ class _WeekTabState extends State<WeekTab> {
             ),
             const SizedBox(height: 12),
 
-            // Class Feed
+            // Timeline Feed (Classes, Free Time, Lunch Time)
             Expanded(
-              child: dayClasses.isNotEmpty
+              child: timelineBlocks.isNotEmpty
                   ? ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer),
-                      itemCount: dayClasses.length + 1, // list + end of classes divider
+                      itemCount: timelineBlocks.length + 1, // list + end of classes divider
                       itemBuilder: (context, index) {
-                        if (index == dayClasses.length) {
+                        if (index == timelineBlocks.length) {
                           // End of classes indicator
                           return Padding(
                             padding: const EdgeInsets.symmetric(vertical: 24),
@@ -348,7 +468,97 @@ class _WeekTabState extends State<WeekTab> {
                           );
                         }
 
-                        final c = dayClasses[index];
+                        final block = timelineBlocks[index];
+
+                        // Free Time block
+                        if (block.type == ScheduleBlockType.freeTime) {
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFF94A3B8),
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    const Text(
+                                      'Free Time',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  '${TimeUtils.format12Hour(block.startTime)} – ${TimeUtils.format12Hour(block.endTime)} · ${block.durationMinutes} mins',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        // Lunch block
+                        if (block.type == ScheduleBlockType.lunch) {
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF7ED),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFFED7AA)),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(Icons.restaurant_rounded, size: 16, color: Color(0xFFEA580C)),
+                                    const SizedBox(width: 8),
+                                    const Text(
+                                      'Lunch',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFFC2410C),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  '${TimeUtils.format12Hour(block.startTime)} – ${TimeUtils.format12Hour(block.endTime)} · ${block.durationMinutes} mins',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF9A3412),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        // Class block
+                        final c = block.classEvent!;
                         final room = (c['room'] as String? ?? 'No Room').split('_')[0];
                         final ltp = c['ltp'] as String? ?? '';
                         final isLab = ltp.toLowerCase().contains('lab') || ltp.toLowerCase().contains('practical') || ltp == 'P';
@@ -363,117 +573,137 @@ class _WeekTabState extends State<WeekTab> {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Container(
-                            padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: isCancelled ? AppConstants.surface.withOpacity(0.5) : AppConstants.surface,
+                              color: isCancelled ? AppConstants.surface.withValues(alpha: 0.5) : AppConstants.surface,
                               borderRadius: BorderRadius.circular(AppConstants.radiusCard),
                               boxShadow: isCancelled ? null : AppConstants.shadowLevel1,
                               border: Border.all(
-                                color: isNext ? AppConstants.primary : (isCancelled ? AppConstants.outline : AppConstants.outline),
+                                color: isNext ? AppConstants.primary : AppConstants.outline,
                                 width: isNext ? 1.5 : 1.0,
                               ),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        c['subject'] as String,
-                                        style: AppConstants.getHeadline().copyWith(
-                                          fontSize: 18,
-                                          decoration: isCancelled ? TextDecoration.lineThrough : null,
-                                          color: isCancelled ? AppConstants.textSecondary : null,
-                                        ),
-                                      ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(AppConstants.radiusCard),
+                                onTap: () {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (ctx) => ClassDetailsBottomSheet(
+                                      classEvent: c,
+                                      status: isCancelled ? 'Cancelled' : (isNext ? 'Up Next' : 'Scheduled'),
+                                      dateStr: subHeadlineText,
                                     ),
-                                    Row(
-                                      children: [
-                                        Text(
-                                          '${TimeUtils.format12Hour(c['start_time'])} - ${TimeUtils.format12Hour(c['end_time'])}',
-                                          style: AppConstants.getLabelSmall(
-                                            color: isCancelled ? AppConstants.textSecondary : AppConstants.primary
-                                          ).copyWith(
-                                            fontWeight: FontWeight.w600,
-                                            decoration: isCancelled ? TextDecoration.lineThrough : null,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        if (!isCancelled)
-                                          LiveClassProgressIndicator(
-                                            startTime: c['start_time'] as String,
-                                            endTime: c['end_time'] as String,
-                                            isToday: _selectedDayIndex == DateTime.now().weekday - 1,
-                                          ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.place_outlined, size: 16, color: AppConstants.textSecondary),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      isCancelled ? 'Cancelled' : room,
-                                      style: AppConstants.getBodyMedium(
-                                        color: isCancelled ? AppConstants.error : AppConstants.textSecondary
-                                      ).copyWith(
-                                        fontWeight: isCancelled ? FontWeight.bold : null,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    const Icon(Icons.person_outline, size: 16, color: AppConstants.textSecondary),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        c['faculty'] as String? ?? 'Unknown Faculty',
-                                        style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                if (!isCancelled && (isNext || ltp.isNotEmpty)) ...[
-                                  const SizedBox(height: 12),
-                                  Row(
+                                  );
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      if (isNext)
-                                        Container(
-                                          margin: const EdgeInsets.only(right: 8),
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                          decoration: BoxDecoration(
-                                            color: AppConstants.primary,
-                                            borderRadius: BorderRadius.circular(AppConstants.radiusTag),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              c['subject'] as String,
+                                              style: AppConstants.getHeadline().copyWith(
+                                                fontSize: 18,
+                                                decoration: isCancelled ? TextDecoration.lineThrough : null,
+                                                color: isCancelled ? AppConstants.textSecondary : null,
+                                              ),
+                                            ),
                                           ),
-                                          child: Text(
-                                            'Next',
-                                            style: AppConstants.getLabelSmall(color: Colors.white).copyWith(fontWeight: FontWeight.bold),
+                                          Row(
+                                            children: [
+                                              Text(
+                                                '${TimeUtils.format12Hour(c['start_time'])} - ${TimeUtils.format12Hour(c['end_time'])}',
+                                                style: AppConstants.getLabelSmall(
+                                                  color: isCancelled ? AppConstants.textSecondary : AppConstants.primary
+                                                ).copyWith(
+                                                  fontWeight: FontWeight.w600,
+                                                  decoration: isCancelled ? TextDecoration.lineThrough : null,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              if (!isCancelled)
+                                                LiveClassProgressIndicator(
+                                                  startTime: c['start_time'] as String,
+                                                  endTime: c['end_time'] as String,
+                                                  isToday: _selectedDayIndex == DateTime.now().weekday - 1,
+                                                ),
+                                            ],
                                           ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.place_outlined, size: 16, color: AppConstants.textSecondary),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            isCancelled ? 'Cancelled' : room,
+                                            style: AppConstants.getBodyMedium(
+                                              color: isCancelled ? AppConstants.error : AppConstants.textSecondary
+                                            ).copyWith(
+                                              fontWeight: isCancelled ? FontWeight.bold : null,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          const Icon(Icons.person_outline, size: 16, color: AppConstants.textSecondary),
+                                          const SizedBox(width: 6),
+                                          Expanded(
+                                            child: Text(
+                                              c['faculty'] as String? ?? 'Unknown Faculty',
+                                              style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      if (!isCancelled && (isNext || ltp.isNotEmpty)) ...[
+                                        const SizedBox(height: 12),
+                                        Row(
+                                          children: [
+                                            if (isNext)
+                                              Container(
+                                                margin: const EdgeInsets.only(right: 8),
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                decoration: BoxDecoration(
+                                                  color: AppConstants.primary,
+                                                  borderRadius: BorderRadius.circular(AppConstants.radiusTag),
+                                                ),
+                                                child: Text(
+                                                  'Next',
+                                                  style: AppConstants.getLabelSmall(color: Colors.white).copyWith(fontWeight: FontWeight.bold),
+                                                ),
+                                              ),
+                                            if (ltp.isNotEmpty)
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                decoration: BoxDecoration(
+                                                  color: isLab
+                                                      ? AppConstants.warningContainer.withValues(alpha: 0.5)
+                                                      : AppConstants.secondaryContainer.withValues(alpha: 0.5),
+                                                  borderRadius: BorderRadius.circular(AppConstants.radiusTag),
+                                                ),
+                                                child: Text(
+                                                  ltp,
+                                                  style: AppConstants.getLabelSmall(
+                                                    color: isLab ? AppConstants.warning : AppConstants.textSecondary,
+                                                  ).copyWith(fontWeight: FontWeight.bold),
+                                                ),
+                                              ),
+                                          ],
                                         ),
-                                      if (ltp.isNotEmpty)
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                          decoration: BoxDecoration(
-                                            color: isLab
-                                                ? AppConstants.warningContainer.withOpacity(0.5)
-                                                : AppConstants.secondaryContainer.withOpacity(0.5),
-                                            borderRadius: BorderRadius.circular(AppConstants.radiusTag),
-                                          ),
-                                          child: Text(
-                                            ltp,
-                                            style: AppConstants.getLabelSmall(
-                                              color: isLab ? AppConstants.warning : AppConstants.textSecondary,
-                                            ).copyWith(fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
+                                      ],
                                     ],
                                   ),
-                                ],
-                              ],
+                                ),
+                              ),
                             ),
                           ),
                         );
@@ -482,10 +712,10 @@ class _WeekTabState extends State<WeekTab> {
                   : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.emoji_food_beverage_outlined, color: AppConstants.primary, size: 48),
+                        const Icon(Icons.calendar_today_outlined, color: AppConstants.primary, size: 48),
                         const SizedBox(height: 16),
                         Text(
-                          'No classes today',
+                          'No classes scheduled for $selectedDayName',
                           style: AppConstants.getHeadline().copyWith(fontSize: 18),
                         ),
                         const SizedBox(height: 4),

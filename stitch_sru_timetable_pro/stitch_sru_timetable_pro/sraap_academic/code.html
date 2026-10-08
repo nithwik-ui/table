@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { colors: { "surface": "#f9f9ff", "primary-fixed": "#d5e3ff", "inverse-primary": "#a8c8ff", "primary-container": "#0b4f96", "on-surface-variant": "#424751", "secondary-fixed-dim": "#c0c7d6", "on-tertiary-fixed-variant": "#753400", "surface-container-high": "#e1e8fd", "secondary-fixed": "#dce2f3", "background": "#f9f9ff", "secondary-container": "#dce2f3", "on-tertiary-fixed": "#321200", "surface-container-highest": "#dce2f7", "surface-bright": "#f9f9ff", "tertiary": "#5f2900", "on-primary": "#ffffff", "on-secondary-fixed": "#151c27", "outline-variant": "#c2c6d2", "on-error-container": "#93000a", "error-container": "#ffdad6", "on-tertiary": "#ffffff", "on-secondary-container": "#5e6572", "surface-container": "#e9edff", "secondary": "#585f6c", "on-secondary": "#ffffff", "inverse-on-surface": "#edf0ff", "on-error": "#ffffff", "primary-fixed-dim": "#a8c8ff", "tertiary-fixed-dim": "#ffb68b", "on-primary-fixed": "#001b3c", "surface-container-low": "#f1f3ff", "tertiary-container": "#823b00", "surface-container-lowest": "#ffffff", "on-background": "#141b2b", "surface-variant": "#dce2f7", "primary": "#003870", "on-primary-container": "#9fc3ff", "on-primary-fixed-variant": "#00468a", "on-surface": "#141b2b", "surface-tint": "#265ea6", "inverse-surface": "#293040", "error": "#ba1a1a", "on-tertiary-container": "#ffaf7f", "surface-dim": "#d3daef", "tertiary-fixed": "#ffdbc8", "on-secondary-fixed-variant": "#404754", "outline": "#727782" }, borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, spacing: { "md": "16px", "xs": "4px", "xl": "32px", "base": "8px", "container-padding": "16px", "stack-gap": "12px", "lg": "24px", "sm": "8px" }, fontFamily: { "mono-label": ["Geist"], "headline": ["Inter"], "body-lg": ["Inter"], "body-md": ["Inter"], "label-sm": ["Geist"], "display": ["Inter"] }, fontSize: { "mono-label": ["13px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }], "headline": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }], "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }], "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }], "display": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }] } } } };</script><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style></head><body class="bg-surface font-body-md text-on-surface antialiased flex flex-col min-h-screen"><header class="fixed top-0 inset-x-0 z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] pt-safe"><div class="h-16 px-container-padding flex items-center justify-between"><div class="flex items-center gap-sm"><div class="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-sm"><span class="material-symbols-outlined text-[20px]">account_balance</span></div><div class="flex flex-col"><span class="font-label-sm text-label-sm uppercase tracking-wider text-primary font-semibold">SRU Timetable</span><h1 class="font-headline text-headline text-on-surface leading-tight">Academic</h1></div></div><div class="flex items-center gap-xs"><button aria-label="Notifications" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-[22px]">notifications</span></button><img alt="Profile" class="w-8 h-8 rounded-full object-cover ml-xs ring-2 ring-primary/20" src="https://lh3.googleusercontent.com/aida/AEtjO1VChkT5AE9g8OUufGbpE7OkxaAZ-sUwI_eRClsgMnpA7t1hQrYc_4-KapHGMkA0jYsXaK95lnkp1ouWQlPC4bldoGLAylJ9Op8OrnTyRWBsX0jea43rELi_D7evChPJkraAIKXE_0g9cJxeWYUIS-UBOBC29v6vRw9GLZiTZhB-pKm61ldBB_om6AM6zfKAmtTv8rlEnhq9NLwSd0SnXmYeiTsKPYKibbp3_VFcN-xAodwyn9Bsn7JkcVVX8hiVNb-2ohgfxmaNkQ"/></div></div></header><main class="flex flex-col relative w-full pt-16 pb-24 bg-surface min-h-screen"><div class="flex flex-col w-full px-container-padding pb-8">
+<!-- State Switcher Pill Bar (Discreet UX Tool) -->
+<div class="w-full mb-4">
+<div class="flex items-center justify-between pb-1">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-semibold">Preview State</span>
+<span class="font-label-sm text-label-sm text-primary font-medium" id="syncStatusBadge">Live Mode</span>
+</div>
+<div class="flex items-center gap-1.5 overflow-x-auto py-1 no-scrollbar -mx-container-padding px-container-padding">
+<button class="state-pill px-3 py-1.5 rounded-full font-label-sm text-label-sm font-semibold transition-all shadow-sm bg-primary text-on-primary" id="btn-connected" onclick="setAppState('connected')">
+        Connected
+      </button>
+<button class="state-pill px-3 py-1.5 rounded-full font-label-sm text-label-sm font-medium transition-all bg-surface-container text-on-surface-variant hover:bg-surface-container-high" id="btn-offline" onclick="setAppState('offline')">
+        Offline
+      </button>
+<button class="state-pill px-3 py-1.5 rounded-full font-label-sm text-label-sm font-medium transition-all bg-surface-container text-on-surface-variant hover:bg-surface-container-high" id="btn-expired" onclick="setAppState('expired')">
+        Session Expired
+      </button>
+<button class="state-pill px-3 py-1.5 rounded-full font-label-sm text-label-sm font-medium transition-all bg-surface-container text-on-surface-variant hover:bg-surface-container-high" id="btn-skeleton" onclick="setAppState('skeleton')">
+        Loading (Skeleton)
+      </button>
+<button class="state-pill px-3 py-1.5 rounded-full font-label-sm text-label-sm font-medium transition-all bg-surface-container text-on-surface-variant hover:bg-surface-container-high" id="btn-first_time" onclick="setAppState('first_time')">
+        First-Time
+      </button>
+</div>
+</div>
+<!-- Header Action & Overview Bar -->
+<section class="flex items-center justify-between mb-4">
+<div>
+<h2 class="font-headline text-headline text-on-surface tracking-tight">Academic</h2>
+<p class="font-body-md text-body-md text-secondary">Your academic overview</p>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-secondary hidden sm:inline" id="quickSyncTime">Today, 10:42 PM</span>
+<button aria-label="Refresh SRAAP Academic Data" class="w-10 h-10 rounded-full bg-surface-container-low active:bg-surface-container text-primary flex items-center justify-center shadow-sm transition-all active:scale-95" id="refreshBtn" onclick="triggerManualRefresh()">
+<span class="material-symbols-outlined text-[20px] transition-transform duration-700" id="refreshIcon">sync</span>
+</button>
+</div>
+</section>
+<!-- BANNERS CONTAINER -->
+<div class="mb-4" id="bannerSlot">
+<!-- Offline Banner (Initially hidden) -->
+<div class="hidden flex items-center gap-3 p-3.5 rounded-xl bg-surface-container-highest text-on-surface-variant shadow-sm transition-all" id="offlineBanner">
+<span class="material-symbols-outlined text-[20px] text-secondary">cloud_off</span>
+<div class="flex-1 min-w-0">
+<p class="font-mono-label text-mono-label font-semibold text-on-surface">Offline · Showing cached data</p>
+<p class="font-label-sm text-label-sm text-secondary truncate">Last verified: Today, 10:42 PM</p>
+</div>
+<button class="font-label-sm text-label-sm font-semibold text-primary px-2.5 py-1 rounded-lg bg-surface hover:bg-surface-container-high transition-colors" onclick="triggerManualRefresh()">
+        Retry
+      </button>
+</div>
+<!-- Expired Banner (Initially hidden) -->
+<div class="hidden flex items-start gap-3 p-3.5 rounded-xl bg-error-container text-on-error-container shadow-sm transition-all" id="expiredBanner">
+<span class="material-symbols-outlined text-[22px] text-error mt-0.5">lock_clock</span>
+<div class="flex-1 min-w-0">
+<p class="font-headline text-[15px] font-semibold text-on-error-container">Session Expired</p>
+<p class="font-body-md text-body-md text-on-error-container/90 mt-0.5">SRAAP session expired. Reconnect to continue accessing your academic information.</p>
+<div class="mt-2.5">
+<button class="px-3.5 py-1.5 rounded-lg bg-error text-on-error font-label-sm text-label-sm font-semibold shadow-sm active:scale-95 transition-all" onclick="setAppState('connected')">
+            Reconnect SRAAP
+          </button>
+</div>
+</div>
+</div>
+</div>
+<!-- STATE 1 & 2 & 3: MAIN CONNECTED / OFFLINE CONTENT CONTAINER -->
+<div class="flex flex-col gap-5" id="viewConnected">
+<!-- Quick Metrics (Attendance & CGPA Paired Grid) -->
+<div class="grid grid-cols-2 gap-3">
+<!-- Overall Attendance Card -->
+<div class="flex flex-col justify-between p-4 rounded-xl bg-surface-container-lowest shadow-sm active:bg-surface-container-low transition-all cursor-pointer" onclick="openAttendanceModal()" role="button" tabindex="0">
+<div>
+<div class="flex items-center justify-between mb-1.5">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-semibold">Attendance</span>
+<span class="material-symbols-outlined text-[18px] text-primary">analytics</span>
+</div>
+<p class="font-display text-display text-primary font-bold tracking-tight">82.4%</p>
+<p class="font-label-sm text-label-sm text-secondary mt-0.5">Overall attendance</p>
+</div>
+<div class="mt-4">
+<div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full transition-all duration-700" style="width: 82.4%;"></div>
+</div>
+<div class="flex items-center justify-between mt-2">
+<span class="font-label-sm text-[11px] text-secondary">Updated 15 min ago</span>
+<span class="material-symbols-outlined text-[14px] text-secondary">chevron_right</span>
+</div>
+</div>
+</div>
+<!-- Overall CGPA Card -->
+<div class="flex flex-col justify-between p-4 rounded-xl bg-surface-container-lowest shadow-sm transition-all">
+<div>
+<div class="flex items-center justify-between mb-1.5">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-semibold">CGPA</span>
+<span class="material-symbols-outlined text-[18px] text-primary">school</span>
+</div>
+<p class="font-display text-display text-on-surface font-bold tracking-tight">8.24</p>
+<p class="font-label-sm text-label-sm text-secondary mt-0.5">Cumulative Grade Point</p>
+</div>
+<div class="mt-4">
+<div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+<div class="bg-secondary h-full rounded-full transition-all duration-700" style="width: 82.4%;"></div>
+</div>
+<div class="flex items-center justify-between mt-2">
+<span class="font-label-sm text-[11px] text-secondary">Semester 6 Active</span>
+<span class="font-mono-label text-[11px] font-semibold text-secondary">Scale 10.0</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Subject-wise Attendance List -->
+<section class="flex flex-col">
+<div class="flex items-center justify-between mb-2.5">
+<h3 class="font-headline text-headline text-on-surface">Subject-wise Attendance</h3>
+<button class="font-label-sm text-label-sm text-primary font-semibold hover:underline" onclick="openAttendanceModal()">
+          View all
+        </button>
+</div>
+<div class="flex flex-col gap-2.5">
+<!-- Subject 1 -->
+<div class="p-3.5 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-body-md text-body-md font-semibold text-on-surface truncate pr-2">Data Structures</span>
+<span class="font-mono-label text-mono-label font-bold text-primary">86%</span>
+</div>
+<div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 86%;"></div>
+</div>
+</div>
+<!-- Subject 2 -->
+<div class="p-3.5 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-body-md text-body-md font-semibold text-on-surface truncate pr-2">Database Management Systems</span>
+<span class="font-mono-label text-mono-label font-bold text-primary">81%</span>
+</div>
+<div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 81%;"></div>
+</div>
+</div>
+<!-- Subject 3 -->
+<div class="p-3.5 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-body-md text-body-md font-semibold text-on-surface truncate pr-2">Computer Networks</span>
+<span class="font-mono-label text-mono-label font-bold text-secondary">79%</span>
+</div>
+<div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary h-full rounded-full" style="width: 79%;"></div>
+</div>
+</div>
+<!-- Subject 4 -->
+<div class="p-3.5 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-body-md text-body-md font-semibold text-on-surface truncate pr-2">Operating Systems</span>
+<span class="font-mono-label text-mono-label font-bold text-primary">91%</span>
+</div>
+<div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 91%;"></div>
+</div>
+</div>
+<!-- Subject 5 -->
+<div class="p-3.5 rounded-xl bg-surface-container-lowest shadow-sm flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-body-md text-body-md font-semibold text-on-surface truncate pr-2">Discrete Mathematics</span>
+<span class="font-mono-label text-mono-label font-bold text-secondary">75%</span>
+</div>
+<div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary h-full rounded-full" style="width: 75%;"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Mentor Section -->
+<section class="flex flex-col">
+<h3 class="font-headline text-headline text-on-surface mb-2.5">Mentor</h3>
+<div class="flex items-center justify-between p-3.5 rounded-xl bg-surface-container-lowest shadow-sm active:bg-surface-container-low transition-all cursor-pointer" onclick="openMentorModal()" role="button" tabindex="0">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-11 h-11 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-headline text-headline font-bold shrink-0">
+            KS
+          </div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline text-[15px] font-semibold text-on-surface truncate">Dr. K. Srinivas</span>
+<span class="font-label-sm text-label-sm text-secondary truncate">Faculty Mentor · CSE Dept</span>
+</div>
+</div>
+<div class="flex items-center text-on-surface-variant pl-2">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</div>
+</div>
+</section>
+<!-- Footer Sync Information -->
+<div class="flex flex-col items-center justify-center pt-2 pb-1 gap-1 text-center">
+<div class="flex items-center gap-1.5 text-secondary">
+<span class="material-symbols-outlined text-[15px]">done_all</span>
+<span class="font-mono-label text-[12px]">Last synced: Today, 10:42 PM</span>
+</div>
+<button class="font-label-sm text-label-sm text-primary font-semibold hover:underline" onclick="triggerManualRefresh()">
+        Refresh SRAAP Portal
+      </button>
+</div>
+</div>
+<!-- STATE 4: SKELETON / LOADING CONTAINER -->
+<div class="hidden flex-col gap-5 animate-pulse" id="viewSkeleton">
+<!-- Metrics Skeleton -->
+<div class="grid grid-cols-2 gap-3">
+<div class="h-36 rounded-xl bg-surface-container-high p-4 flex flex-col justify-between">
+<div class="w-20 h-3.5 bg-surface-container-highest rounded-full"></div>
+<div class="w-24 h-8 bg-surface-container-highest rounded-md"></div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full"></div>
+</div>
+<div class="h-36 rounded-xl bg-surface-container-high p-4 flex flex-col justify-between">
+<div class="w-16 h-3.5 bg-surface-container-highest rounded-full"></div>
+<div class="w-20 h-8 bg-surface-container-highest rounded-md"></div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full"></div>
+</div>
+</div>
+<!-- Attendance List Skeleton -->
+<div class="flex flex-col gap-2.5">
+<div class="w-44 h-4 bg-surface-container-high rounded-full mb-1"></div>
+<div class="h-14 rounded-xl bg-surface-container-high p-3 flex flex-col justify-center gap-2">
+<div class="flex justify-between">
+<div class="w-32 h-3.5 bg-surface-container-highest rounded"></div>
+<div class="w-10 h-3.5 bg-surface-container-highest rounded"></div>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full"></div>
+</div>
+<div class="h-14 rounded-xl bg-surface-container-high p-3 flex flex-col justify-center gap-2">
+<div class="flex justify-between">
+<div class="w-48 h-3.5 bg-surface-container-highest rounded"></div>
+<div class="w-10 h-3.5 bg-surface-container-highest rounded"></div>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full"></div>
+</div>
+<div class="h-14 rounded-xl bg-surface-container-high p-3 flex flex-col justify-center gap-2">
+<div class="flex justify-between">
+<div class="w-36 h-3.5 bg-surface-container-highest rounded"></div>
+<div class="w-10 h-3.5 bg-surface-container-highest rounded"></div>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full"></div>
+</div>
+<div class="h-14 rounded-xl bg-surface-container-high p-3 flex flex-col justify-center gap-2">
+<div class="flex justify-between">
+<div class="w-40 h-3.5 bg-surface-container-highest rounded"></div>
+<div class="w-10 h-3.5 bg-surface-container-highest rounded"></div>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full"></div>
+</div>
+</div>
+<!-- Mentor Skeleton -->
+<div class="flex flex-col gap-2">
+<div class="w-20 h-4 bg-surface-container-high rounded-full"></div>
+<div class="h-16 rounded-xl bg-surface-container-high p-3 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest"></div>
+<div class="flex flex-col gap-1.5 flex-1">
+<div class="w-32 h-3.5 bg-surface-container-highest rounded"></div>
+<div class="w-24 h-2.5 bg-surface-container-highest rounded"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- STATE 5: FIRST-TIME EMPTY STATE CONTAINER -->
+<div class="hidden flex-col items-center text-center py-6 px-3" id="viewFirstTime">
+<!-- Academic Illustration Banner / Placeholder -->
+<div class="w-20 h-20 rounded-2xl bg-primary-fixed flex items-center justify-center text-primary mb-5 shadow-sm">
+<span class="material-symbols-outlined text-[40px]">school</span>
+</div>
+<h3 class="font-display text-[22px] font-bold text-on-surface tracking-tight mb-2">Your Academic Space</h3>
+<p class="font-body-md text-body-md text-secondary max-w-xs mb-6">
+      Connect your SR University SRAAP account to sync live attendance records, CGPA updates, and direct advisor contact.
+    </p>
+<!-- Value Proposition List -->
+<div class="w-full max-w-xs p-4 rounded-xl bg-surface-container-lowest shadow-sm mb-6 flex flex-col gap-3 text-left">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface">Live Overall &amp; Subject Attendance</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface">Verified Cumulative Grade Points</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface">Direct Faculty Mentor Connection</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
+<span class="font-body-md text-body-md text-on-surface">Instant low-attendance warnings</span>
+</div>
+</div>
+<button class="w-full max-w-xs py-3.5 px-6 rounded-xl bg-primary text-on-primary font-headline text-headline shadow-md active:scale-98 transition-all flex items-center justify-center gap-2" onclick="setAppState('connected')">
+<span class="material-symbols-outlined text-[20px]">link</span>
+      Connect SRAAP Account
+    </button>
+</div>
+<!-- INTERACTIVE MODAL 1: ATTENDANCE DETAIL SHEET -->
+<div class="fixed inset-0 z-50 bg-inverse-surface/40 backdrop-blur-sm hidden items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity" id="attendanceModal">
+<div class="w-full max-w-md bg-surface-container-lowest rounded-t-2xl sm:rounded-2xl p-5 shadow-xl flex flex-col max-h-[85vh]">
+<!-- Header -->
+<div class="flex items-center justify-between pb-3 border-b-0">
+<div>
+<span class="font-label-sm text-label-sm text-primary font-semibold uppercase tracking-wider">SR University SRAAP</span>
+<h4 class="font-headline text-headline text-on-surface">Attendance Breakdown</h4>
+</div>
+<button class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-secondary hover:text-on-surface" onclick="closeAttendanceModal()">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<!-- Core Stat -->
+<div class="p-4 rounded-xl bg-surface-container-low my-3 flex items-center justify-between">
+<div>
+<p class="font-label-sm text-label-sm text-secondary">Aggregate Attendance</p>
+<p class="font-display text-display font-bold text-primary">82.4%</p>
+<span class="font-label-sm text-label-sm text-on-surface font-medium">186 of 226 Sessions Attended</span>
+</div>
+<div class="w-16 h-16 rounded-full bg-surface flex items-center justify-center shadow-inner">
+<span class="font-mono-label text-mono-label font-bold text-primary">Safe</span>
+</div>
+</div>
+<!-- Detail List -->
+<div class="flex-1 overflow-y-auto space-y-2 py-1 pr-0.5">
+<div class="flex justify-between items-center p-2.5 rounded-lg bg-surface">
+<span class="font-body-md text-body-md text-on-surface">Data Structures</span>
+<span class="font-mono-label text-mono-label font-semibold text-on-surface">43 / 50 (86%)</span>
+</div>
+<div class="flex justify-between items-center p-2.5 rounded-lg bg-surface">
+<span class="font-body-md text-body-md text-on-surface">Database Management Systems</span>
+<span class="font-mono-label text-mono-label font-semibold text-on-surface">39 / 48 (81%)</span>
+</div>
+<div class="flex justify-between items-center p-2.5 rounded-lg bg-surface">
+<span class="font-body-md text-body-md text-on-surface">Computer Networks</span>
+<span class="font-mono-label text-mono-label font-semibold text-secondary">34 / 43 (79%)</span>
+</div>
+<div class="flex justify-between items-center p-2.5 rounded-lg bg-surface">
+<span class="font-body-md text-body-md text-on-surface">Operating Systems</span>
+<span class="font-mono-label text-mono-label font-semibold text-on-surface">41 / 45 (91%)</span>
+</div>
+<div class="flex justify-between items-center p-2.5 rounded-lg bg-surface">
+<span class="font-body-md text-body-md text-on-surface">Discrete Mathematics</span>
+<span class="font-mono-label text-mono-label font-semibold text-secondary">29 / 40 (75%)</span>
+</div>
+</div>
+<!-- Close Action -->
+<button class="w-full mt-4 py-2.5 rounded-xl bg-surface-container-high text-on-surface font-headline text-headline text-[15px] hover:bg-surface-container-highest transition-colors" onclick="closeAttendanceModal()">
+        Done
+      </button>
+</div>
+</div>
+<!-- INTERACTIVE MODAL 2: MENTOR DETAIL MODAL -->
+<div class="fixed inset-0 z-50 bg-inverse-surface/40 backdrop-blur-sm hidden items-center justify-center p-4 transition-opacity" id="mentorModal">
+<div class="w-full max-w-sm bg-surface-container-lowest rounded-2xl p-6 shadow-xl flex flex-col items-center text-center">
+<div class="w-16 h-16 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-display text-[24px] font-bold mb-3 shadow-sm">
+        KS
+      </div>
+<h4 class="font-headline text-[19px] text-on-surface">Dr. K. Srinivas</h4>
+<p class="font-body-md text-body-md text-secondary">Faculty Mentor · Associate Professor</p>
+<span class="font-label-sm text-label-sm text-primary font-medium mt-0.5">Computer Science &amp; Engineering</span>
+<div class="w-full bg-surface-container-low rounded-xl p-3.5 my-5 text-left flex flex-col gap-2">
+<div class="flex items-center gap-2.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px] text-secondary">mail</span>
+<span class="font-mono-label text-[12px] truncate">k.srinivas@sru.edu.in</span>
+</div>
+<div class="flex items-center gap-2.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px] text-secondary">location_on</span>
+<span class="font-body-md text-[13px]">Cabin 304, Block-B, SRU Campus</span>
+</div>
+<div class="flex items-center gap-2.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px] text-secondary">schedule</span>
+<span class="font-label-sm text-[12px]">Consultation: Mon - Thu, 3 PM - 4 PM</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2 w-full">
+<a class="py-2.5 rounded-xl bg-primary text-on-primary font-label-sm text-label-sm font-semibold flex items-center justify-center gap-1.5 shadow-sm" href="mailto:k.srinivas@sru.edu.in">
+<span class="material-symbols-outlined text-[18px]">send</span>
+          Email
+        </a>
+<button class="py-2.5 rounded-xl bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold hover:bg-surface-container-highest transition-colors" onclick="closeMentorModal()">
+          Close
+        </button>
+</div>
+</div>
+</div>
+</div>
+<script>
+  // High-fidelity local state controller for SRU SRAAP Academic screen
+  function setAppState(state) {
+    const viewConnected = document.getElementById('viewConnected');
+    const viewSkeleton = document.getElementById('viewSkeleton');
+    const viewFirstTime = document.getElementById('viewFirstTime');
+    const offlineBanner = document.getElementById('offlineBanner');
+    const expiredBanner = document.getElementById('expiredBanner');
+    const syncStatusBadge = document.getElementById('syncStatusBadge');
+
+    // Reset views
+    viewConnected.classList.add('hidden');
+    viewSkeleton.classList.add('hidden');
+    viewFirstTime.classList.add('hidden');
+    offlineBanner.classList.add('hidden');
+    expiredBanner.classList.add('hidden');
+
+    // Update switcher buttons UI
+    document.querySelectorAll('.state-pill').forEach(btn => {
+      btn.className = "state-pill px-3 py-1.5 rounded-full font-label-sm text-label-sm font-medium transition-all bg-surface-container text-on-surface-variant hover:bg-surface-container-high";
+    });
+    const activeBtn = document.getElementById('btn-' + state);
+    if (activeBtn) {
+      activeBtn.className = "state-pill px-3 py-1.5 rounded-full font-label-sm text-label-sm font-semibold transition-all shadow-sm bg-primary text-on-primary";
+    }
+
+    if (state === 'connected') {
+      viewConnected.classList.remove('hidden');
+      syncStatusBadge.textContent = 'Live Mode';
+      syncStatusBadge.className = 'font-label-sm text-label-sm text-primary font-medium';
+    } else if (state === 'offline') {
+      viewConnected.classList.remove('hidden');
+      offlineBanner.classList.remove('hidden');
+      syncStatusBadge.textContent = 'Cached (Offline)';
+      syncStatusBadge.className = 'font-label-sm text-label-sm text-secondary font-medium';
+    } else if (state === 'expired') {
+      viewConnected.classList.remove('hidden');
+      expiredBanner.classList.remove('hidden');
+      syncStatusBadge.textContent = 'Auth Expired';
+      syncStatusBadge.className = 'font-label-sm text-label-sm text-error font-medium';
+    } else if (state === 'skeleton') {
+      viewSkeleton.classList.remove('hidden');
+      syncStatusBadge.textContent = 'Syncing...';
+      syncStatusBadge.className = 'font-label-sm text-label-sm text-primary font-medium animate-pulse';
+    } else if (state === 'first_time') {
+      viewFirstTime.classList.remove('hidden');
+      syncStatusBadge.textContent = 'Unconnected';
+      syncStatusBadge.className = 'font-label-sm text-label-sm text-secondary font-medium';
+    }
+  }
+
+  function triggerManualRefresh() {
+    const icon = document.getElementById('refreshIcon');
+    icon.classList.add('rotate-180');
+    
+    // Simulate swift data sync micro-interaction
+    setTimeout(() => {
+      icon.classList.remove('rotate-180');
+      const timeSpan = document.getElementById('quickSyncTime');
+      const now = new Date();
+      const timeStr = 'Just now';
+      if (timeSpan) timeSpan.textContent = timeStr;
+    }, 600);
+  }
+
+  function openAttendanceModal() {
+    const modal = document.getElementById('attendanceModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  function closeAttendanceModal() {
+    const modal = document.getElementById('attendanceModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+
+  function openMentorModal() {
+    const modal = document.getElementById('mentorModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  function closeMentorModal() {
+    const modal = document.getElementById('mentorModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+
+  // Close modals on clicking backdrop
+  window.addEventListener('click', function(e) {
+    const attModal = document.getElementById('attendanceModal');
+    const menModal = document.getElementById('mentorModal');
+    if (e.target === attModal) closeAttendanceModal();
+    if (e.target === menModal) closeMentorModal();
+  });
+</script></main><nav class="fixed bottom-0 inset-x-0 z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-2px_12px_rgba(0,0,0,0.04)]" data-active-classes="text-primary font-semibold"><div class="flex items-center justify-around h-16 px-xs"><a class="flex flex-col items-center justify-center flex-1 h-full min-w-[44px] text-on-surface-variant hover:text-on-surface transition-colors" data-path="home" href="#"><span class="material-symbols-outlined text-[22px]">home</span><span class="font-label-sm text-label-sm mt-xs">Home</span></a><a class="flex flex-col items-center justify-center flex-1 h-full min-w-[44px] text-on-surface-variant hover:text-on-surface transition-colors" data-path="week" href="#"><span class="material-symbols-outlined text-[22px]">calendar_view_week</span><span class="font-label-sm text-label-sm mt-xs">Week</span></a><a aria-current="page" class="flex flex-col items-center justify-center flex-1 h-full min-w-[44px] transition-colors text-primary font-semibold" data-path="academic" href="#"><span class="material-symbols-outlined text-[22px]">school</span><span class="font-label-sm text-label-sm mt-xs">Academic</span></a><a class="flex flex-col items-center justify-center flex-1 h-full min-w-[44px] text-on-surface-variant hover:text-on-surface transition-colors" data-path="changes" href="#"><span class="material-symbols-outlined text-[22px]">change_circle</span><span class="font-label-sm text-label-sm mt-xs">Changes</span></a><a class="flex flex-col items-center justify-center flex-1 h-full min-w-[44px] text-on-surface-variant hover:text-on-surface transition-colors" data-path="profile" href="#"><span class="material-symbols-outlined text-[22px]">person</span><span class="font-label-sm text-label-sm mt-xs">Profile</span></a></div></nav></body></html>

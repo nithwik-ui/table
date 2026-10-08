@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
-import '../../core/api.dart';
+import '../../core/sync.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -23,73 +23,33 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _loadNotificationHistory() async {
-    final userMode = StorageService.getUserMode();
-    if (userMode == 'faculty') {
-      final selection = StorageService.getFacultySelection();
-      if (selection == null) {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final isFaculty = StorageService.getUserMode() == 'faculty';
+    final profile = StorageService.getProfile();
+    final contextName = profile?['department'] ?? 'SRU Updates';
+
+    try {
+      await SyncService.instance.syncTimetable();
+      
+      final cached = isFaculty ? StorageService.getFacultyChangesCache() : StorageService.getChangesCache();
+      if (mounted) {
         setState(() {
+          _notifications = _parseChanges(cached, contextName);
           _isLoading = false;
-          _errorMessage = 'No faculty selected. Please configure your profile.';
         });
-        return;
       }
-      final facultyId = selection['facultyId']!;
-      final facultyName = selection['facultyName']!;
-
-      try {
-        final changes = await ApiService.fetchFacultyChanges(facultyId);
-        await StorageService.saveFacultyChangesCache(changes);
-        final parsedList = _parseChanges(changes, facultyName);
-        if (mounted) {
-          setState(() {
-            _notifications = parsedList;
-            _isLoading = false;
-            _errorMessage = null;
-          });
-        }
-      } catch (e) {
-        if (mounted) {
-          final cached = StorageService.getFacultyChangesCache();
-          setState(() {
-            _notifications = _parseChanges(cached, facultyName);
-            _isLoading = false;
-            _errorMessage = cached.isEmpty ? 'Could not retrieve notifications. You are offline.' : null;
-          });
-        }
-      }
-    } else {
-      final selection = StorageService.getSelection();
-      if (selection == null) {
+    } catch (e) {
+      if (mounted) {
+        final cached = isFaculty ? StorageService.getFacultyChangesCache() : StorageService.getChangesCache();
         setState(() {
+          _notifications = _parseChanges(cached, contextName);
           _isLoading = false;
-          _errorMessage = 'No batch selected. Please configure your timetable.';
+          _errorMessage = cached.isEmpty ? 'Could not retrieve notifications. You are offline.' : null;
         });
-        return;
-      }
-
-      final batchId = selection['batchId']!;
-      final batchCode = selection['batchCode']!;
-
-      try {
-        final changes = await ApiService.fetchChanges(batchId);
-        await StorageService.saveChangesCache(changes);
-        final parsedList = _parseChanges(changes, batchCode);
-        if (mounted) {
-          setState(() {
-            _notifications = parsedList;
-            _isLoading = false;
-            _errorMessage = null;
-          });
-        }
-      } catch (e) {
-        if (mounted) {
-          final cached = StorageService.getChangesCache();
-          setState(() {
-            _notifications = _parseChanges(cached, batchCode);
-            _isLoading = false;
-            _errorMessage = cached.isEmpty ? 'Could not retrieve notifications. You are offline.' : null;
-          });
-        }
       }
     }
   }

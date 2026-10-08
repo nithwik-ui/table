@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:async';
-import 'dart:io';
 import '../../core/constants.dart';
 import '../../core/api.dart';
 import '../../core/storage.dart';
@@ -56,7 +55,7 @@ class _SyncingScreenState extends State<SyncingScreen> {
       // 2.5 Schedule local reminders if enabled (default true)
       try {
         if (StorageService.isClassRemindersEnabled()) {
-          await NotificationService.scheduleClassReminders(entries);
+          await NotificationService.reconcileReminders();
         }
       } catch (e) {
         debugPrint('[SYNC] Reminder scheduling failed: $e');
@@ -76,12 +75,10 @@ class _SyncingScreenState extends State<SyncingScreen> {
       await Future.delayed(const Duration(seconds: 2));
 
       // 4. Save batch variables to local storage (marks onboarding as complete)
-      await StorageService.saveSelection(
-        degree: widget.degree,
-        year: widget.year,
-        batchId: widget.batchId,
-        batchCode: widget.batchCode,
-      );
+      await StorageService.saveProfile({
+        'batch': widget.batchCode,
+        'department': widget.batchCode,
+      });
       
       // Explicitly set user mode since first-time users skip mode_selection_screen logic
       await StorageService.setUserMode('student');
@@ -101,7 +98,8 @@ class _SyncingScreenState extends State<SyncingScreen> {
       debugPrint('[SYNC] StackTrace: $stackTrace');
       
       String displayError = 'Unknown error occurred.';
-      if (e is SocketException || e is TimeoutException) {
+      final eStr = e.toString().toLowerCase();
+      if (eStr.contains('socketexception') || eStr.contains('clientexception') || eStr.contains('xmlhttprequest') || eStr.contains('timeoutexception')) {
         displayError = 'Network failure. Please check your internet connection.';
       } else {
         displayError = e.toString().replaceFirst('Exception: ', '');

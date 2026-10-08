@@ -55,6 +55,17 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), file("proguard-rules.pro"))
         }
     }
+
+    flavorDimensions.add("default")
+
+    productFlavors {
+        create("prod") {
+            dimension = "default"
+        }
+        create("beta") {
+            dimension = "default"
+        }
+    }
 }
 
 kotlin {
