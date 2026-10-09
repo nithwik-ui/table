@@ -23,6 +23,7 @@ class AdService {
 
   /// Returns the appropriate Banner Ad Unit ID based on platform and build mode.
   String get bannerAdUnitId {
+    if (kIsWeb) return '';
     if (kReleaseMode) {
       return Platform.isAndroid ? prodBannerIdAndroid : prodBannerIdIos;
     }

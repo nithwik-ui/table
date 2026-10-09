@@ -196,8 +196,9 @@ class _HomeTabState extends State<HomeTab> {
     // Calculate remaining classes (where end_time has not passed)
     // Keep cancelled classes in the list so they can be shown as struck through
     final remaining = today.where((e) {
-      final endParts = (e['end_time'] as String).split(':').map(int.parse).toList();
-      final endMinutes = endParts[0] * 60 + endParts[1];
+      final endTimeStr = e['end_time'] as String? ?? '00:00';
+      final endParts = endTimeStr.split(':');
+      final endMinutes = endParts.length == 2 ? int.parse(endParts[0]) * 60 + int.parse(endParts[1]) : 0;
       return endMinutes > currentMinutes;
     }).toList();
 
@@ -210,8 +211,9 @@ class _HomeTabState extends State<HomeTab> {
     if (activeRemaining.isNotEmpty) {
       // Check if first active remaining class is currently in progress
       final first = activeRemaining.first;
-      final startParts = (first['start_time'] as String).split(':').map(int.parse).toList();
-      final startMinutes = startParts[0] * 60 + startParts[1];
+      final startTimeStr = first['start_time'] as String? ?? '00:00';
+      final startParts = startTimeStr.split(':');
+      final startMinutes = startParts.length == 2 ? int.parse(startParts[0]) * 60 + int.parse(startParts[1]) : 0;
 
       if (currentMinutes >= startMinutes) {
         nextClass = Map<String, dynamic>.from(first);
@@ -479,7 +481,7 @@ class _HomeTabState extends State<HomeTab> {
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              _upNextClass!['subject'] as String,
+                              _upNextClass!['subject'] as String? ?? 'No Subject',
                               style: AppConstants.getHeadline().copyWith(fontSize: 20),
                             ),
                             const SizedBox(height: 12),
@@ -488,13 +490,13 @@ class _HomeTabState extends State<HomeTab> {
                                 const Icon(Icons.access_time, size: 16, color: AppConstants.textSecondary),
                                 const SizedBox(width: 6),
                                 Text(
-                                  '${TimeUtils.format12Hour(_upNextClass!['start_time'])} - ${TimeUtils.format12Hour(_upNextClass!['end_time'])}',
+                                  '${TimeUtils.format12Hour(_upNextClass!['start_time'] as String? ?? '00:00')} - ${TimeUtils.format12Hour(_upNextClass!['end_time'] as String? ?? '00:00')}',
                                   style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
                                 ),
                                 const SizedBox(width: 12),
                                 LiveClassProgressIndicator(
-                                  startTime: _upNextClass!['start_time'] as String,
-                                  endTime: _upNextClass!['end_time'] as String,
+                                  startTime: _upNextClass!['start_time'] as String? ?? '00:00',
+                                  endTime: _upNextClass!['end_time'] as String? ?? '00:00',
                                   isToday: true,
                                 ),
                                 const SizedBox(width: 12),
@@ -506,7 +508,7 @@ class _HomeTabState extends State<HomeTab> {
                                 ),
                               ],
                             ),
-                            if (_upNextClass!['faculty'] != null && (_upNextClass!['faculty'] as String).isNotEmpty) ...[
+                            if (_upNextClass!['faculty'] != null && (_upNextClass!['faculty'] as String? ?? '').isNotEmpty) ...[
                               const SizedBox(height: 8),
                               Row(
                                 children: [
@@ -514,7 +516,7 @@ class _HomeTabState extends State<HomeTab> {
                                   const SizedBox(width: 6),
                                   Expanded(
                                     child: Text(
-                                      _upNextClass!['faculty'] as String,
+                                      _upNextClass!['faculty'] as String? ?? '',
                                       style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
                                     ),
                                   ),
@@ -605,10 +607,13 @@ class _HomeTabState extends State<HomeTab> {
                           final isLab = ltp.toLowerCase().contains('lab') || ltp.toLowerCase().contains('practical') || ltp == 'P';
                           final isCancelled = c['isCancelled'] == true;
 
-                          final startParts = (c['start_time'] as String).split(':').map(int.parse).toList();
-                          final startMins = startParts[0] * 60 + startParts[1];
-                          final endParts = (c['end_time'] as String).split(':').map(int.parse).toList();
-                          final endMins = endParts[0] * 60 + endParts[1];
+                          final startTimeStr = c['start_time'] as String? ?? '00:00';
+                          final startParts = startTimeStr.split(':');
+                          final startMins = startParts.length == 2 ? int.parse(startParts[0]) * 60 + int.parse(startParts[1]) : 0;
+                          
+                          final endTimeStr = c['end_time'] as String? ?? '00:00';
+                          final endParts = endTimeStr.split(':');
+                          final endMins = endParts.length == 2 ? int.parse(endParts[0]) * 60 + int.parse(endParts[1]) : 0;
 
                           final now = TimeUtils.getKolkataTime();
                           final curMins = now.hour * 60 + now.minute;
@@ -695,7 +700,7 @@ class _HomeTabState extends State<HomeTab> {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              c['subject'] as String,
+                                              c['subject'] as String? ?? 'No Subject',
                                               style: AppConstants.getHeadline().copyWith(
                                                 fontSize: 16,
                                                 decoration: isCancelled ? TextDecoration.lineThrough : null,
@@ -706,7 +711,7 @@ class _HomeTabState extends State<HomeTab> {
                                             Row(
                                               children: [
                                                 Text(
-                                                  '${TimeUtils.format12Hour(c['start_time'])} - ${TimeUtils.format12Hour(c['end_time'])}',
+                                                  '${TimeUtils.format12Hour(c['start_time'] as String? ?? '00:00')} - ${TimeUtils.format12Hour(c['end_time'] as String? ?? '00:00')}',
                                                   style: AppConstants.getBodyMedium(color: AppConstants.textSecondary).copyWith(
                                                     decoration: isCancelled ? TextDecoration.lineThrough : null,
                                                   ),
@@ -714,8 +719,8 @@ class _HomeTabState extends State<HomeTab> {
                                                 const SizedBox(width: 10),
                                                 if (!isCancelled && isOngoing) ...[
                                                   LiveClassProgressIndicator(
-                                                    startTime: c['start_time'] as String,
-                                                    endTime: c['end_time'] as String,
+                                                    startTime: c['start_time'] as String? ?? '00:00',
+                                                    endTime: c['end_time'] as String? ?? '00:00',
                                                     isToday: true,
                                                   ),
                                                   const SizedBox(width: 10),

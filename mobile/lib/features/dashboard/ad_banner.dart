@@ -16,9 +16,9 @@ class _AdBannerState extends State<AdBanner> {
   bool _isLoaded = false;
 
   // Test ID for debug builds, production ID for release builds
-  final String _testAdUnitId = Platform.isAndroid
+  final String _testAdUnitId = kIsWeb ? '' : (Platform.isAndroid
       ? 'ca-app-pub-3940256099942544/6300978111'
-      : 'ca-app-pub-3940256099942544/2934735716';
+      : 'ca-app-pub-3940256099942544/2934735716');
 
   final String _prodAdUnitId = 'ca-app-pub-4600395533739943/8970984870';
 
@@ -27,6 +27,7 @@ class _AdBannerState extends State<AdBanner> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (kIsWeb) return;
     if (_bannerAd == null) {
       _loadAd();
     }
