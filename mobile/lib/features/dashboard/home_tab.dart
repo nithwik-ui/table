@@ -633,7 +633,7 @@ class _HomeTabState extends State<HomeTab> {
                             statusColor = AppConstants.textSecondary;
                             statusBg = AppConstants.outline.withValues(alpha: 0.12);
                             isCompleted = true;
-                          } else if (_upNextClass != null && c['id'] == _upNextClass!['id']) {
+                          } else if (_upNextClass != null && c['start_time'] == _upNextClass!['start_time']) {
                             itemStatus = _upNextStatus.isNotEmpty ? _upNextStatus : 'Up Next';
                             statusColor = AppConstants.info;
                             statusBg = AppConstants.infoContainer;
