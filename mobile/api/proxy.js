@@ -79,6 +79,12 @@ export default async function handler(req, res) {
       forwardHeaders[key] = value;
     }
   }
+  
+  // Browsers block JS from setting "Cookie" headers. Dart sends it as "x-proxy-cookie".
+  if (req.headers['x-proxy-cookie']) {
+    forwardHeaders['cookie'] = req.headers['x-proxy-cookie'];
+    delete forwardHeaders['x-proxy-cookie'];
+  }
   forwardHeaders['host'] = hostname;
   // Set correct origin and referer so Laravel's CSRF middleware accepts the request
   forwardHeaders['origin'] = `https://${hostname}`;
@@ -105,6 +111,9 @@ export default async function handler(req, res) {
           const cookies = Array.isArray(value) ? value : [value];
           const fixed = cookies.map(stripCookieDomain);
           res.setHeader('set-cookie', fixed);
+          // Browsers block JS from reading Set-Cookie. We expose it manually so Dart can capture it.
+          res.setHeader('x-proxy-set-cookie', fixed.join(', '));
+          res.setHeader('Access-Control-Expose-Headers', 'x-proxy-set-cookie');
         } else if (lkey === 'location') {
           res.setHeader('location', rewriteLocation(value, target));
         } else if (lkey === 'transfer-encoding' || lkey === 'content-encoding') {

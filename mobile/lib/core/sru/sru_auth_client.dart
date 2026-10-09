@@ -213,31 +213,34 @@ class SruAuthClient {
 
   Map<String, String> _headers({bool isForm = false}) {
     final headers = <String, String>{};
-    // On Web, browser handles cookies and user-agent automatically.
-    // Setting Cookie/Origin/Referer manually on web causes 419 CSRF errors
-    // because the browser can't expose Set-Cookie headers to JS (XHR security).
-    if (!kIsWeb) {
-      headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-      headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
-    }
+    // Send normal headers. The proxy forwards these appropriately.
+    headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+    headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
+
     if (isForm) {
       headers['Content-Type'] = 'application/x-www-form-urlencoded';
       if (!kIsWeb) {
-        // On web, browser sets Origin/Referer automatically for same-origin
         headers['Origin'] = baseUrl;
         headers['Referer'] = '$baseUrl/';
       }
     }
-    // On web, the browser's native cookie jar handles session cookies.
-    // We MUST NOT send a manual Cookie header as it overrides the browser's jar.
-    if (!kIsWeb && _cookieHeader.isNotEmpty) {
-      headers['Cookie'] = _cookieHeader;
+    
+    // We capture cookies manually on all platforms (using x-proxy-set-cookie on web).
+    // Send our manual cookie header so the backend gets the session!
+    if (_cookieHeader.isNotEmpty) {
+      if (kIsWeb) {
+        // XMLHttpRequest blocks manual "Cookie" headers. We bypass this via our proxy.
+        headers['x-proxy-cookie'] = _cookieHeader;
+      } else {
+        headers['Cookie'] = _cookieHeader;
+      }
     }
     return headers;
   }
 
   void _updateCookies(Map<String, String> headers) {
-    final setCookie = headers['set-cookie'];
+    // On web, Set-Cookie is blocked by the browser. Our proxy exposes x-proxy-set-cookie instead.
+    final setCookie = headers['set-cookie'] ?? headers['x-proxy-set-cookie'];
     if (setCookie != null && setCookie.isNotEmpty) {
       final parts = setCookie.split(RegExp(r',(?=[a-zA-Z0-9_\-]+=|$)'));
       for (var part in parts) {
