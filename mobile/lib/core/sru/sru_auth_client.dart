@@ -97,6 +97,20 @@ class SruAuthClient {
       }
     } else {
       final body = response.body.toLowerCase();
+      final finalUrl = response.request?.url.toString().toLowerCase() ?? '';
+      
+      // On Web, HTTP client automatically follows redirects, so we get 200 instead of 302
+      if (finalUrl.contains('otp') || finalUrl.contains('verification') || body.contains('verification code')) {
+        _otpTargetUrl = response.request?.url.toString() ?? '$baseUrl/login/otp-verification';
+        if (kIsWeb && _otpTargetUrl.contains('sruniv.com')) {
+          _otpTargetUrl = '$baseUrl${Uri.parse(_otpTargetUrl).path}';
+        }
+        prefetchOtpToken(_otpTargetUrl);
+        return {'status': 'otp_required'};
+      } else if (finalUrl.contains('dashboard') || finalUrl.contains('student') || finalUrl.contains('faculty')) {
+        return {'status': 'authenticated'};
+      }
+      
       if (body.contains('invalid') || body.contains('wrong') || body.contains('incorrect') || body.contains('credentials')) {
         throw SruAuthException('Your login details could not be verified.');
       }
