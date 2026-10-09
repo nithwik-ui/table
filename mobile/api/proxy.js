@@ -69,5 +69,9 @@ export default function handler(req, res) {
     res.status(500).send(err.message);
   });
 
-  req.pipe(proxyReq);
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
+    proxyReq.end();
+  } else {
+    req.pipe(proxyReq);
+  }
 }
