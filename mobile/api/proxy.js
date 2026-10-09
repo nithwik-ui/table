@@ -1,5 +1,4 @@
 import https from 'https';
-import { URL } from 'url';
 
 export const config = {
   api: {
@@ -7,6 +6,16 @@ export const config = {
     externalResolver: true,
   },
 };
+
+// Read entire request body as a Buffer
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on('data', (chunk) => chunks.push(chunk));
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
 
 function rewriteLocation(location, target) {
   if (!location) return location;
@@ -33,7 +42,7 @@ function stripCookieDomain(cookie) {
     .replace(/;\s*secure/gi, '');
 }
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   const { target, path } = req.query;
   let hostname = '';
 
@@ -47,16 +56,33 @@ export default function handler(req, res) {
 
   const urlPath = '/' + (path || '');
 
-  // Forward all headers except host/origin/referer to avoid CORS rejection
-  const forwardHeaders = { ...req.headers };
+  // Read body first before doing anything else
+  let bodyBuffer = Buffer.alloc(0);
+  try {
+    bodyBuffer = await readBody(req);
+  } catch (e) {
+    console.error('Body read error:', e.message);
+  }
+
+  // Build clean headers
+  const forwardHeaders = {};
+  const skipHeaders = new Set([
+    'host', 'origin', 'referer',
+    'x-forwarded-for', 'x-vercel-forwarded-for',
+    'x-vercel-ip-country', 'x-forwarded-proto',
+    'x-forwarded-host', 'x-real-ip',
+    'connection', 'x-vercel-deployment-url',
+    'x-vercel-id', 'x-vercel-cache',
+  ]);
+  for (const [key, value] of Object.entries(req.headers)) {
+    if (!skipHeaders.has(key.toLowerCase())) {
+      forwardHeaders[key] = value;
+    }
+  }
   forwardHeaders['host'] = hostname;
-  delete forwardHeaders['origin'];
-  delete forwardHeaders['referer'];
-  delete forwardHeaders['x-forwarded-for'];
-  delete forwardHeaders['x-vercel-forwarded-for'];
-  delete forwardHeaders['x-vercel-ip-country'];
-  delete forwardHeaders['x-forwarded-proto'];
-  delete forwardHeaders['x-forwarded-host'];
+  if (bodyBuffer.length > 0) {
+    forwardHeaders['content-length'] = String(bodyBuffer.length);
+  }
 
   const options = {
     hostname: hostname,
@@ -66,39 +92,47 @@ export default function handler(req, res) {
     headers: forwardHeaders,
   };
 
-  const proxyReq = https.request(options, (proxyRes) => {
-    // Pass through status
-    res.status(proxyRes.statusCode);
+  return new Promise((resolve) => {
+    const proxyReq = https.request(options, (proxyRes) => {
+      res.status(proxyRes.statusCode);
 
-    // Process response headers
-    for (const [key, value] of Object.entries(proxyRes.headers)) {
-      const lkey = key.toLowerCase();
-      if (lkey === 'set-cookie') {
-        const cookies = Array.isArray(value) ? value : [value];
-        const fixed = cookies.map(stripCookieDomain);
-        res.setHeader('set-cookie', fixed);
-      } else if (lkey === 'location') {
-        const newLoc = rewriteLocation(value, target);
-        res.setHeader('location', newLoc);
-      } else if (lkey === 'transfer-encoding' || lkey === 'content-encoding') {
-        // Don't forward encoding headers as Vercel handles this
-        continue;
-      } else {
-        try { res.setHeader(key, value); } catch (_) {}
+      for (const [key, value] of Object.entries(proxyRes.headers)) {
+        const lkey = key.toLowerCase();
+        if (lkey === 'set-cookie') {
+          const cookies = Array.isArray(value) ? value : [value];
+          const fixed = cookies.map(stripCookieDomain);
+          res.setHeader('set-cookie', fixed);
+        } else if (lkey === 'location') {
+          res.setHeader('location', rewriteLocation(value, target));
+        } else if (lkey === 'transfer-encoding' || lkey === 'content-encoding') {
+          // Skip - Vercel handles encoding
+        } else {
+          try { res.setHeader(key, value); } catch (_) {}
+        }
       }
+
+      const chunks = [];
+      proxyRes.on('data', (c) => chunks.push(c));
+      proxyRes.on('end', () => {
+        const body = Buffer.concat(chunks);
+        res.end(body);
+        resolve();
+      });
+      proxyRes.on('error', (err) => {
+        res.status(502).end('Upstream error: ' + err.message);
+        resolve();
+      });
+    });
+
+    proxyReq.on('error', (err) => {
+      console.error('Proxy request error:', err.message);
+      res.status(500).json({ error: err.message });
+      resolve();
+    });
+
+    if (bodyBuffer.length > 0) {
+      proxyReq.write(bodyBuffer);
     }
-
-    proxyRes.pipe(res);
-  });
-
-  proxyReq.on('error', (err) => {
-    console.error('Proxy error:', err.message);
-    res.status(500).json({ error: err.message });
-  });
-
-  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
     proxyReq.end();
-  } else {
-    req.pipe(proxyReq);
-  }
+  });
 }
