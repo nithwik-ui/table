@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/constants.dart';
+import '../../../core/utils.dart';
 
 class LiveClassProgressIndicator extends StatefulWidget {
   final String startTime;
@@ -63,7 +64,7 @@ class _LiveClassProgressIndicatorState extends State<LiveClassProgressIndicator>
       return;
     }
 
-    final now = DateTime.now();
+    final now = TimeUtils.getKolkataTime();
     try {
       final startParts = widget.startTime.split(':');
       final endParts = widget.endTime.split(':');

@@ -83,9 +83,23 @@ Future<void> _initFirebaseSafely() async {
     
     final messaging = FirebaseMessaging.instance;
     
+    // Request permission (handles Android 13+ POST_NOTIFICATIONS)
+    try {
+      await messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    } catch (_) {}
+    
     // Subscribe to global topic for broadcasts (mobile only)
     if (!kIsWeb) {
       try {
+        // Unsubscribe from v2.0 topics to prevent contamination
+        await messaging.unsubscribeFromTopic('all_users');
+        await messaging.unsubscribeFromTopic('all');
+        await messaging.unsubscribeFromTopic('students');
+        
         await messaging.subscribeToTopic('sru_all_users');
         debugPrint('Subscribed to sru_all_users FCM topic');
       } catch (_) {}
@@ -94,31 +108,23 @@ Future<void> _initFirebaseSafely() async {
     } else {
       // Web FCM setup
       try {
-        final settings = await messaging.requestPermission(
-          alert: true,
-          badge: true,
-          sound: true,
+        final webToken = await messaging.getToken(
+          vapidKey: "BLfXNackp6Rs_phEfbaIPWdKm7HADbl3RYGEhjU2qocshKk7CbeIX0Gb5zLQ9EH84nkSaZSiJCcENw4wWf7e12M",
         );
-        if (settings.authorizationStatus == AuthorizationStatus.authorized ||
-            settings.authorizationStatus == AuthorizationStatus.provisional) {
-          final webToken = await messaging.getToken(
-            vapidKey: "BLfXNackp6Rs_phEfbaIPWdKm7HADbl3RYGEhjU2qocshKk7CbeIX0Gb5zLQ9EH84nkSaZSiJCcENw4wWf7e12M",
+        if (webToken != null && webToken.isNotEmpty) {
+          debugPrint('Web FCM token obtained: $webToken');
+          final userMode = StorageService.getUserMode() ?? 'student';
+          final profile = StorageService.getProfile();
+          final id = profile?['id']?.toString() ?? 
+              profile?['roll_no']?.toString() ?? 
+              StorageService.getStudentRollNumber() ?? 
+              StorageService.getUserIdentifier() ?? '';
+          await ApiService.registerDevice(
+            webToken,
+            userMode == 'student' ? id : '',
+            userMode: userMode,
+            facultyId: userMode == 'faculty' ? id : null,
           );
-          if (webToken != null && webToken.isNotEmpty) {
-            debugPrint('Web FCM token obtained: $webToken');
-            final userMode = StorageService.getUserMode() ?? 'student';
-            final profile = StorageService.getProfile();
-            final id = profile?['id']?.toString() ?? 
-                profile?['roll_no']?.toString() ?? 
-                StorageService.getStudentRollNumber() ?? 
-                StorageService.getUserIdentifier() ?? '';
-            await ApiService.registerDevice(
-              webToken,
-              userMode == 'student' ? id : '',
-              userMode: userMode,
-              facultyId: userMode == 'faculty' ? id : null,
-            );
-          }
         }
       } catch (e) {
         debugPrint('Web FCM registration error: $e');

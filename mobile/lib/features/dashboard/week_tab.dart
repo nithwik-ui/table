@@ -83,7 +83,7 @@ class _WeekTabState extends State<WeekTab> {
 
   void _calculateCurrentWeek() {
     // Current Local Time
-    final nowLocal = DateTime.now();
+    final nowLocal = TimeUtils.getKolkataTime();
     
     // Find the Monday of the current week
     final weekday = nowLocal.weekday; // 1 = Mon, 7 = Sun
@@ -108,7 +108,7 @@ class _WeekTabState extends State<WeekTab> {
   void _calculateNextClassHighlight() {
     if (_timetable.isEmpty) return;
 
-    final nowLocal = DateTime.now();
+    final nowLocal = TimeUtils.getKolkataTime();
     final currentDayIndex = nowLocal.weekday - 1;
     
     // Highlight is only computed if the selected day index matches today
@@ -633,7 +633,7 @@ class _WeekTabState extends State<WeekTab> {
                                                 LiveClassProgressIndicator(
                                                   startTime: c['start_time'] as String,
                                                   endTime: c['end_time'] as String,
-                                                  isToday: _selectedDayIndex == DateTime.now().weekday - 1,
+                                                  isToday: _selectedDayIndex == TimeUtils.getKolkataTime().weekday - 1,
                                                 ),
                                             ],
                                           ),

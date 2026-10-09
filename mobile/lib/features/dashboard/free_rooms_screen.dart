@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/api.dart';
+import '../../core/utils.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
 
@@ -33,7 +34,7 @@ class _FreeRoomsScreenState extends State<FreeRoomsScreen> {
   void initState() {
     super.initState();
     // Default to current day if weekday
-    final now = DateTime.now();
+    final now = TimeUtils.getKolkataTime();
     if (now.weekday <= 5) {
       _selectedDay = _days[now.weekday - 1];
     } else {
@@ -92,7 +93,7 @@ class _FreeRoomsScreenState extends State<FreeRoomsScreen> {
       final timetable = StorageService.getTimetableCache();
       
       // Get current local time
-      final now = DateTime.now();
+      final now = TimeUtils.getKolkataTime();
       final dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
       final todayStr = dayNames[now.weekday - 1];
       

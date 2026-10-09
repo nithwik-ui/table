@@ -18,7 +18,10 @@ class TimeUtils {
       // format 'h:mm a' will output "1:30 PM" without leading zero on hours
       return DateFormat('h:mm a').format(dt);
     } catch (_) {
-      return timeStr; // Fallback to original if parsing fails
     }
+  }
+
+  static DateTime getKolkataTime() {
+    return DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30));
   }
 }

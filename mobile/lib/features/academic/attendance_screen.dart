@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants.dart';
+import '../../core/utils.dart';
 import '../../core/storage.dart';
 import '../../core/sraap/sraap_academic_service.dart';
 import '../../core/sraap/models/sraap_academic_data.dart';
@@ -66,7 +67,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
   String _formatLastUpdated(DateTime? dateTime) {
     if (dateTime == null) return 'Never updated';
-    final now = DateTime.now();
+    final now = TimeUtils.getKolkataTime();
     final diff = now.difference(dateTime);
     if (diff.inSeconds < 60) {
       return 'Updated just now';

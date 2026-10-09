@@ -48,7 +48,7 @@ class _LiveFreeSlotProgressIndicatorState extends State<LiveFreeSlotProgressIndi
   void _updateProgress() {
     if (!mounted || !widget.isToday) return;
 
-    final now = DateTime.now();
+    final now = TimeUtils.getKolkataTime();
     try {
       final startParts = widget.startTime.split(':');
       final endParts = widget.endTime.split(':');

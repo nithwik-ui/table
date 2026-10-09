@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants.dart';
+import '../../core/utils.dart';
 import '../../core/sraap/sraap_academic_service.dart';
 import '../../core/sraap/models/sraap_academic_data.dart';
 import 'academic_login_screen.dart';
@@ -68,7 +69,7 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
   }
 
   String _formatTimeAgo(DateTime time) {
-    final now = DateTime.now();
+    final now = TimeUtils.getKolkataTime();
     final diff = now.difference(time);
     if (diff.inSeconds < 60) return 'Updated just now';
     if (diff.inMinutes < 60) return 'Updated ${diff.inMinutes} min ago';

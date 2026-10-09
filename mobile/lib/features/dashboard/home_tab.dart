@@ -73,8 +73,8 @@ class _HomeTabState extends State<HomeTab> {
     final profile = StorageService.getProfile();
     final name = profile?['name'] ?? StorageService.getUserName();
     
-    // Greeting time calculation (local timezone context)
-    final nowLocal = DateTime.now();
+    // Greeting time calculation (Kolkata timezone context)
+    final nowLocal = TimeUtils.getKolkataTime();
     final hour = nowLocal.hour;
     String greet;
     if (hour < 12) {
@@ -131,8 +131,8 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   void _calculateSchedules(List<dynamic> timetable) {
-    // Current Local Time
-    final nowLocal = DateTime.now();
+    // Current Kolkata Time
+    final nowLocal = TimeUtils.getKolkataTime();
     final weekdayIndex = nowLocal.weekday;
     
     // Mappings: Flutter weekday (1 = Mon, 7 = Sun) -> DB Day values
@@ -450,7 +450,7 @@ class _HomeTabState extends State<HomeTab> {
                                 builder: (context) => ClassDetailsBottomSheet(
                                   classEvent: _upNextClass!,
                                   status: _upNextStatus,
-                                  dateStr: DateFormat('EEEE, d MMMM').format(DateTime.now()),
+                                  dateStr: DateFormat('EEEE, d MMMM').format(TimeUtils.getKolkataTime()),
                                 ),
                               );
                             },
@@ -610,7 +610,7 @@ class _HomeTabState extends State<HomeTab> {
                           final endParts = (c['end_time'] as String).split(':').map(int.parse).toList();
                           final endMins = endParts[0] * 60 + endParts[1];
 
-                          final now = DateTime.now();
+                          final now = TimeUtils.getKolkataTime();
                           final curMins = now.hour * 60 + now.minute;
 
                           String itemStatus;
@@ -666,7 +666,7 @@ class _HomeTabState extends State<HomeTab> {
                                     builder: (context) => ClassDetailsBottomSheet(
                                       classEvent: c,
                                       status: itemStatus,
-                                      dateStr: DateFormat('EEEE, d MMMM').format(DateTime.now()),
+                                      dateStr: DateFormat('EEEE, d MMMM').format(TimeUtils.getKolkataTime()),
                                     ),
                                   );
                                 },
