@@ -41,6 +41,22 @@ export default function handler(req, res) {
         } else {
           res.setHeader(key, value.replace(/domain=[^;]+;?/gi, ''));
         }
+      } else if (key.toLowerCase() === 'location') {
+        let newLoc = value;
+        if (target === 'sru') {
+          if (newLoc.startsWith('http://www.sruniv.com') || newLoc.startsWith('https://www.sruniv.com')) {
+            newLoc = newLoc.replace(/^https?:\/\/www\.sruniv\.com/i, '/api/sru');
+          } else if (newLoc.startsWith('/')) {
+            newLoc = '/api/sru' + newLoc;
+          }
+        } else if (target === 'sraap') {
+          if (newLoc.startsWith('http://sraap.in') || newLoc.startsWith('https://sraap.in')) {
+            newLoc = newLoc.replace(/^https?:\/\/sraap\.in/i, '/api/sraap');
+          } else if (newLoc.startsWith('/')) {
+            newLoc = '/api/sraap' + newLoc;
+          }
+        }
+        res.setHeader(key, newLoc);
       } else {
         res.setHeader(key, value);
       }
