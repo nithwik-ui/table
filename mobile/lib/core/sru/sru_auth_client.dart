@@ -69,7 +69,9 @@ class SruAuthClient {
     final token = await _getCsrfToken(getCsrfUrl);
     
     final request = http.Request('POST', Uri.parse(postLoginUrl));
-    request.followRedirects = false; // Handle 302 manually to preserve cookies
+    if (!kIsWeb) {
+      request.followRedirects = false; // Handle 302 manually to preserve cookies on mobile
+    }
     request.headers.addAll(_headers(isForm: true));
     request.bodyFields = {
       '_token': token ?? '',
@@ -114,7 +116,9 @@ class SruAuthClient {
     }
     
     final request = http.Request('POST', Uri.parse(otpUrl));
-    request.followRedirects = false;
+    if (!kIsWeb) {
+      request.followRedirects = false;
+    }
     request.headers.addAll(_headers(isForm: true));
     request.bodyFields = {
       '_token': token ?? '',
@@ -133,6 +137,13 @@ class SruAuthClient {
       throw SruAuthException('Verification code is invalid.');
     } else {
       final body = response.body.toLowerCase();
+      final finalUrl = response.request?.url.toString().toLowerCase() ?? '';
+      
+      // On Web, HTTP client automatically follows redirects, so we get 200 instead of 302
+      if (finalUrl.contains('dashboard') || finalUrl.contains('student') || finalUrl.contains('faculty')) {
+        return {'status': 'authenticated'};
+      }
+
       if (body.contains('invalid') || body.contains('wrong') || body.contains('incorrect')) {
         throw SruAuthException('Verification code is invalid.');
       }
