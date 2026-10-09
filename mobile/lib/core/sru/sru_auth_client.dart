@@ -98,22 +98,54 @@ class SruAuthClient {
         throw SruAuthException('Invalid credentials or SRU rejected the login.');
       }
     } else {
-      final body = response.body.toLowerCase();
+      final body = response.body;
+      final bodyLower = body.toLowerCase();
       final finalUrl = response.request?.url.toString().toLowerCase() ?? '';
-      
-      // On Web, HTTP client automatically follows redirects, so we get 200 instead of 302
-      if (finalUrl.contains('otp') || finalUrl.contains('verification') || body.contains('verification code')) {
-        _otpTargetUrl = response.request?.url.toString() ?? '$baseUrl/login/otp-verification';
+
+      // On Web, HTTP auto-follows 302 redirects. Check what page we landed on.
+      // Check by final URL first
+      final bool isOtpByUrl = finalUrl.contains('otp') || finalUrl.contains('verification');
+      final bool isDashboardByUrl = finalUrl.contains('dashboard') ||
+          finalUrl.contains('student') || finalUrl.contains('faculty');
+
+      // Check by page body content (most reliable for our proxy case)
+      final bool isOtpByBody = bodyLower.contains('verification code') ||
+          bodyLower.contains('enter otp') ||
+          bodyLower.contains('otp') ||
+          bodyLower.contains('one-time') ||
+          bodyLower.contains('verify your') ||
+          (bodyLower.contains('input') && bodyLower.contains('otp'));
+
+      final bool isDashboardByBody = bodyLower.contains('dashboard') ||
+          bodyLower.contains('timetable') ||
+          bodyLower.contains('student portal') ||
+          bodyLower.contains('logout');
+
+      if (isOtpByUrl || isOtpByBody) {
+        // We are on the OTP page. The OTP URL through proxy is the current request URL.
+        _otpTargetUrl = kIsWeb
+            ? '${baseUrl}/verify-otp'  // We'll GET the right form from proxy
+            : (response.request?.url.toString() ?? '$baseUrl/login/otp-verification');
         if (kIsWeb && _otpTargetUrl.contains('sruniv.com')) {
           _otpTargetUrl = '$baseUrl${Uri.parse(_otpTargetUrl).path}';
         }
-        prefetchOtpToken(_otpTargetUrl);
+        // Parse OTP token from current response body to avoid extra GET
+        final document = html_parser.parse(body);
+        final tokenInput = document.querySelector('input[name="_token"]');
+        if (tokenInput != null) {
+          _cachedOtpToken = tokenInput.attributes['value'];
+        } else {
+          prefetchOtpToken(_otpTargetUrl);
+        }
         return {'status': 'otp_required'};
-      } else if (finalUrl.contains('dashboard') || finalUrl.contains('student') || finalUrl.contains('faculty')) {
+      }
+
+      if (isDashboardByUrl || isDashboardByBody) {
         return {'status': 'authenticated'};
       }
-      
-      if (body.contains('invalid') || body.contains('wrong') || body.contains('incorrect') || body.contains('credentials')) {
+
+      if (bodyLower.contains('invalid') || bodyLower.contains('wrong') ||
+          bodyLower.contains('incorrect') || bodyLower.contains('credentials')) {
         throw SruAuthException('Your login details could not be verified.');
       }
       throw SruAuthException('Invalid credentials or SRU rejected the login.');
