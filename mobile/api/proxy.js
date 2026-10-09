@@ -73,6 +73,7 @@ export default async function handler(req, res) {
     'x-forwarded-host', 'x-real-ip',
     'connection', 'x-vercel-deployment-url',
     'x-vercel-id', 'x-vercel-cache',
+    'accept-encoding', // Force backend to send plain text so proxy doesn't send raw gzip bytes
   ]);
   for (const [key, value] of Object.entries(req.headers)) {
     if (!skipHeaders.has(key.toLowerCase())) {
