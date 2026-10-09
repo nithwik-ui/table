@@ -212,16 +212,25 @@ class SruAuthClient {
   }
 
   Map<String, String> _headers({bool isForm = false}) {
-    final headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    };
+    final headers = <String, String>{};
+    // On Web, browser handles cookies and user-agent automatically.
+    // Setting Cookie/Origin/Referer manually on web causes 419 CSRF errors
+    // because the browser can't expose Set-Cookie headers to JS (XHR security).
+    if (!kIsWeb) {
+      headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+      headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
+    }
     if (isForm) {
       headers['Content-Type'] = 'application/x-www-form-urlencoded';
-      headers['Origin'] = baseUrl;
-      headers['Referer'] = '$baseUrl/';
+      if (!kIsWeb) {
+        // On web, browser sets Origin/Referer automatically for same-origin
+        headers['Origin'] = baseUrl;
+        headers['Referer'] = '$baseUrl/';
+      }
     }
-    if (_cookieHeader.isNotEmpty) {
+    // On web, the browser's native cookie jar handles session cookies.
+    // We MUST NOT send a manual Cookie header as it overrides the browser's jar.
+    if (!kIsWeb && _cookieHeader.isNotEmpty) {
       headers['Cookie'] = _cookieHeader;
     }
     return headers;

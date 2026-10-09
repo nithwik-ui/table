@@ -80,6 +80,9 @@ export default async function handler(req, res) {
     }
   }
   forwardHeaders['host'] = hostname;
+  // Set correct origin and referer so Laravel's CSRF middleware accepts the request
+  forwardHeaders['origin'] = `https://${hostname}`;
+  forwardHeaders['referer'] = `https://${hostname}/`;
   if (bodyBuffer.length > 0) {
     forwardHeaders['content-length'] = String(bodyBuffer.length);
   }
