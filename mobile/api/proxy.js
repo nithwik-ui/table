@@ -119,7 +119,7 @@ export default async function handler(req, res) {
           const cookies = Array.isArray(value) ? value : [value];
           const fixed = cookies.map(stripCookieDomain);
           res.setHeader('set-cookie', fixed);
-          res.setHeader('x-proxy-set-cookie', fixed.join(', '));
+          res.setHeader('x-proxy-set-cookie', fixed.join(','));
           res.setHeader('Access-Control-Expose-Headers', 'x-proxy-set-cookie, x-proxy-redirect');
         } else if (lkey === 'location') {
           const newLoc = rewriteLocation(value, target);

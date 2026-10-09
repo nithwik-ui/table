@@ -86,11 +86,11 @@ class SruAuthClient {
     final proxyRedirect = response.headers['x-proxy-redirect'];
     
     if (response.statusCode == 302 || proxyRedirect != null) {
-      final rawLocation = proxyRedirect ?? response.headers['location'] ?? '';
-      final location = rawLocation.toLowerCase();
+      final redirectLocation = proxyRedirect ?? response.headers['location'] ?? '';
+      final location = redirectLocation.toLowerCase();
       
       if (location.contains('otp') || location.contains('verification')) {
-        _otpTargetUrl = rawLocation.startsWith('http') ? rawLocation : '$baseUrl$rawLocation';
+        _otpTargetUrl = rawLocation(redirectLocation, postLoginUrl);
         // Prefetch OTP CSRF token immediately in the background
         prefetchOtpToken(_otpTargetUrl);
         return {'status': 'otp_required'};
@@ -220,6 +220,7 @@ class SruAuthClient {
   
   String rawLocation(String loc, String originalUrl) {
     if (loc.startsWith('http')) return loc;
+    if (loc.startsWith(baseUrl)) return loc;
     return '$baseUrl$loc';
   }
 
@@ -261,7 +262,7 @@ class SruAuthClient {
     // On web, Set-Cookie is blocked by the browser. Our proxy exposes x-proxy-set-cookie instead.
     final setCookie = headers['set-cookie'] ?? headers['x-proxy-set-cookie'];
     if (setCookie != null && setCookie.isNotEmpty) {
-      final parts = setCookie.split(RegExp(r',(?=[a-zA-Z0-9_\-]+=|$)'));
+      final parts = setCookie.split(RegExp(r',\s*(?=[a-zA-Z0-9_\-]+=|$)'));
       for (var part in parts) {
         final cookieString = part.split(';').first.trim();
         final equalIndex = cookieString.indexOf('=');
