@@ -63,7 +63,7 @@ class SruAuthClient {
 
   Future<Map<String, dynamic>> login(String identifier, String password) async {
     final getCsrfUrl = '$baseUrl/';
-    final postLoginUrl = baseUrl;
+    final postLoginUrl = '$baseUrl/';
     _cachedOtpToken = null;
     
     final token = await _getCsrfToken(getCsrfUrl);

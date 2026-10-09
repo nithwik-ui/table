@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/api/sru/(.*)",
-      "destination": "https://www.sruniv.com/$1"
+      "destination": "/api/proxy?target=sru&path=$1"
     },
     {
       "source": "/api/sraap/(.*)",
-      "destination": "https://sraap.in/$1"
+      "destination": "/api/proxy?target=sraap&path=$1"
     },
     {
       "source": "/(.*)",
