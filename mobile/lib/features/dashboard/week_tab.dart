@@ -236,7 +236,7 @@ class _WeekTabState extends State<WeekTab> {
             final oStart = override['start_time'];
             final oEnd = override['end_time'];
             if (oStart != null && oStart.toString().isNotEmpty && oEnd != null && oEnd.toString().isNotEmpty) {
-               final cStart = cls['start_time'] as String;
+               final cStart = cls['start_time'] as String? ?? '00:00';
                if (cStart.compareTo(oStart) >= 0 && cStart.compareTo(oEnd) <= 0) {
                  isCancelled = true;
                  break;
@@ -609,7 +609,7 @@ class _WeekTabState extends State<WeekTab> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                              c['subject'] as String,
+                                              c['subject'] as String? ?? 'No Subject',
                                               style: AppConstants.getHeadline().copyWith(
                                                 fontSize: 18,
                                                 decoration: isCancelled ? TextDecoration.lineThrough : null,
@@ -620,7 +620,7 @@ class _WeekTabState extends State<WeekTab> {
                                           Row(
                                             children: [
                                               Text(
-                                                '${TimeUtils.format12Hour(c['start_time'])} - ${TimeUtils.format12Hour(c['end_time'])}',
+                                                '${TimeUtils.format12Hour(c['start_time'] as String? ?? '00:00')} - ${TimeUtils.format12Hour(c['end_time'] as String? ?? '00:00')}',
                                                 style: AppConstants.getLabelSmall(
                                                   color: isCancelled ? AppConstants.textSecondary : AppConstants.primary
                                                 ).copyWith(
@@ -631,8 +631,8 @@ class _WeekTabState extends State<WeekTab> {
                                               const SizedBox(width: 8),
                                               if (!isCancelled)
                                                 LiveClassProgressIndicator(
-                                                  startTime: c['start_time'] as String,
-                                                  endTime: c['end_time'] as String,
+                                                  startTime: c['start_time'] as String? ?? '00:00',
+                                                  endTime: c['end_time'] as String? ?? '00:00',
                                                   isToday: _selectedDayIndex == TimeUtils.getKolkataTime().weekday - 1,
                                                 ),
                                             ],
