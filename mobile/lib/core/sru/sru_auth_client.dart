@@ -83,8 +83,10 @@ class SruAuthClient {
     final response = await http.Response.fromStream(streamedResponse);
     _updateCookies(response.headers);
     
-    if (response.statusCode == 302) {
-      final rawLocation = response.headers['location'] ?? '';
+    final proxyRedirect = response.headers['x-proxy-redirect'];
+    
+    if (response.statusCode == 302 || proxyRedirect != null) {
+      final rawLocation = proxyRedirect ?? response.headers['location'] ?? '';
       final location = rawLocation.toLowerCase();
       
       if (location.contains('otp') || location.contains('verification')) {
@@ -102,8 +104,7 @@ class SruAuthClient {
       final bodyLower = body.toLowerCase();
       final finalUrl = response.request?.url.toString().toLowerCase() ?? '';
 
-      // On Web, HTTP auto-follows 302 redirects. Check what page we landed on.
-      // Check by final URL first
+      // On Web, check what page we landed on (fallback).
       final bool isOtpByUrl = finalUrl.contains('otp') || finalUrl.contains('verification');
       final bool isDashboardByUrl = finalUrl.contains('dashboard') ||
           finalUrl.contains('student') || finalUrl.contains('faculty');
@@ -123,9 +124,7 @@ class SruAuthClient {
 
       if (isOtpByUrl || isOtpByBody) {
         // We are on the OTP page. The OTP URL through proxy is the current request URL.
-        _otpTargetUrl = kIsWeb
-            ? '${baseUrl}/verify-otp'  // We'll GET the right form from proxy
-            : (response.request?.url.toString() ?? '$baseUrl/login/otp-verification');
+        _otpTargetUrl = response.request?.url.toString() ?? '$baseUrl/login/otp-verification';
         if (kIsWeb && _otpTargetUrl.contains('sruniv.com')) {
           _otpTargetUrl = '$baseUrl${Uri.parse(_otpTargetUrl).path}';
         }
@@ -175,8 +174,10 @@ class SruAuthClient {
     final response = await http.Response.fromStream(streamedResponse);
     _updateCookies(response.headers);
     
-    if (response.statusCode == 302) {
-      final location = response.headers['location']?.toLowerCase() ?? '';
+    final proxyRedirect = response.headers['x-proxy-redirect'];
+    
+    if (response.statusCode == 302 || proxyRedirect != null) {
+      final location = (proxyRedirect ?? response.headers['location'] ?? '').toLowerCase();
       if (location.contains('dashboard') || location.contains('student') || location.contains('faculty')) {
         return {'status': 'authenticated'};
       }
@@ -198,10 +199,28 @@ class SruAuthClient {
   }
 
   Future<http.Response> getAuthenticated(String url) async {
-    final response = await _client.get(Uri.parse(url), headers: _headers())
+    var response = await _client.get(Uri.parse(url), headers: _headers())
         .timeout(const Duration(seconds: 15));
     _updateCookies(response.headers);
+    
+    final proxyRedirect = response.headers['x-proxy-redirect'];
+    if (response.statusCode == 302 || proxyRedirect != null) {
+      final location = (proxyRedirect ?? response.headers['location'] ?? '').toLowerCase();
+      if (location.contains('login')) {
+        throw SruAuthException('Session expired. Please log in again.');
+      }
+      // Manually follow redirect for other pages, retaining our custom cookie headers
+      final redirectUrl = rawLocation(proxyRedirect ?? response.headers['location'] ?? '', url);
+      response = await _client.get(Uri.parse(redirectUrl), headers: _headers())
+          .timeout(const Duration(seconds: 15));
+      _updateCookies(response.headers);
+    }
     return response;
+  }
+  
+  String rawLocation(String loc, String originalUrl) {
+    if (loc.startsWith('http')) return loc;
+    return '$baseUrl$loc';
   }
 
   void clearSession() {

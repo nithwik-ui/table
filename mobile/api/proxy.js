@@ -104,7 +104,14 @@ export default async function handler(req, res) {
 
   return new Promise((resolve) => {
     const proxyReq = https.request(options, (proxyRes) => {
-      res.status(proxyRes.statusCode);
+      let statusCode = proxyRes.statusCode;
+      const isRedirect = statusCode >= 300 && statusCode < 400;
+      
+      if (isRedirect) {
+        // Intercept redirects so web browsers don't auto-follow and lose custom headers
+        statusCode = 200;
+      }
+      res.status(statusCode);
 
       for (const [key, value] of Object.entries(proxyRes.headers)) {
         const lkey = key.toLowerCase();
@@ -112,11 +119,19 @@ export default async function handler(req, res) {
           const cookies = Array.isArray(value) ? value : [value];
           const fixed = cookies.map(stripCookieDomain);
           res.setHeader('set-cookie', fixed);
-          // Browsers block JS from reading Set-Cookie. We expose it manually so Dart can capture it.
           res.setHeader('x-proxy-set-cookie', fixed.join(', '));
-          res.setHeader('Access-Control-Expose-Headers', 'x-proxy-set-cookie');
+          res.setHeader('Access-Control-Expose-Headers', 'x-proxy-set-cookie, x-proxy-redirect');
         } else if (lkey === 'location') {
-          res.setHeader('location', rewriteLocation(value, target));
+          const newLoc = rewriteLocation(value, target);
+          if (isRedirect) {
+            res.setHeader('x-proxy-redirect', newLoc);
+            // Also expose it to the browser
+            let expose = res.getHeader('Access-Control-Expose-Headers') || 'x-proxy-set-cookie';
+            if (!expose.includes('x-proxy-redirect')) expose += ', x-proxy-redirect';
+            res.setHeader('Access-Control-Expose-Headers', expose);
+          } else {
+            res.setHeader('location', newLoc);
+          }
         } else if (lkey === 'transfer-encoding' || lkey === 'content-encoding') {
           // Skip - Vercel handles encoding
         } else {
