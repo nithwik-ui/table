@@ -1,5 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html_parser;
+import 'package:flutter/foundation.dart';
 
 class SruAuthException implements Exception {
   final String message;
@@ -17,7 +18,7 @@ class SruAuthClient {
   final Map<String, String> _cookies = {};
   
   // The actual SRU Timetable portal URL
-  static const String baseUrl = 'https://www.sruniv.com';
+  static String get baseUrl => kIsWeb ? '/api/sru' : 'https://www.sruniv.com';
   
   String get cookieHeader => _cookieHeader;
 

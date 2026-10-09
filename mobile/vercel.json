@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/api/sru/(.*)",
+      "destination": "https://www.sruniv.com/$1"
+    },
+    {
+      "source": "/api/sraap/(.*)",
+      "destination": "https://sraap.in/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
