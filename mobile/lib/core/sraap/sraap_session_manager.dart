@@ -100,7 +100,9 @@ class SraapSessionManager {
   }) async {
     final req = http.Request('POST', Uri.parse(SraapSessionManager.baseUrl + '/student_login.php'));
     req.headers.addAll(_headers(isForm: true));
-    req.followRedirects = false; // CRITICAL: Stop auto-redirect to capture cookies correctly
+    if (!kIsWeb) {
+      req.followRedirects = false; // CRITICAL: Stop auto-redirect to capture cookies correctly on mobile
+    }
     req.bodyFields = {
       'user_id': enrollment,
       'user_password': password,
