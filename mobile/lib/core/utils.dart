@@ -18,6 +18,7 @@ class TimeUtils {
       // format 'h:mm a' will output "1:30 PM" without leading zero on hours
       return DateFormat('h:mm a').format(dt);
     } catch (_) {
+      return timeStr;
     }
   }
 
