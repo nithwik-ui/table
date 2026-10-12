@@ -408,3 +408,85 @@ export async function sendHolidaySilentPush(date: string, targetMode: string) {
     console.error('Error dispatching holiday silent push:', err.message || err);
   }
 }
+
+export async function sendTestPush(fcmToken: string) {
+  if (!fcmInitialized) {
+    throw new Error('Firebase Admin SDK is not initialized.');
+  }
+
+  const payload = {
+    token: fcmToken,
+    notification: {
+      title: '🔔 SRU Timetable Test',
+      body: 'Push notifications are working on this device.',
+    },
+    data: {
+      click_action: 'FLUTTER_NOTIFICATION_CLICK',
+      type: 'test_notification'
+    },
+    android: {
+      notification: {
+        clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+        sound: 'default',
+      }
+    },
+    apns: {
+      payload: { aps: { sound: 'default' } }
+    }
+  };
+
+  await admin.messaging().send(payload);
+}
+
+export async function sendAttendancePush(rollNumber: string, subject: string, date: string, timeStr: string) {
+  if (!fcmInitialized) {
+    console.warn('Skipping attendance push: Firebase Admin SDK is not initialized.');
+    return;
+  }
+
+  try {
+    const { data: tokens, error: tokensErr } = await supabase
+      .from('device_tokens')
+      .select('fcm_token')
+      .eq('user_mode', 'student')
+      .eq('faculty_id', rollNumber);
+
+    if (tokensErr) {
+      console.error('Failed to fetch tokens for attendance push:', tokensErr.message);
+      return;
+    }
+
+    if (!tokens || tokens.length === 0) {
+      return;
+    }
+
+    const fcmTokens = tokens.map(t => t.fcm_token);
+
+    const payload = {
+      tokens: fcmTokens,
+      notification: {
+        title: '📚 Attendance Marked',
+        body: `Your attendance for ${subject} has been marked PRESENT.`,
+      },
+      data: {
+        click_action: 'FLUTTER_NOTIFICATION_CLICK',
+        type: 'attendance',
+        subject: subject
+      },
+      android: {
+        notification: {
+          clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+          sound: 'default',
+        }
+      },
+      apns: {
+        payload: { aps: { sound: 'default' } }
+      }
+    };
+
+    const response = await admin.messaging().sendEachForMulticast(payload);
+    console.log(`Dispatched Attendance push to ${rollNumber}: ${response.successCount} succeeded, ${response.failureCount} failed.`);
+  } catch (err: any) {
+    console.error('Error dispatching attendance push:', err.message || err);
+  }
+}
