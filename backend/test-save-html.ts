@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import axios from 'axios';
 import fs from 'fs';
 
@@ -21,7 +22,7 @@ async function test() {
     });
     fs.writeFileSync('free_rooms.html', res.data);
     console.log('Saved to free_rooms.html');
-  } catch (e) {
+  } catch (e: any) {
     console.log(e.message);
   }
 }
