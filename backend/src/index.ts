@@ -359,8 +359,12 @@ app.post('/api/devices/unregister', async (req: Request, res: Response) => {
 import { sendTestPush, sendAttendancePush } from './notifications/fcm';
 
 app.post('/api/devices/test-notification', async (req: Request, res: Response) => {
+  const fcm_token = req.body?.fcm_token;
+  const maskedToken = typeof fcm_token === 'string' && fcm_token.length > 10
+    ? `${fcm_token.substring(0, 6)}...${fcm_token.substring(fcm_token.length - 4)}`
+    : '***';
+
   try {
-    const { fcm_token } = req.body;
     if (!fcm_token) {
       return res.status(400).json({
         success: false,
@@ -369,9 +373,6 @@ app.post('/api/devices/test-notification', async (req: Request, res: Response) =
       });
     }
 
-    const maskedToken = fcm_token.length > 10
-      ? `${fcm_token.substring(0, 6)}...${fcm_token.substring(fcm_token.length - 4)}`
-      : '***';
     console.log(`[FCM] Dispatching test notification to token: ${maskedToken}`);
 
     await sendTestPush(fcm_token);
@@ -386,6 +387,16 @@ app.post('/api/devices/test-notification', async (req: Request, res: Response) =
                            (err.message && err.message.includes('not registered'));
 
     if (isUnregistered) {
+      try {
+        await supabase
+          .from('device_tokens')
+          .delete()
+          .eq('fcm_token', fcm_token);
+        console.log(`[FCM] Pruned unregistered token from database: ${maskedToken}`);
+      } catch (cleanupErr: any) {
+        console.error('[FCM] Failed to cleanup unregistered token:', cleanupErr.message);
+      }
+
       return res.status(400).json({
         success: false,
         code: 'FCM_UNREGISTERED',
