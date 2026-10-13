@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -6,6 +7,8 @@ import '../../core/storage.dart';
 import '../../core/sync.dart';
 import '../../core/auth/auth_repository.dart';
 import '../../core/auth/auth_state.dart';
+import '../../core/sru/sru_auth_client.dart';
+import '../../core/timetable/timetable_repository.dart';
 import 'sru_otp_screen.dart';
 import '../dashboard/dashboard_screen.dart';
 
@@ -25,6 +28,37 @@ class _SruLoginScreenState extends State<SruLoginScreen> {
   String? _errorMessage;
 
   bool _rememberMe = true;
+
+  String _formatErrorMessage(dynamic error) {
+    if (error == null) return '';
+    final msg = error.toString();
+    if (error is TimeoutException || msg.contains('TimeoutException')) {
+      return 'The SRU portal took too long to respond. If you received an OTP SMS, tap "Enter OTP" below.';
+    }
+    if (msg.contains('SocketException') || msg.contains('Failed host lookup')) {
+      return 'Unable to reach SRU portal. Please check your internet connection.';
+    }
+    if (error is SruAuthException) {
+      return error.message;
+    }
+    return msg.replaceAll(RegExp(r'^(Exception|Error|SruAuthException):\s*'), '');
+  }
+
+  void _navigateToOtpScreen() async {
+    final id = _identifierController.text.trim();
+    if (id.isNotEmpty) {
+      await StorageService.setUserMode(widget.role);
+      await StorageService.saveUserIdentifier(id);
+      if (RegExp(r'\b2[0-9][0-9A-Za-z]{2}[A-Za-z0-9]{6}\b').hasMatch(id)) {
+        await StorageService.saveStudentRollNumber(id);
+      }
+    }
+    AuthRepository.instance.setRole(widget.role);
+    if (!mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const SruOtpScreen()),
+    );
+  }
 
   void _login() async {
     setState(() {
@@ -55,7 +89,13 @@ class _SruLoginScreenState extends State<SruLoginScreen> {
           );
         } else if (AuthRepository.instance.state == AuthState.authenticated) {
           TextInput.finishAutofillContext();
-          SyncService.instance.syncTimetable();
+          try {
+            await SyncService.instance.syncTimetable(force: true).timeout(const Duration(seconds: 20));
+          } catch (e) {
+            debugPrint('[LOGIN] Direct auth sync caught non-fatal: $e');
+          }
+          TimetableRepository.instance.loadFromCache();
+          if (!mounted) return;
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => const DashboardScreen(initialTab: 0)),
             (route) => false,
@@ -66,7 +106,7 @@ class _SruLoginScreenState extends State<SruLoginScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = e.toString();
+          _errorMessage = _formatErrorMessage(e);
         });
       }
     } finally {
@@ -101,7 +141,7 @@ class _SruLoginScreenState extends State<SruLoginScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Use your registered mobile number or official SRU email.',
+                'ⓘ Please use your SRU-registered mobile number or official SRU email and password to log in.\n\n🔒 Your password will not be saved.',
                 style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
                 textAlign: TextAlign.center,
               ),
@@ -114,9 +154,34 @@ class _SruLoginScreenState extends State<SruLoginScreen> {
                     color: AppConstants.errorContainer,
                     borderRadius: BorderRadius.circular(AppConstants.radiusTag),
                   ),
-                  child: Text(
-                    _errorMessage!,
-                    style: AppConstants.getBodyMedium(color: AppConstants.error),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _errorMessage!,
+                        style: AppConstants.getBodyMedium(color: AppConstants.error),
+                      ),
+                      if (_errorMessage!.contains('OTP') || _errorMessage!.contains('SMS')) ...[
+                        const SizedBox(height: 8),
+                        GestureDetector(
+                          onTap: _navigateToOtpScreen,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Enter OTP code',
+                                style: AppConstants.getBodyMedium(color: AppConstants.primary).copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(Icons.arrow_forward, size: 16, color: AppConstants.primary),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               AutofillGroup(
@@ -194,7 +259,19 @@ class _SruLoginScreenState extends State<SruLoginScreen> {
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                     : const Text('Sign in'),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
+              Center(
+                child: TextButton(
+                  onPressed: _isLoading ? null : _navigateToOtpScreen,
+                  child: Text(
+                    'Already received an OTP? Enter code',
+                    style: AppConstants.getBodyMedium(color: AppConstants.primary).copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
               Center(
                 child: TextButton(
                   onPressed: () async {

@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../core/storage.dart';
+import '../../core/api.dart';
 import 'sraap_session_manager.dart';
 import 'sraap_parser.dart';
 import 'models/sraap_academic_data.dart';
@@ -20,18 +22,61 @@ class SraapAcademicService {
       }
 
       if (!StorageService.isSraapConnected()) {
-        return null; // Must authenticate first
+        return _getCachedData();
       }
 
       // Fetch fresh data from network
       return await _fetchFreshData();
     } catch (e) {
       debugPrint('SRAAP Fetch Error: $e');
+      final cached = _getCachedData();
+      if (cached != null) {
+        return cached;
+      }
       if (forceRefresh) {
         rethrow;
       }
-      // On normal load, fallback to cache
-      return _getCachedData();
+      return null;
+    }
+  }
+
+  Timer? _keepAliveTimer;
+
+  /// Starts the active session keep-alive loop.
+  /// Pings SRAAP dashboard every 10 minutes to touch the session and prevent PHP inactivity timeout.
+  void startKeepAlive() {
+    _keepAliveTimer?.cancel();
+    if (!StorageService.isSraapConnected()) return;
+
+    _keepAliveTimer = Timer.periodic(const Duration(minutes: 10), (_) async {
+      if (StorageService.isSraapConnected()) {
+        try {
+          await pingKeepAlive();
+        } catch (_) {}
+      }
+    });
+  }
+
+  /// Sends a background heartbeat to keep the session alive and refresh attendance.
+  Future<SraapAcademicData?> pingKeepAlive() async {
+    try {
+      if (!StorageService.isSraapConnected()) return null;
+      return await fetchFreshDataSilently();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Attempts to fetch fresh live data in the background silently.
+  /// Returns the newly fetched data on success, or null if network fails.
+  /// Never throws exceptions, never wipes cached data, and preserves session keep-alive.
+  Future<SraapAcademicData?> fetchFreshDataSilently() async {
+    try {
+      if (!StorageService.isSraapConnected()) return null;
+      return await _fetchFreshData();
+    } catch (e) {
+      debugPrint('[SRAAP] Silent live sync: $e');
+      return null;
     }
   }
 
@@ -43,8 +88,14 @@ class SraapAcademicService {
 
     // Fetch Dashboard Page (contains Overall Attendance, CGPA, Mentor, and Subject Attendance)
     final dashboardRes = await SraapSessionManager.instance.get('/student/dash_board.php');
-    if (dashboardRes.statusCode != 200 || (!dashboardRes.body.toLowerCase().contains('logout') && dashboardRes.bodyBytes.length < 10000)) {
-      throw Exception('Session expired or access denied.');
+    final body = dashboardRes.body;
+    final isDashboardHtml = body.contains('Attendance') ||
+        body.toLowerCase().contains('logout') ||
+        body.contains('attendanceTable') ||
+        body.contains('Welcome to');
+
+    if (dashboardRes.statusCode != 200 || (!isDashboardHtml && dashboardRes.bodyBytes.length < 5000)) {
+      throw Exception('Access denied or invalid response.');
     }
     
     // Parse Dashboard
@@ -53,11 +104,41 @@ class SraapAcademicService {
     // Merge subject data into the parsed object (dash_board.php also contains Course Wise Attendance)
     data = SraapParser.parseSubjects(dashboardRes.body, data);
 
+    // Check for attendance updates
+    final oldData = _getCachedData();
+    if (oldData != null) {
+      _checkForAttendanceChanges(oldData, data);
+    }
+
     // Cache the new data
     await StorageService.saveSraapAcademicCache(data.toJson());
     await StorageService.saveSraapLastSyncedAt(data.lastSynced);
 
     return data;
+  }
+
+  Future<void> _checkForAttendanceChanges(SraapAcademicData oldData, SraapAcademicData newData) async {
+    final rollNumber = StorageService.getStudentRollNumber();
+    if (rollNumber == null || rollNumber.isEmpty) return;
+
+    for (final newSub in newData.subjects) {
+      final oldSub = oldData.subjects.where((s) => s.subjectName == newSub.subjectName).firstOrNull;
+      if (oldSub != null) {
+        final newTotal = newSub.totalCount ?? 0;
+        final oldTotal = oldSub.totalCount ?? 0;
+        final newPresent = newSub.presentCount ?? 0;
+        final oldPresent = oldSub.presentCount ?? 0;
+
+        if (newTotal > oldTotal && newPresent > oldPresent) {
+          // Present count increased! Send notification via backend.
+          try {
+            await ApiService.sendAttendanceNotification(rollNumber, newSub.subjectName);
+          } catch (e) {
+            debugPrint('Failed to send attendance notification: $e');
+          }
+        }
+      }
+    }
   }
 
   SraapAcademicData? getCachedAcademicData() => _getCachedData();

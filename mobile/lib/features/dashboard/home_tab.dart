@@ -1,19 +1,27 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
 import '../../core/utils.dart';
+import '../../core/api.dart';
 import '../../core/sync.dart';
+import '../../core/timetable_status_engine.dart';
 import '../notifications/notifications_screen.dart';
 import 'dashboard_screen.dart';
 import 'free_rooms_screen.dart';
 import 'changes_tab.dart';
 import 'widgets/live_class_progress.dart';
 import '../../widgets/class_details_bottom_sheet.dart';
+import '../../core/timetable/timetable_repository.dart';
+import '../../core/auth/auth_repository.dart';
+import '../../core/auth/auth_state.dart';
 
 class HomeTab extends StatefulWidget {
-  const HomeTab({super.key});
+  final VoidCallback? onNavigateToWeek;
+  const HomeTab({super.key, this.onNavigateToWeek});
 
   @override
   State<HomeTab> createState() => _HomeTabState();
@@ -33,6 +41,7 @@ class _HomeTabState extends State<HomeTab> {
   
   bool _isOffline = false;
   bool _isRefreshing = false;
+  bool _showWebNotificationPrompt = false;
   Timer? _timer;
 
   @override
@@ -43,11 +52,30 @@ class _HomeTabState extends State<HomeTab> {
     // Auto-update freshness text and class statuses every minute
     _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
       if (mounted) {
+        TimetableRepository.instance.updateStatusCalculations();
         _updateFreshnessAndTimetable();
       }
     });
     
+    TimetableRepository.instance.addListener(_onTimetableRepoUpdate);
     SyncService.instance.addListener(_onSyncUpdate);
+
+    if (kIsWeb) {
+      FirebaseMessaging.instance.getNotificationSettings().then((settings) {
+        if (mounted &&
+            settings.authorizationStatus != AuthorizationStatus.authorized &&
+            settings.authorizationStatus != AuthorizationStatus.provisional &&
+            !StorageService.isWebNotificationPromptDismissed()) {
+          setState(() => _showWebNotificationPrompt = true);
+        }
+      }).catchError((_) {});
+    }
+  }
+
+  void _onTimetableRepoUpdate() {
+    if (mounted) {
+      _updateFreshnessAndTimetable();
+    }
   }
 
   void _onSyncUpdate() {
@@ -63,6 +91,7 @@ class _HomeTabState extends State<HomeTab> {
 
   @override
   void dispose() {
+    TimetableRepository.instance.removeListener(_onTimetableRepoUpdate);
     SyncService.instance.removeListener(_onSyncUpdate);
     _timer?.cancel();
     super.dispose();
@@ -99,8 +128,9 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   void _updateFreshnessAndTimetable() {
-    final userMode = StorageService.getUserMode() ?? 'student';
-    final lastSynced = userMode == 'faculty' ? StorageService.getFacultyLastSyncedAt() : StorageService.getLastSyncedAt();
+    final repo = TimetableRepository.instance;
+    final lastSynced = repo.metadata.lastUpdated;
+    
     if (lastSynced == null) {
       setState(() {
         _freshnessText = 'Never updated';
@@ -117,125 +147,62 @@ class _HomeTabState extends State<HomeTab> {
       }
     }
 
-    // Refresh timetable from cache
-    final timetable = userMode == 'faculty' ? StorageService.getFacultyTimetableCache() : StorageService.getTimetableCache();
-    if (timetable.isNotEmpty) {
-      _calculateSchedules(timetable);
-    } else {
-      setState(() {
-        _upNextClass = null;
-        _upNextStatus = '';
-        _todayClasses = [];
-      });
-    }
-  }
-
-  void _calculateSchedules(List<dynamic> timetable) {
-    // Current Kolkata Time
-    final nowLocal = TimeUtils.getKolkataTime();
-    final weekdayIndex = nowLocal.weekday;
-    
-    // Mappings: Flutter weekday (1 = Mon, 7 = Sun) -> DB Day values
-    final weekdays = [
-      'Sunday', // 0
-      'Monday', // 1
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday' // 7
-    ];
-    final currentDay = weekdays[weekdayIndex].toLowerCase();
-    final currentMinutes = nowLocal.hour * 60 + nowLocal.minute;
-
-    // Filter today's classes
-    final rawToday = timetable.where((e) => (e['day'] as String).toLowerCase() == currentDay).toList();
-    
-    // Apply calendar overrides
-    final userMode = StorageService.getUserMode() ?? 'student';
-    final overrides = userMode == 'faculty' 
-        ? StorageService.getFacultyCalendarOverridesCache() 
-        : StorageService.getStudentCalendarOverridesCache();
-    final formattedDate = "${nowLocal.year}-${nowLocal.month.toString().padLeft(2, '0')}-${nowLocal.day.toString().padLeft(2, '0')}";
-    
-    List<dynamic> today = [];
-    String? holidayTitle;
-    String? holidayMessage;
-    for (final rawCls in rawToday) {
-      final cls = Map<String, dynamic>.from(rawCls);
-      bool isCancelled = false;
-      for (final override in overrides) {
-        if (override['override_date'] == formattedDate) {
-          final targetMode = override['target_mode'];
-          if (targetMode == 'both' || targetMode == userMode) {
-            holidayTitle = override['title'];
-            holidayMessage = override['message'];
-            final oStart = override['start_time'];
-            final oEnd = override['end_time'];
-            if (oStart != null && oStart.toString().isNotEmpty && oEnd != null && oEnd.toString().isNotEmpty) {
-               final cStart = cls['start_time'] as String;
-               if (cStart.compareTo(oStart) >= 0 && cStart.compareTo(oEnd) <= 0) {
-                 isCancelled = true;
-                 break;
-               }
-            } else {
-              isCancelled = true; // Full day
-              break;
-            }
-          }
-        }
-      }
-      cls['isCancelled'] = isCancelled;
-      today.add(cls);
-    }
-    
-    // Sort chronologically
-    today.sort((a, b) => (a['start_time'] as String).compareTo(b['start_time'] as String));
-
-    // Calculate remaining classes (where end_time has not passed)
-    // Keep cancelled classes in the list so they can be shown as struck through
-    final remaining = today.where((e) {
-      final endTimeStr = e['end_time'] as String? ?? '00:00';
-      final endParts = endTimeStr.split(':');
-      final endMinutes = endParts.length == 2 ? int.parse(endParts[0]) * 60 + int.parse(endParts[1]) : 0;
-      return endMinutes > currentMinutes;
-    }).toList();
-
-    Map<String, dynamic>? nextClass;
-    String status = '';
-
-    // Find the first NON-CANCELLED class for "Up Next"
-    final activeRemaining = remaining.where((e) => e['isCancelled'] != true).toList();
-
-    if (activeRemaining.isNotEmpty) {
-      // Check if first active remaining class is currently in progress
-      final first = activeRemaining.first;
-      final startTimeStr = first['start_time'] as String? ?? '00:00';
-      final startParts = startTimeStr.split(':');
-      final startMinutes = startParts.length == 2 ? int.parse(startParts[0]) * 60 + int.parse(startParts[1]) : 0;
-
-      if (currentMinutes >= startMinutes) {
-        nextClass = Map<String, dynamic>.from(first);
-        status = 'Ongoing';
-      } else {
-        nextClass = Map<String, dynamic>.from(first);
-        final diff = startMinutes - currentMinutes;
-        status = 'Starts in $diff min';
-      }
-    }
-
     setState(() {
-      _upNextClass = nextClass;
-      _upNextStatus = status;
-      _todayHolidayTitle = holidayTitle;
-      _todayHolidayMessage = holidayMessage;
-      
-      // CRITICAL FIX: Retain ALL classes for today in chronological order so students see their full day schedule
-      _todayClasses = today;
+      _todayClasses = repo.todayClasses;
+      _upNextClass = repo.upNextClass;
+      _upNextStatus = repo.upNextStatus;
+      _todayHolidayTitle = repo.todayHolidayTitle;
+      _todayHolidayMessage = repo.todayHolidayMessage;
+      // Only display offline banner if there is literally NO timetable in storage
+      _isOffline = repo.classes.isEmpty && SyncService.instance.syncState != SyncState.online;
     });
   }
 
+
+  Future<void> _enableWebNotifications() async {
+    try {
+      final settings = await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional) {
+        final token = await FirebaseMessaging.instance.getToken(vapidKey: AppConstants.fcmVapidKey);
+        if (token != null && token.isNotEmpty) {
+          final userMode = StorageService.getUserMode() ?? 'student';
+          final profile = StorageService.getProfile();
+          final id = profile?['id']?.toString() ?? 
+              profile?['roll_no']?.toString() ?? 
+              StorageService.getStudentRollNumber() ?? 
+              StorageService.getUserIdentifier() ?? '';
+          final batchId = profile?['batch_id']?.toString() ?? '';
+          await ApiService.registerDevice(
+            token,
+            userMode == 'student' ? (batchId.isNotEmpty ? batchId : id) : '',
+            userMode: userMode,
+            facultyId: userMode == 'faculty' ? id : id,
+          );
+        }
+        if (mounted) {
+          setState(() => _showWebNotificationPrompt = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Notifications enabled successfully!'),
+              backgroundColor: AppConstants.success,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          setState(() => _showWebNotificationPrompt = false);
+          await StorageService.setWebNotificationPromptDismissed(true);
+        }
+      }
+    } catch (e) {
+      debugPrint('[HOME] Web notification enable error: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -298,7 +265,7 @@ class _HomeTabState extends State<HomeTab> {
               ),
             ),
             
-            // Offline banner
+            // Stale / Sync Unavailable banner (non-blocking)
             if (_isOffline) ...[
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer),
@@ -307,7 +274,7 @@ class _HomeTabState extends State<HomeTab> {
                   decoration: BoxDecoration(
                     color: AppConstants.errorContainer,
                     borderRadius: BorderRadius.circular(AppConstants.radiusButton),
-                    border: Border.all(color: AppConstants.error.withOpacity(0.3)),
+                    border: Border.all(color: AppConstants.error.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     children: [
@@ -318,20 +285,22 @@ class _HomeTabState extends State<HomeTab> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'You\'re offline',
+                              (SyncService.instance.syncState == SyncState.sessionExpired &&
+                                      AuthRepository.instance.state == AuthState.sessionExpired)
+                                  ? 'Session expired'
+                                  : 'Sync unavailable',
                               style: AppConstants.getHeadline().copyWith(fontSize: 14, color: AppConstants.error),
                             ),
                             Text(
-                              'Showing last synchronized timetable.',
-                              style: AppConstants.getBodyMedium(color: AppConstants.error.withOpacity(0.8)),
+                              'Showing saved timetable.',
+                              style: AppConstants.getBodyMedium(color: AppConstants.error.withValues(alpha: 0.8)),
                             ),
                           ],
                         ),
                       ),
                       TextButton(
                         onPressed: () {
-                          setState(() => _isOffline = false);
-                          SyncService.instance.syncTimetable();
+                          TimetableRepository.instance.refresh(force: true);
                         },
                         child: Text(
                           'Try again',
@@ -354,7 +323,7 @@ class _HomeTabState extends State<HomeTab> {
                   decoration: BoxDecoration(
                     color: AppConstants.infoContainer,
                     borderRadius: BorderRadius.circular(AppConstants.radiusButton),
-                    border: Border.all(color: AppConstants.info.withOpacity(0.3)),
+                    border: Border.all(color: AppConstants.info.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     children: [
@@ -371,7 +340,7 @@ class _HomeTabState extends State<HomeTab> {
                             if (_todayHolidayMessage != null && _todayHolidayMessage!.isNotEmpty)
                               Text(
                                 _todayHolidayMessage!,
-                                style: AppConstants.getBodyMedium(color: AppConstants.info.withOpacity(0.9)),
+                                style: AppConstants.getBodyMedium(color: AppConstants.info.withValues(alpha: 0.9)),
                               ),
                           ],
                         ),
@@ -387,7 +356,7 @@ class _HomeTabState extends State<HomeTab> {
               child: RefreshIndicator(
                 color: AppConstants.primary,
                 onRefresh: () async {
-                  await SyncService.instance.syncTimetable();
+                  await TimetableRepository.instance.refresh(force: true);
                 },
                 child: ListView(
                   padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer),
@@ -403,6 +372,58 @@ class _HomeTabState extends State<HomeTab> {
                       _contextLine,
                       style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
                     ),
+                    if (_showWebNotificationPrompt) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppConstants.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(AppConstants.radiusCard),
+                          border: Border.all(color: AppConstants.primary.withValues(alpha: 0.2)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.notifications_active_outlined, color: AppConstants.primary, size: 22),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Enable Notifications',
+                                    style: AppConstants.getHeadline().copyWith(fontSize: 13, color: AppConstants.primary),
+                                  ),
+                                  Text(
+                                    'Get live alerts when your classes or rooms are changed.',
+                                    style: AppConstants.getBodyMedium(color: AppConstants.textSecondary).copyWith(fontSize: 11),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            ElevatedButton(
+                              onPressed: _enableWebNotifications,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppConstants.primary,
+                                foregroundColor: AppConstants.onPrimary,
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                minimumSize: const Size(56, 28),
+                              ),
+                              child: const Text('Enable', style: TextStyle(fontSize: 11)),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close, size: 14, color: AppConstants.textSecondary),
+                              onPressed: () {
+                                setState(() => _showWebNotificationPrompt = false);
+                                StorageService.setWebNotificationPromptDismissed(true);
+                              },
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     
                     // Sync Refresh row
@@ -581,10 +602,14 @@ class _HomeTabState extends State<HomeTab> {
                         ),
                         TextButton(
                           onPressed: () {
-                            Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(builder: (context) => const DashboardScreen(initialTab: 1)),
-                              (route) => false,
-                            );
+                            if (widget.onNavigateToWeek != null) {
+                              widget.onNavigateToWeek!();
+                            } else {
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(builder: (context) => const DashboardScreen(initialTab: 1)),
+                                (route) => false,
+                              );
+                            }
                           },
                           child: Text(
                             'View All',
@@ -601,44 +626,38 @@ class _HomeTabState extends State<HomeTab> {
                         itemCount: _todayClasses.length,
                         separatorBuilder: (context, index) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
-                          final c = _todayClasses[index];
+                          final c = Map<String, dynamic>.from(_todayClasses[index] as Map);
                           final room = (c['room'] as String? ?? 'No Room').split('_')[0];
                           final ltp = c['ltp'] as String? ?? '';
                           final isLab = ltp.toLowerCase().contains('lab') || ltp.toLowerCase().contains('practical') || ltp == 'P';
                           final isCancelled = c['isCancelled'] == true;
 
-                          final startTimeStr = c['start_time'] as String? ?? '00:00';
-                          final startParts = startTimeStr.split(':');
-                          final startMins = startParts.length == 2 ? int.parse(startParts[0]) * 60 + int.parse(startParts[1]) : 0;
-                          
-                          final endTimeStr = c['end_time'] as String? ?? '00:00';
-                          final endParts = endTimeStr.split(':');
-                          final endMins = endParts.length == 2 ? int.parse(endParts[0]) * 60 + int.parse(endParts[1]) : 0;
-
-                          final now = TimeUtils.getKolkataTime();
-                          final curMins = now.hour * 60 + now.minute;
+                          final nowLocal = TimeUtils.nowInSruTime();
+                          final classStatus = TimetableStatusEngine.getStatus(
+                            classData: c,
+                            referenceDate: nowLocal,
+                            nowLocal: nowLocal,
+                          );
 
                           String itemStatus;
                           Color statusColor;
                           Color statusBg;
-                          bool isCompleted = false;
-                          bool isOngoing = false;
+                          bool isCompleted = classStatus == ClassStatus.completed;
+                          bool isOngoing = classStatus == ClassStatus.ongoing;
 
-                          if (isCancelled) {
+                          if (classStatus == ClassStatus.cancelled) {
                             itemStatus = 'Cancelled';
                             statusColor = AppConstants.error;
                             statusBg = AppConstants.errorContainer;
-                          } else if (curMins >= startMins && curMins < endMins) {
+                          } else if (classStatus == ClassStatus.ongoing) {
                             itemStatus = 'Ongoing';
                             statusColor = AppConstants.success;
                             statusBg = AppConstants.successContainer;
-                            isOngoing = true;
-                          } else if (curMins >= endMins) {
+                          } else if (classStatus == ClassStatus.completed) {
                             itemStatus = 'Completed';
                             statusColor = AppConstants.textSecondary;
                             statusBg = AppConstants.outline.withValues(alpha: 0.12);
-                            isCompleted = true;
-                          } else if (_upNextClass != null && c['id'] == _upNextClass!['id']) {
+                          } else if (_upNextClass != null && ((c['id'] != null && c['id'] == _upNextClass!['id']) || (c['start_time'] == _upNextClass!['start_time'] && c['subject'] == _upNextClass!['subject']))) {
                             itemStatus = _upNextStatus.isNotEmpty ? _upNextStatus : 'Up Next';
                             statusColor = AppConstants.info;
                             statusBg = AppConstants.infoContainer;
@@ -722,6 +741,7 @@ class _HomeTabState extends State<HomeTab> {
                                                     startTime: c['start_time'] as String? ?? '00:00',
                                                     endTime: c['end_time'] as String? ?? '00:00',
                                                     isToday: true,
+                                                    referenceDate: DateTime.now(),
                                                   ),
                                                   const SizedBox(width: 10),
                                                 ],

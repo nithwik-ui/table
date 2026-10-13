@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
+import '../../core/auth/secure_session_store.dart';
 import '../../core/sraap/sraap_session_manager.dart';
 import '../../core/sraap/sraap_academic_service.dart';
 
@@ -26,7 +27,26 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
   @override
   void initState() {
     super.initState();
+    final savedRoll = StorageService.getStudentRollNumber();
+    if (savedRoll != null && savedRoll.isNotEmpty) {
+      _enrollmentCtrl.text = savedRoll;
+    }
+    _restoreSavedCredentials();
     _fetchCaptcha();
+  }
+
+  Future<void> _restoreSavedCredentials() async {
+    try {
+      final creds = await SecureSessionStore.getSession(role: 'sraap_credentials');
+      if (creds != null) {
+        if (_enrollmentCtrl.text.isEmpty && creds['sraap_roll'] != null) {
+          _enrollmentCtrl.text = creds['sraap_roll'].toString();
+        }
+        if (_passwordCtrl.text.isEmpty && creds['sraap_pass'] != null) {
+          _passwordCtrl.text = creds['sraap_pass'].toString();
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> _fetchCaptcha() async {
@@ -42,7 +62,7 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
         _captchaBytes = bytes;
         _isRefreshingCaptcha = false;
         if (bytes == null) {
-          _errorMessage = "Unable to load CAPTCHA.\nLog: ${SraapSessionManager.instance.lastDebugLog}";
+          _errorMessage = "Unable to load CAPTCHA. Tap the refresh icon or check connection.";
         }
       });
     }
@@ -72,6 +92,11 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
         // Success
         await StorageService.setSraapConnected(true);
         await StorageService.saveStudentRollNumber(_enrollmentCtrl.text.trim());
+        await SecureSessionStore.saveSession({
+          'sraap_roll': _enrollmentCtrl.text.trim(),
+          'sraap_pass': _passwordCtrl.text.trim(),
+        }, role: 'sraap_credentials');
+        SraapAcademicService.instance.startKeepAlive();
         try {
           await SraapAcademicService.instance.getAcademicData(forceRefresh: true);
         } catch (_) {}
@@ -91,7 +116,11 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _errorMessage = "Couldn't connect to SRAAP.");
+        if (e.toString().contains('TimeoutException')) {
+          setState(() => _errorMessage = "Unable to reach SRAAP. Please check your connection and try again.");
+        } else {
+          setState(() => _errorMessage = "Couldn't connect to SRAAP.");
+        }
       }
     } finally {
       if (mounted) {
@@ -130,7 +159,7 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Your password is used only to authenticate with SRAAP.',
+                'ⓘ Please use your roll number and password to log in.\n\n🔒 Your password will not be saved.',
                 style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
               ),
               const SizedBox(height: 24),
@@ -159,11 +188,11 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
               ],
 
               // Enrollment Field
-              _buildLabel('Enrollment Number'),
+              _buildLabel('Roll Number'),
               TextField(
                 controller: _enrollmentCtrl,
                 decoration: InputDecoration(
-                  hintText: 'Enter enrollment number',
+                  hintText: 'Enter roll number',
                   filled: true,
                   fillColor: AppConstants.surface,
                   border: OutlineInputBorder(

@@ -7,8 +7,11 @@ import 'analytics_service.dart';
 import 'widget_updater.dart';
 import 'sru/sru_student_source.dart';
 import 'sru/sru_faculty_source.dart';
+import 'timetable/timetable_repository.dart';
+import 'auth/auth_repository.dart';
+import 'auth/auth_state.dart';
 
-enum SyncState { online, offline, serverUnavailable, syncTimeout }
+enum SyncState { online, offline, serverUnavailable, syncTimeout, sessionExpired }
 
 class SyncService extends ChangeNotifier {
   static final SyncService instance = SyncService._internal();
@@ -25,9 +28,19 @@ class SyncService extends ChangeNotifier {
   Timer? _retryTimer;
   DateTime? _lastCheckedAt;
   DateTime? get lastCheckedAt => _lastCheckedAt;
+  DateTime? _syncStartTime;
+  int _syncGeneration = 0;
+  int get syncGeneration => _syncGeneration;
 
-  Future<void> syncTimetable() async {
-    if (_isSyncing) return;
+  Future<void> syncTimetable({bool force = false}) async {
+    final now = DateTime.now();
+    if (_isSyncing) {
+      final isStuck = _syncStartTime != null && now.difference(_syncStartTime!).inSeconds > 15;
+      if (!force && !isStuck) {
+        return;
+      }
+      debugPrint('[SYNC] Overriding in-flight sync (force: $force, isStuck: $isStuck)');
+    }
     
     var userMode = StorageService.getUserMode();
     if (userMode == null || userMode.isEmpty) {
@@ -35,25 +48,42 @@ class SyncService extends ChangeNotifier {
       await StorageService.setUserMode('student');
     }
 
+    final currentGeneration = ++_syncGeneration;
     _isSyncing = true;
+    _syncStartTime = DateTime.now();
     _retryTimer?.cancel();
     notifyListeners();
 
     try {
       if (userMode == 'faculty') {
-        try {
-          final overrides = await ApiService.fetchCalendarOverrides('', 'faculty');
-          await StorageService.saveFacultyCalendarOverridesCache(overrides);
-        } catch (_) {}
+        // Run calendar overrides in background/concurrently without blocking timetable
+        final overridesFuture = ApiService.fetchCalendarOverrides('', 'faculty')
+            .then((overrides) => StorageService.saveFacultyCalendarOverridesCache(overrides))
+            .catchError((e) {
+          debugPrint('[SYNC] Faculty overrides fetch non-fatal: $e');
+        });
 
+        // Timetable fetch is primary
         final list = await SruFacultySource.instance.fetchTimetable();
-        try {
-          final profile = await SruFacultySource.instance.fetchProfile();
-          await StorageService.saveProfile(profile);
-        } catch (e) {
-          debugPrint('Faculty profile sync non-fatal: $e');
-        }
         
+        // Decouple profile fetch so it never blocks timetable render
+        unawaited(SruFacultySource.instance.fetchProfile().then((profile) async {
+          if (currentGeneration == _syncGeneration) {
+            await StorageService.saveProfile(profile);
+          }
+        }).catchError((e) {
+          debugPrint('[SYNC] Faculty profile sync non-fatal: $e');
+        }));
+        
+        // Await overrides if quick, non-fatal
+        await overridesFuture;
+        
+        // Race check: discard if superseded by a newer sync
+        if (currentGeneration != _syncGeneration) {
+          debugPrint('[SYNC] Discarding stale faculty sync (generation $currentGeneration != $_syncGeneration)');
+          return;
+        }
+
         AnalyticsService.instance.logTimetableLoaded(
           mode: 'faculty',
           classCount: list.length,
@@ -65,6 +95,7 @@ class SyncService extends ChangeNotifier {
         
         await StorageService.saveFacultyTimetableCache(list);
         await StorageService.saveFacultyLastSyncedAt(DateTime.now());
+        TimetableRepository.instance.updateTimetable(list, source: 'sru_authenticated_faculty');
         
         await WidgetUpdater.updateWidgetInfo();
 
@@ -73,17 +104,23 @@ class SyncService extends ChangeNotifier {
         }
       } else {
         // Student Mode (default)
-        try {
-          final overrides = await ApiService.fetchCalendarOverrides('', 'student');
-          await StorageService.saveStudentCalendarOverridesCache(overrides);
-        } catch (_) {}
+        // Run calendar overrides concurrently without blocking timetable
+        final overridesFuture = ApiService.fetchCalendarOverrides('', 'student')
+            .then((overrides) => StorageService.saveStudentCalendarOverridesCache(overrides))
+            .catchError((e) {
+          debugPrint('[SYNC] Student overrides fetch non-fatal: $e');
+        });
 
+        // Timetable fetch is primary (SruStudentSource.fetchTimetable auto-extracts & saves profile)
         final list = await SruStudentSource.instance.fetchTimetable();
-        try {
-          final profile = await SruStudentSource.instance.fetchProfile();
-          await StorageService.saveProfile(profile);
-        } catch (e) {
-          debugPrint('Student profile sync non-fatal: $e');
+        
+        // Await overrides if quick, non-fatal
+        await overridesFuture;
+
+        // Race check: discard if superseded by a newer sync
+        if (currentGeneration != _syncGeneration) {
+          debugPrint('[SYNC] Discarding stale student sync (generation $currentGeneration != $_syncGeneration)');
+          return;
         }
 
         AnalyticsService.instance.logTimetableLoaded(
@@ -97,6 +134,7 @@ class SyncService extends ChangeNotifier {
         
         await StorageService.saveTimetableCache(list);
         await StorageService.saveLastSyncedAt(DateTime.now());
+        TimetableRepository.instance.updateTimetable(list, source: 'sru_authenticated_student');
 
         await WidgetUpdater.updateWidgetInfo();
 
@@ -105,11 +143,18 @@ class SyncService extends ChangeNotifier {
         }
       }
       
+      if (currentGeneration != _syncGeneration) return;
+
       _syncState = SyncState.online;
       _lastCheckedAt = DateTime.now();
       _retryCount = 0; // Reset on success
 
     } catch (e) {
+      if (currentGeneration != _syncGeneration) {
+        debugPrint('[SYNC] Discarding error from stale sync (generation $currentGeneration != $_syncGeneration)');
+        return;
+      }
+
       debugPrint('Sync failed: $e');
       AnalyticsService.instance.logTimetableLoadFailed(
         mode: userMode,
@@ -118,25 +163,42 @@ class SyncService extends ChangeNotifier {
       
       _lastCheckedAt = DateTime.now();
       final eStr = e.toString().toLowerCase();
-      if (eStr.contains('socketexception') || eStr.contains('clientexception') || eStr.contains('xmlhttprequest')) {
+      if (eStr.contains('session expired')) {
+        if (AuthRepository.instance.state == AuthState.authenticated ||
+            AuthRepository.instance.state == AuthState.ready) {
+          _syncState = SyncState.serverUnavailable;
+          TimetableRepository.instance.markStale('Sync retry scheduled');
+          _scheduleRetry();
+        } else {
+          _syncState = SyncState.sessionExpired;
+          TimetableRepository.instance.markStale('Session expired');
+        }
+      } else if (eStr.contains('socketexception') || eStr.contains('clientexception') || eStr.contains('xmlhttprequest')) {
         _syncState = SyncState.offline;
+        TimetableRepository.instance.markStale('Network unavailable');
+        _scheduleRetry();
       } else if (e is TimeoutException) {
         _syncState = SyncState.syncTimeout;
+        TimetableRepository.instance.markStale('Sync timed out');
+        _scheduleRetry();
       } else {
         _syncState = SyncState.serverUnavailable;
+        TimetableRepository.instance.markStale('Server unavailable');
+        _scheduleRetry();
       }
-      
-      _scheduleRetry();
     } finally {
-      _isSyncing = false;
-      notifyListeners();
+      if (currentGeneration == _syncGeneration) {
+        _isSyncing = false;
+        _syncStartTime = null;
+        notifyListeners();
+      }
     }
   }
 
   void _scheduleRetry() {
-    if (_retryCount >= 4) return; // Max retries: immediate, 30s, 2m, 10m
+    if (_retryCount >= 4) return; // Max retries: 15s, 60s, 5m, 15m
     
-    final delays = [0, 30, 120, 600];
+    final delays = [15, 60, 300, 900];
     final delaySeconds = delays[_retryCount];
     _retryCount++;
     

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:async';
@@ -64,7 +65,9 @@ class _SyncingScreenState extends State<SyncingScreen> {
       // Try to register device token with fallback (never blocks)
       String fcmToken = 'local_device';
       try {
-        final token = await FirebaseMessaging.instance.getToken().timeout(const Duration(seconds: 3));
+        final token = kIsWeb
+            ? await FirebaseMessaging.instance.getToken(vapidKey: AppConstants.fcmVapidKey).timeout(const Duration(seconds: 5))
+            : await FirebaseMessaging.instance.getToken().timeout(const Duration(seconds: 5));
         if (token != null) {
           fcmToken = token;
         }
@@ -78,6 +81,7 @@ class _SyncingScreenState extends State<SyncingScreen> {
       await StorageService.saveProfile({
         'batch': widget.batchCode,
         'department': widget.batchCode,
+        'batch_id': widget.batchId,
       });
       
       // Explicitly set user mode since first-time users skip mode_selection_screen logic

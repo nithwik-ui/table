@@ -8,6 +8,7 @@ class AppConstants {
   static const String apiBaseUrl = 'https://table-ij9g.onrender.com';
   static const String currentVersion = '3.0.0';
   static const String githubRepo = 'nithwik-ui/table';
+  static const String fcmVapidKey = 'BLfXNackp6Rs_phEfbaIPWdKm7HADbl3RYGEhjU2qocshKk7CbeIX0Gb5zLQ9EH84nkSaZSiJCcENw4wWf7e12M';
   
   // DESIGN PALETTE (Academic Precision)
   static const Color background = Color(0xFFF7F9FC);

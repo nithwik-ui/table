@@ -1,18 +1,20 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/constants.dart';
-import '../../../core/utils.dart';
+import '../../../core/timetable_status_engine.dart';
 
 class LiveClassProgressIndicator extends StatefulWidget {
   final String startTime;
   final String endTime;
   final bool isToday;
+  final DateTime? referenceDate;
 
   const LiveClassProgressIndicator({
     super.key,
     required this.startTime,
     required this.endTime,
     this.isToday = true,
+    this.referenceDate,
   });
 
   @override
@@ -64,19 +66,14 @@ class _LiveClassProgressIndicatorState extends State<LiveClassProgressIndicator>
       return;
     }
 
-    final now = TimeUtils.getKolkataTime();
+    final now = DateTime.now();
+    final refDate = widget.referenceDate ?? now;
+    
     try {
-      final startParts = widget.startTime.split(':');
-      final endParts = widget.endTime.split(':');
-      
-      if (startParts.length != 2 || endParts.length != 2) return;
+      final startDt = TimetableStatusEngine.parseSruTimeToLocal(refDate, widget.startTime);
+      final endDt = TimetableStatusEngine.parseSruTimeToLocal(refDate, widget.endTime);
 
-      final startDt = DateTime(now.year, now.month, now.day, int.parse(startParts[0]), int.parse(startParts[1]));
-      final endDt = DateTime(now.year, now.month, now.day, int.parse(endParts[0]), int.parse(endParts[1]));
-
-      // Class is ongoing if now is equal to or after startDt AND before endDt.
-      // E.g. class 9:30 - 11:00. At 9:30 it's ongoing (0%). At 11:00 it's no longer ongoing.
-      if (now.compareTo(startDt) >= 0 && now.isBefore(endDt)) {
+      if (!now.isBefore(startDt) && now.isBefore(endDt)) {
         final totalSecs = endDt.difference(startDt).inSeconds;
         final elapsedSecs = now.difference(startDt).inSeconds;
         

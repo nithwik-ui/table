@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:home_widget/home_widget.dart';
 import 'storage.dart';
+import 'timetable/timetable_repository.dart';
 
 class WidgetUpdater {
   static const String appGroupId = 'sru_timetable_widget'; // Android AppWidgetProvider name or string id if needed
@@ -20,7 +21,9 @@ class WidgetUpdater {
     List<dynamic> overrides = [];
 
     if (mode == 'student') {
-      timetable = StorageService.getTimetableCache();
+      timetable = TimetableRepository.instance.classes.isNotEmpty
+          ? TimetableRepository.instance.classes
+          : StorageService.getTimetableCache();
       overrides = StorageService.getStudentCalendarOverridesCache();
     } else {
       timetable = StorageService.getFacultyTimetableCache();

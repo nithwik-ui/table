@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
+import '../../core/auth/secure_session_store.dart';
+import '../../core/auth/auth_repository.dart';
+import '../../core/timetable/timetable_repository.dart';
+import '../../core/notifications.dart';
+import '../dashboard/dashboard_screen.dart';
 import 'sru_login_screen.dart';
-
 
 class ModeSelectionScreen extends StatelessWidget {
   final bool isSwitching;
@@ -10,7 +14,24 @@ class ModeSelectionScreen extends StatelessWidget {
   const ModeSelectionScreen({super.key, this.isSwitching = false});
 
   void _selectStudent(BuildContext context) async {
-    await StorageService.setUserMode('student');
+    final hasStudentData = StorageService.getTimetableCache().isNotEmpty || 
+                           StorageService.getStudentRollNumber() != null ||
+                           (await SecureSessionStore.getSession(role: 'student')) != null;
+    
+    if (hasStudentData) {
+      await StorageService.setUserMode('student');
+      await AuthRepository.instance.restoreSession(targetRole: 'student');
+      TimetableRepository.instance.loadFromCache();
+      await NotificationService.reconcileReminders();
+      if (context.mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const DashboardScreen(initialTab: 0)),
+          (route) => false,
+        );
+      }
+      return;
+    }
+
     if (context.mounted) {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (context) => const SruLoginScreen(role: 'student')),
@@ -19,7 +40,23 @@ class ModeSelectionScreen extends StatelessWidget {
   }
 
   void _selectFaculty(BuildContext context) async {
-    await StorageService.setUserMode('faculty');
+    final hasFacultyData = StorageService.getFacultyTimetableCache().isNotEmpty || 
+                           (await SecureSessionStore.getSession(role: 'faculty')) != null;
+    
+    if (hasFacultyData) {
+      await StorageService.setUserMode('faculty');
+      await AuthRepository.instance.restoreSession(targetRole: 'faculty');
+      TimetableRepository.instance.loadFromCache();
+      await NotificationService.reconcileReminders();
+      if (context.mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const DashboardScreen(initialTab: 0)),
+          (route) => false,
+        );
+      }
+      return;
+    }
+
     if (context.mounted) {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (context) => const SruLoginScreen(role: 'faculty')),
@@ -50,7 +87,7 @@ class ModeSelectionScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppConstants.primaryContainer.withOpacity(0.3),
+                color: AppConstants.primaryContainer.withValues(alpha: 0.3),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: AppConstants.primary, size: 32),

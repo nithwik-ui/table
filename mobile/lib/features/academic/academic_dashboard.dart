@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants.dart';
+import '../../core/storage.dart';
 import '../../core/utils.dart';
 import '../../core/sraap/sraap_academic_service.dart';
 import '../../core/sraap/models/sraap_academic_data.dart';
@@ -26,45 +27,51 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
   }
 
   Future<void> _loadData({bool forceRefresh = false}) async {
-    if (_data == null) {
-      final cached = SraapAcademicService.instance.getCachedAcademicData();
-      if (cached != null) {
-        _data = cached;
-        _isLoading = false;
+    // 1. Immediately render cached data if available
+    final cached = SraapAcademicService.instance.getCachedAcademicData();
+    if (cached != null && _data == null) {
+      _data = cached;
+      _isLoading = false;
+    }
+
+    if (mounted) {
+      setState(() {
+        if (_data == null) _isLoading = true;
+        _isSyncing = true;
+        _error = null;
+      });
+    }
+
+    // 2. Immediately fetch live data from the main SRAAP page!
+    if (StorageService.isSraapConnected()) {
+      try {
+        final fresh = await SraapAcademicService.instance.fetchFreshDataSilently();
+        if (mounted && fresh != null) {
+          setState(() {
+            _data = fresh;
+            _isLoading = false;
+            _isSyncing = false;
+          });
+          return;
+        }
+      } catch (e) {
+        debugPrint('[SRAAP] Live dashboard fetch error: $e');
       }
     }
 
     if (mounted) {
       setState(() {
-        if (!forceRefresh && _data == null) _isLoading = true;
-        _isSyncing = forceRefresh;
-        _error = null;
-      });
-    }
-
-    try {
-      final data = await SraapAcademicService.instance.getAcademicData(forceRefresh: forceRefresh);
-      if (mounted && data != null) {
-        setState(() {
-          _data = data;
-          _isLoading = false;
-          _isSyncing = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        final cached = SraapAcademicService.instance.getCachedAcademicData();
-        setState(() {
-          if (_data == null && cached != null) {
-            _data = cached;
-            _error = null;
-          } else if (_data == null) {
-            _error = 'Unable to connect to SRAAP.';
+        if (_data == null) {
+          final c = SraapAcademicService.instance.getCachedAcademicData();
+          if (c != null) {
+            _data = c;
+          } else {
+            _error = 'Not connected to SRAAP.';
           }
-          _isLoading = false;
-          _isSyncing = false;
-        });
-      }
+        }
+        _isLoading = false;
+        _isSyncing = false;
+      });
     }
   }
 
@@ -139,16 +146,8 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
 
     final isSafe = attendance >= 75.0;
     final isCondonation = attendance >= 65.0 && attendance < 75.0;
-    final statusColor = isSafe
-        ? AppConstants.success
-        : isCondonation
-            ? AppConstants.warning
-            : AppConstants.error;
-    final badgeBg = isSafe
-        ? AppConstants.successContainer
-        : isCondonation
-            ? AppConstants.warningContainer
-            : AppConstants.errorContainer;
+    final statusColor = AppConstants.primary;
+    final badgeBg = AppConstants.secondaryContainer;
     final statusText = isSafe
         ? 'Safe / Eligible'
         : isCondonation
@@ -191,7 +190,8 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
           ],
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
+
 
         // 1. Featured Overall Attendance Card
         Container(
@@ -275,7 +275,7 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
                       borderRadius: BorderRadius.circular(AppConstants.radiusCard),
                       child: LinearProgressIndicator(
                         value: (attendance / 100).clamp(0.0, 1.0),
-                        backgroundColor: AppConstants.outline.withOpacity(0.5),
+                        backgroundColor: AppConstants.outline.withValues(alpha: 0.5),
                         valueColor: AlwaysStoppedAnimation<Color>(statusColor),
                         minHeight: 8,
                       ),
@@ -398,7 +398,7 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: accentColor.withOpacity(0.12),
+                        color: accentColor.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(icon, size: 18, color: accentColor),

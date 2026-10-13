@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html_parser;
 import 'package:flutter/foundation.dart';
@@ -35,7 +36,7 @@ class SruAuthClient {
   }
 
   String? _cachedOtpToken;
-  String _otpTargetUrl = '$baseUrl/verify-otp';
+  String _otpTargetUrl = '$baseUrl/login/otp-verification';
 
   Future<void> prefetchOtpToken([String? customUrl]) async {
     try {
@@ -50,7 +51,7 @@ class SruAuthClient {
   Future<String?> _getCsrfToken(String url) async {
     try {
       final response = await _client.get(Uri.parse(url), headers: _headers())
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 25));
       _updateCookies(response.headers);
       if (response.statusCode == 200) {
         final document = html_parser.parse(response.body);
@@ -61,146 +62,185 @@ class SruAuthClient {
     return null;
   }
 
+  bool _isLoginInFlight = false;
+  bool _isVerifyInFlight = false;
+
   Future<Map<String, dynamic>> login(String identifier, String password) async {
-    final getCsrfUrl = '$baseUrl/';
-    final postLoginUrl = '$baseUrl/';
-    _cachedOtpToken = null;
-    
-    final token = await _getCsrfToken(getCsrfUrl);
-    
-    final request = http.Request('POST', Uri.parse(postLoginUrl));
-    if (!kIsWeb) {
-      request.followRedirects = false; // Handle 302 manually to preserve cookies on mobile
+    if (_isLoginInFlight) {
+      throw SruAuthException('Authentication already in progress. Please wait.');
     }
-    request.headers.addAll(_headers(isForm: true));
-    request.bodyFields = {
-      '_token': token ?? '',
-      'login_identifier': identifier,
-      'password': password,
-    };
-    
-    final streamedResponse = await _client.send(request).timeout(const Duration(seconds: 15));
-    final response = await http.Response.fromStream(streamedResponse);
-    _updateCookies(response.headers);
-    
-    final proxyRedirect = response.headers['x-proxy-redirect'];
-    
-    if (response.statusCode == 302 || proxyRedirect != null) {
-      final redirectLocation = proxyRedirect ?? response.headers['location'] ?? '';
-      final location = redirectLocation.toLowerCase();
+    _isLoginInFlight = true;
+    try {
+      final getCsrfUrl = '$baseUrl/';
+      final postLoginUrl = '$baseUrl/';
+      _cachedOtpToken = null;
       
-      if (location.contains('otp') || location.contains('verification')) {
-        _otpTargetUrl = rawLocation(redirectLocation, postLoginUrl);
-        // Prefetch OTP CSRF token immediately in the background
-        prefetchOtpToken(_otpTargetUrl);
-        return {'status': 'otp_required'};
-      } else if (location.contains('dashboard') || location.contains('student') || location.contains('faculty')) {
-        return {'status': 'authenticated'};
+      final token = await _getCsrfToken(getCsrfUrl);
+      
+      final request = http.Request('POST', Uri.parse(postLoginUrl));
+      if (!kIsWeb) {
+        request.followRedirects = false; // Handle 302 manually to preserve cookies on mobile
+      }
+      request.headers.addAll(_headers(isForm: true));
+      request.bodyFields = {
+        '_token': token ?? '',
+        'login_identifier': identifier,
+        'password': password,
+      };
+      
+      final streamedResponse = await _client.send(request).timeout(const Duration(seconds: 45));
+      final response = await http.Response.fromStream(streamedResponse);
+      _updateCookies(response.headers);
+      
+      final proxyRedirect = response.headers['x-proxy-redirect'];
+      
+      if (response.statusCode == 302 || proxyRedirect != null) {
+        final redirectLocation = proxyRedirect ?? response.headers['location'] ?? '';
+        final location = redirectLocation.toLowerCase();
+        
+        if (location.contains('otp') || location.contains('verification')) {
+          _otpTargetUrl = rawLocation(redirectLocation, postLoginUrl);
+          // Prefetch OTP CSRF token immediately in the background
+          prefetchOtpToken(_otpTargetUrl);
+          return {'status': 'otp_required'};
+        } else if (location.contains('dashboard') || location.contains('student') || location.contains('faculty')) {
+          return {'status': 'authenticated'};
+        } else {
+          throw SruAuthException('Invalid credentials or SRU rejected the login.');
+        }
       } else {
+        final body = response.body;
+        final bodyLower = body.toLowerCase();
+        final finalUrl = response.request?.url.toString().toLowerCase() ?? '';
+
+        // On Web, check what page we landed on (fallback).
+        final bool isOtpByUrl = finalUrl.contains('otp') || finalUrl.contains('verification');
+        final bool isDashboardByUrl = finalUrl.contains('dashboard') ||
+            finalUrl.contains('student') || finalUrl.contains('faculty');
+
+        // Check by page body content (most reliable for our proxy case)
+        final bool isOtpByBody = bodyLower.contains('verification code') ||
+            bodyLower.contains('enter otp') ||
+            bodyLower.contains('otp') ||
+            bodyLower.contains('one-time') ||
+            bodyLower.contains('verify your') ||
+            (bodyLower.contains('input') && bodyLower.contains('otp'));
+
+        final bool isDashboardByBody = bodyLower.contains('dashboard') ||
+            bodyLower.contains('timetable') ||
+            bodyLower.contains('student portal') ||
+            bodyLower.contains('logout');
+
+        if (isOtpByUrl || isOtpByBody) {
+          // We are on the OTP page. The OTP URL through proxy is the current request URL.
+          _otpTargetUrl = response.request?.url.toString() ?? '$baseUrl/login/otp-verification';
+          if (kIsWeb && _otpTargetUrl.contains('sruniv.com')) {
+            _otpTargetUrl = '$baseUrl${Uri.parse(_otpTargetUrl).path}';
+          }
+          // Parse OTP token from current response body to avoid extra GET
+          final document = html_parser.parse(body);
+          final tokenInput = document.querySelector('input[name="_token"]');
+          if (tokenInput != null) {
+            _cachedOtpToken = tokenInput.attributes['value'];
+          } else {
+            prefetchOtpToken(_otpTargetUrl);
+          }
+          return {'status': 'otp_required'};
+        }
+
+        if (isDashboardByUrl || isDashboardByBody) {
+          return {'status': 'authenticated'};
+        }
+
+        if (bodyLower.contains('invalid') || bodyLower.contains('wrong') ||
+            bodyLower.contains('incorrect') || bodyLower.contains('credentials')) {
+          throw SruAuthException('Your login details could not be verified.');
+        }
         throw SruAuthException('Invalid credentials or SRU rejected the login.');
       }
-    } else {
-      final body = response.body;
-      final bodyLower = body.toLowerCase();
-      final finalUrl = response.request?.url.toString().toLowerCase() ?? '';
-
-      // On Web, check what page we landed on (fallback).
-      final bool isOtpByUrl = finalUrl.contains('otp') || finalUrl.contains('verification');
-      final bool isDashboardByUrl = finalUrl.contains('dashboard') ||
-          finalUrl.contains('student') || finalUrl.contains('faculty');
-
-      // Check by page body content (most reliable for our proxy case)
-      final bool isOtpByBody = bodyLower.contains('verification code') ||
-          bodyLower.contains('enter otp') ||
-          bodyLower.contains('otp') ||
-          bodyLower.contains('one-time') ||
-          bodyLower.contains('verify your') ||
-          (bodyLower.contains('input') && bodyLower.contains('otp'));
-
-      final bool isDashboardByBody = bodyLower.contains('dashboard') ||
-          bodyLower.contains('timetable') ||
-          bodyLower.contains('student portal') ||
-          bodyLower.contains('logout');
-
-      if (isOtpByUrl || isOtpByBody) {
-        // We are on the OTP page. The OTP URL through proxy is the current request URL.
-        _otpTargetUrl = response.request?.url.toString() ?? '$baseUrl/login/otp-verification';
-        if (kIsWeb && _otpTargetUrl.contains('sruniv.com')) {
-          _otpTargetUrl = '$baseUrl${Uri.parse(_otpTargetUrl).path}';
-        }
-        // Parse OTP token from current response body to avoid extra GET
-        final document = html_parser.parse(body);
-        final tokenInput = document.querySelector('input[name="_token"]');
-        if (tokenInput != null) {
-          _cachedOtpToken = tokenInput.attributes['value'];
-        } else {
-          prefetchOtpToken(_otpTargetUrl);
-        }
-        return {'status': 'otp_required'};
-      }
-
-      if (isDashboardByUrl || isDashboardByBody) {
-        return {'status': 'authenticated'};
-      }
-
-      if (bodyLower.contains('invalid') || bodyLower.contains('wrong') ||
-          bodyLower.contains('incorrect') || bodyLower.contains('credentials')) {
-        throw SruAuthException('Your login details could not be verified.');
-      }
-      throw SruAuthException('Invalid credentials or SRU rejected the login.');
+    } on TimeoutException {
+      throw SruAuthException('SRU portal took too long to send OTP. Please check your connection or tap "Enter OTP" if you received the SMS.');
+    } finally {
+      _isLoginInFlight = false;
     }
   }
 
   Future<Map<String, dynamic>> verifyOtp(String otp) async {
-    final otpUrl = _otpTargetUrl;
-    
-    // Use pre-fetched token if available, otherwise fetch quickly
-    String? token = _cachedOtpToken;
-    if (token == null || token.isEmpty) {
-      token = await _getCsrfToken(otpUrl);
+    if (_isVerifyInFlight) {
+      throw SruAuthException('Verification already in progress. Please wait.');
     }
-    
-    final request = http.Request('POST', Uri.parse(otpUrl));
-    if (!kIsWeb) {
-      request.followRedirects = false;
-    }
-    request.headers.addAll(_headers(isForm: true));
-    request.bodyFields = {
-      '_token': token ?? '',
-      'otp': otp,
-    };
-    
-    final streamedResponse = await _client.send(request).timeout(const Duration(seconds: 15));
-    final response = await http.Response.fromStream(streamedResponse);
-    _updateCookies(response.headers);
-    
-    final proxyRedirect = response.headers['x-proxy-redirect'];
-    
-    if (response.statusCode == 302 || proxyRedirect != null) {
-      final location = (proxyRedirect ?? response.headers['location'] ?? '').toLowerCase();
-      if (location.contains('dashboard') || location.contains('student') || location.contains('faculty')) {
-        return {'status': 'authenticated'};
-      }
-      throw SruAuthException('Verification code is invalid.');
-    } else {
-      final body = response.body.toLowerCase();
-      final finalUrl = response.request?.url.toString().toLowerCase() ?? '';
+    _isVerifyInFlight = true;
+    try {
+      final otpUrl = _otpTargetUrl;
       
-      // On Web, HTTP client automatically follows redirects, so we get 200 instead of 302
-      if (finalUrl.contains('dashboard') || finalUrl.contains('student') || finalUrl.contains('faculty')) {
-        return {'status': 'authenticated'};
+      // Use pre-fetched token if available, otherwise fetch quickly
+      String? token = _cachedOtpToken;
+      if (token == null || token.isEmpty) {
+        token = await _getCsrfToken(otpUrl);
       }
-
-      if (body.contains('invalid') || body.contains('wrong') || body.contains('incorrect')) {
+      
+      final request = http.Request('POST', Uri.parse(otpUrl));
+      if (!kIsWeb) {
+        request.followRedirects = false;
+      }
+      request.headers.addAll(_headers(isForm: true));
+      request.bodyFields = {
+        '_token': token ?? '',
+        'otp': otp,
+      };
+      
+      final streamedResponse = await _client.send(request).timeout(const Duration(seconds: 35));
+      final response = await http.Response.fromStream(streamedResponse);
+      _updateCookies(response.headers);
+      
+      final proxyRedirect = response.headers['x-proxy-redirect'];
+      
+      if (response.statusCode == 302 || proxyRedirect != null) {
+        final rawLoc = proxyRedirect ?? response.headers['location'] ?? '';
+        final location = rawLoc.toLowerCase();
+        if (location.contains('dashboard') || location.contains('student') || location.contains('faculty')) {
+          // Handshake GET to complete server session handshake and capture final session cookies
+          try {
+            final targetUrl = rawLocation(rawLoc, otpUrl);
+            final dashResponse = await _client.get(Uri.parse(targetUrl), headers: _headers())
+                .timeout(const Duration(seconds: 15));
+            _updateCookies(dashResponse.headers);
+          } catch (e) {
+            debugPrint('[AUTH] Handshake GET to dashboard non-fatal: $e');
+          }
+          return {'status': 'authenticated'};
+        }
         throw SruAuthException('Verification code is invalid.');
+      } else {
+        final body = response.body.toLowerCase();
+        final finalUrl = response.request?.url.toString().toLowerCase() ?? '';
+        
+        // On Web, HTTP client automatically follows redirects, so we get 200 instead of 302
+        if (finalUrl.contains('dashboard') || finalUrl.contains('student') || finalUrl.contains('faculty')) {
+          return {'status': 'authenticated'};
+        }
+
+        if (body.contains('invalid') || body.contains('wrong') || body.contains('incorrect')) {
+          throw SruAuthException('Verification code is invalid.');
+        }
+        throw SruAuthException('Failed to verify OTP. Please try again.');
       }
-      throw SruAuthException('Failed to verify OTP. Please try again.');
+    } on TimeoutException {
+      throw SruAuthException('Verification request timed out. Please check your connection and try again.');
+    } finally {
+      _isVerifyInFlight = false;
     }
   }
 
   Future<http.Response> getAuthenticated(String url) async {
-    var response = await _client.get(Uri.parse(url), headers: _headers())
-        .timeout(const Duration(seconds: 15));
+    final request = http.Request('GET', Uri.parse(url));
+    if (!kIsWeb) {
+      request.followRedirects = false; // Prevent Dart from stripping Cookie header on redirect
+    }
+    request.headers.addAll(_headers());
+
+    final streamedResponse = await _client.send(request).timeout(const Duration(seconds: 25));
+    var response = await http.Response.fromStream(streamedResponse);
     _updateCookies(response.headers);
     
     final proxyRedirect = response.headers['x-proxy-redirect'];
@@ -211,8 +251,13 @@ class SruAuthClient {
       }
       // Manually follow redirect for other pages, retaining our custom cookie headers
       final redirectUrl = rawLocation(proxyRedirect ?? response.headers['location'] ?? '', url);
-      response = await _client.get(Uri.parse(redirectUrl), headers: _headers())
-          .timeout(const Duration(seconds: 15));
+      final redirReq = http.Request('GET', Uri.parse(redirectUrl));
+      if (!kIsWeb) {
+        redirReq.followRedirects = false;
+      }
+      redirReq.headers.addAll(_headers());
+      final streamedRedir = await _client.send(redirReq).timeout(const Duration(seconds: 25));
+      response = await http.Response.fromStream(streamedRedir);
       _updateCookies(response.headers);
     }
     return response;

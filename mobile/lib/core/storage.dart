@@ -7,8 +7,8 @@ class StorageService {
   // Initialize Hive and open boxes
   static Future<void> init() async {
     await Hive.initFlutter();
-    _prefsBox = await Hive.openBox('sru_timetable_prefs');
-    _cacheBox = await Hive.openBox('sru_timetable_cache');
+    _prefsBox = await Hive.openBox('sru_timetable_v3_prefs');
+    _cacheBox = await Hive.openBox('sru_timetable_v3_cache');
 
     // Migration: Remove old format FACULTY_CHANGED records safely
     final cachedChanges = getChangesCache();
@@ -58,6 +58,31 @@ class StorageService {
 
   static String? getStudentRollNumber() {
     return _prefsBox?.get('student_roll_number') as String?;
+  }
+
+  // FCM Diagnostics Tracking
+  static Future<void> saveFcmLastRegistration(DateTime dt) async => await _prefsBox?.put('fcm_last_registration', dt.toIso8601String());
+  static DateTime? getFcmLastRegistration() {
+    final s = _prefsBox?.get('fcm_last_registration') as String?;
+    return s != null ? DateTime.tryParse(s) : null;
+  }
+
+  static Future<void> saveFcmLastTokenRefresh(DateTime dt) async => await _prefsBox?.put('fcm_last_token_refresh', dt.toIso8601String());
+  static DateTime? getFcmLastTokenRefresh() {
+    final s = _prefsBox?.get('fcm_last_token_refresh') as String?;
+    return s != null ? DateTime.tryParse(s) : null;
+  }
+
+  static Future<void> saveFcmLastBackendSync(DateTime dt) async => await _prefsBox?.put('fcm_last_backend_sync', dt.toIso8601String());
+  static DateTime? getFcmLastBackendSync() {
+    final s = _prefsBox?.get('fcm_last_backend_sync') as String?;
+    return s != null ? DateTime.tryParse(s) : null;
+  }
+
+  static Future<void> saveFcmLastTest(DateTime dt) async => await _prefsBox?.put('fcm_last_test', dt.toIso8601String());
+  static DateTime? getFcmLastTest() {
+    final s = _prefsBox?.get('fcm_last_test') as String?;
+    return s != null ? DateTime.tryParse(s) : null;
   }
 
   static String? getRollNumber() => getStudentRollNumber();
@@ -297,4 +322,7 @@ class StorageService {
   }
   static Future<void> saveSessionState(Map<String, dynamic> state) async => await _cacheBox?.put('sraap_session_state', state);
   static Future<void> clearSessionState() async => await _cacheBox?.delete('sraap_session_state');
+
+  static Future<void> setWebNotificationPromptDismissed(bool dismissed) async => await _prefsBox?.put('web_notification_prompt_dismissed', dismissed);
+  static bool isWebNotificationPromptDismissed() => _prefsBox?.get('web_notification_prompt_dismissed', defaultValue: false) as bool? ?? false;
 }

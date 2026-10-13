@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { supabase } from './db/supabase';
 import { runSync } from './sync';
-import { sendGenericBroadcast } from './notifications/fcm';
+import { sendGenericBroadcast, sendTestClassNotification, sendTestClassRemovedNotification, subscribeDeviceToGlobalTopic } from './notifications/fcm';
 
 import facultyRouter from './api/faculty';
 import roomsRouter from './api/rooms';
@@ -329,6 +329,10 @@ app.post('/api/devices/register', async (req: Request, res: Response) => {
       );
 
     if (error) throw error;
+
+    // Automatically subscribe token to sru_all_users topic (subscribes web push tokens as well)
+    subscribeDeviceToGlobalTopic(fcm_token);
+
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -383,8 +387,8 @@ app.post('/api/devices/test-notification', async (req: Request, res: Response) =
   } catch (err: any) {
     const errorCode = err.code || 'FCM_SEND_FAILED';
     const isUnregistered = errorCode === 'messaging/registration-token-not-registered' ||
-                           errorCode === 'messaging/invalid-registration-token' ||
-                           (err.message && err.message.includes('not registered'));
+      errorCode === 'messaging/invalid-registration-token' ||
+      (err.message && err.message.includes('not registered'));
 
     if (isUnregistered) {
       try {

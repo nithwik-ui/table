@@ -3,6 +3,7 @@ import '../../core/api.dart';
 import '../../core/utils.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
+import '../../core/timetable/timetable_repository.dart';
 
 import 'ad_banner.dart';
 class FreeRoomsScreen extends StatefulWidget {
@@ -68,17 +69,11 @@ class _FreeRoomsScreenState extends State<FreeRoomsScreen> {
     try {
       final rooms = await ApiService.fetchFreeRooms(_selectedDay!, _selectedTime!);
       
-      // Categorize into blocks
+      // Categorize into blocks using robust block pattern matching
       Map<String, List<dynamic>> blocksMap = {};
       for (final room in rooms) {
-        final name = room['name'] as String;
-        String block = 'Other';
-        
-        // Find FIRST DIGIT of the identifier (even if 0)
-        final match = RegExp(r'\d').firstMatch(name);
-        if (match != null) {
-          block = 'Block ${match.group(0)}';
-        }
+        final name = (room['name'] as String? ?? '').trim();
+        final block = extractBlock(name);
         
         if (!blocksMap.containsKey(block)) {
           blocksMap[block] = [];
@@ -86,11 +81,11 @@ class _FreeRoomsScreenState extends State<FreeRoomsScreen> {
         blocksMap[block]!.add(room);
       }
       
-      final blocks = blocksMap.keys.toList()..sort();
+      final blocks = blocksMap.keys.toList()
+        ..sort((a, b) => blockSortKey(a).compareTo(blockSortKey(b)));
       
       // Determine priority block from timetable
       String? priorityBlock;
-      final timetable = StorageService.getTimetableCache();
       
       // Get current local time
       final now = TimeUtils.getKolkataTime();
@@ -99,9 +94,19 @@ class _FreeRoomsScreenState extends State<FreeRoomsScreen> {
       
       // Only prioritize if today is a weekday and matches the selected day
       if (todayStr == _selectedDay) {
-        final dayData = timetable.firstWhere((e) => e['day'] == todayStr, orElse: () => null);
-        if (dayData != null) {
-          final classes = dayData['classes'] as List<dynamic>? ?? [];
+        List<dynamic> classes = TimetableRepository.instance.getClassesForDay(todayStr);
+        if (classes.isEmpty) {
+          final cached = StorageService.getTimetableCache();
+          final dayData = cached.firstWhere(
+            (e) => (e['day'] as String?)?.toLowerCase() == todayStr.toLowerCase(),
+            orElse: () => null,
+          );
+          if (dayData != null && dayData['classes'] is List) {
+            classes = dayData['classes'] as List<dynamic>;
+          }
+        }
+
+        if (classes.isNotEmpty) {
           final currentMinutes = now.hour * 60 + now.minute;
           
           Map<String, dynamic>? runningClass;
@@ -141,9 +146,9 @@ class _FreeRoomsScreenState extends State<FreeRoomsScreen> {
           final targetClass = runningClass ?? lastCompletedClass ?? nearestUpcomingClass;
           if (targetClass != null) {
             final roomStr = targetClass['room'] as String? ?? '';
-            final m = RegExp(r'\d').firstMatch(roomStr);
-            if (m != null) {
-              priorityBlock = 'Block ${m.group(0)}';
+            final b = extractBlock(roomStr);
+            if (b != 'Other') {
+              priorityBlock = b;
             }
           }
         }
@@ -199,7 +204,7 @@ class _FreeRoomsScreenState extends State<FreeRoomsScreen> {
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           ),
-                          value: _selectedDay,
+                          initialValue: _selectedDay,
                           items: _days.map((day) => DropdownMenuItem(
                             value: day,
                             child: Text(day),
@@ -215,7 +220,7 @@ class _FreeRoomsScreenState extends State<FreeRoomsScreen> {
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           ),
-                          value: _selectedTime,
+                          initialValue: _selectedTime,
                           items: _times.map((time) => DropdownMenuItem(
                             value: time,
                             child: Text(time),
@@ -251,7 +256,7 @@ class _FreeRoomsScreenState extends State<FreeRoomsScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppConstants.error.withOpacity(0.1),
+                    color: AppConstants.error.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -271,11 +276,13 @@ class _FreeRoomsScreenState extends State<FreeRoomsScreen> {
               
             Expanded(
               child: _searched && !_isLoading
-                  ? _rooms.isEmpty
+                  ? (_rooms.isEmpty && _error.isEmpty)
                       ? const Center(
                           child: Text('No free rooms found for this slot.'),
                         )
-                      : Column(
+                      : _error.isNotEmpty 
+                          ? const SizedBox.shrink()
+                          : Column(
                           children: [
                             // Horizontal Block Selector
                             SizedBox(
@@ -338,7 +345,11 @@ class _FreeRoomsScreenState extends State<FreeRoomsScreen> {
                                         room['name'],
                                         style: AppConstants.getHeadline().copyWith(fontSize: 16),
                                       ),
-                                      subtitle: Text(room['type']),
+                                      subtitle: Text(
+                                        extractFloor(room['name']) != null
+                                            ? '${room['type']} • ${extractFloor(room['name'])}'
+                                            : room['type'],
+                                      ),
                                     ),
                                   );
                                 },
@@ -353,5 +364,79 @@ class _FreeRoomsScreenState extends State<FreeRoomsScreen> {
         ),
       ),
     );
+  }
+
+  /// Categorizes room name into canonical Block (e.g. BL-1 -> Block 1, BL10 -> Block 10, BL11 -> Block 11).
+  /// Future-proof for any new university blocks.
+  static String extractBlock(String roomName) {
+    final upper = roomName.toUpperCase().trim();
+    
+    // 1. Explicit BL or BLOCK match (e.g. BL-10, BL10, BL-1, BL1, BLOCK-10, BLOCK 10, BLOCK1)
+    final blMatch = RegExp(r'(?:BL-?|BLOCK\s*-?)(\d+)', caseSensitive: false).firstMatch(upper);
+    if (blMatch != null) {
+      final num = int.tryParse(blMatch.group(1)!) ?? blMatch.group(1);
+      return 'Block $num';
+    }
+
+    // 2. 5-digit room prefix (e.g. 10001, 10101 -> Block 10, 11003 -> Block 11)
+    final fiveDigitMatch = RegExp(r'^(\d{2})\d{3}').firstMatch(upper);
+    if (fiveDigitMatch != null) {
+      final num = int.tryParse(fiveDigitMatch.group(1)!) ?? fiveDigitMatch.group(1);
+      return 'Block $num';
+    }
+
+    // 3. 4-digit room prefix (e.g. 8003 -> Block 8, 1206 -> Block 1, 2001 -> Block 2)
+    final fourDigitMatch = RegExp(r'^(\d)\d{3}').firstMatch(upper);
+    if (fourDigitMatch != null) {
+      final num = int.tryParse(fourDigitMatch.group(1)!) ?? fourDigitMatch.group(1);
+      return 'Block $num';
+    }
+
+    // 4. Standalone B tag: e.g. B-10, B10, B-1, B1
+    final bMatch = RegExp(r'\bB-?(\d+)\b').firstMatch(upper);
+    if (bMatch != null) {
+      final num = int.tryParse(bMatch.group(1)!) ?? bMatch.group(1);
+      return 'Block $num';
+    }
+
+    // 5. Fallback: Any number in string
+    final anyDigit = RegExp(r'\d+').firstMatch(upper);
+    if (anyDigit != null) {
+      final num = int.tryParse(anyDigit.group(0)!) ?? anyDigit.group(0);
+      return 'Block $num';
+    }
+
+    return 'Other';
+  }
+
+  /// Extracts readable floor information from room code.
+  /// GF/GL -> Ground Floor, FF/FL -> 1st Floor, SF/SL -> 2nd Floor, TF/TL -> 3rd Floor, 4F -> 4th Floor
+  static String? extractFloor(String roomName) {
+    final upper = roomName.toUpperCase();
+    if (upper.contains('-GF') || upper.contains('_GF') || upper.contains('-GL') || upper.contains('_GL')) {
+      return 'Ground Floor';
+    }
+    if (upper.contains('-FF') || upper.contains('_FF') || upper.contains('-FL') || upper.contains('_FL')) {
+      return '1st Floor';
+    }
+    if (upper.contains('-SF') || upper.contains('_SF') || upper.contains('-SL') || upper.contains('_SL')) {
+      return '2nd Floor';
+    }
+    if (upper.contains('-TF') || upper.contains('_TF') || upper.contains('-TL') || upper.contains('_TL')) {
+      return '3rd Floor';
+    }
+    if (upper.contains('-4F') || upper.contains('_4F') || upper.contains('-4L') || upper.contains('_4L')) {
+      return '4th Floor';
+    }
+    return null;
+  }
+
+  /// Natural numerical sorting key for blocks (Block 1, Block 2, Block 3 ... Block 10, Block 11).
+  static int blockSortKey(String block) {
+    final match = RegExp(r'\d+').firstMatch(block);
+    if (match != null) {
+      return int.tryParse(match.group(0)!) ?? 999;
+    }
+    return 9999;
   }
 }

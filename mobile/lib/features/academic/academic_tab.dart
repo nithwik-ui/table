@@ -16,9 +16,10 @@ class AcademicTab extends StatefulWidget {
 class _AcademicTabState extends State<AcademicTab> {
   @override
   Widget build(BuildContext context) {
+    final hasCache = StorageService.getSraapAcademicCache() != null;
     final isConnected = StorageService.isSraapConnected();
 
-    if (isConnected) {
+    if (isConnected || hasCache) {
       return const AcademicDashboard();
     } else {
       return _AcademicConnectState(
@@ -83,9 +84,6 @@ class _AcademicConnectState extends StatelessWidget {
             // Benefits
             _BenefitRow(icon: Icons.fact_check_outlined, label: 'Attendance'),
             _BenefitRow(icon: Icons.bar_chart_outlined, label: 'CGPA / SGPA'),
-            _BenefitRow(icon: Icons.assignment_outlined, label: 'Results'),
-            _BenefitRow(icon: Icons.warning_amber_outlined, label: 'Backlogs'),
-            _BenefitRow(icon: Icons.book_outlined, label: 'Subjects'),
             _BenefitRow(icon: Icons.person_outlined, label: 'Mentor'),
 
             const SizedBox(height: 40),

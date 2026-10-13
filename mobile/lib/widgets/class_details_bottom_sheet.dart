@@ -574,7 +574,7 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
   }
 
   String _formatTimeAgo(DateTime dt) {
-    final diff = TimeUtils.getKolkataTime().difference(dt);
+    final diff = DateTime.now().difference(dt);
     if (diff.inMinutes < 60) {
       return '${diff.inMinutes}m ago';
     } else if (diff.inHours < 24) {

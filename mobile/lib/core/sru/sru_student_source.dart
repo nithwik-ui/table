@@ -53,7 +53,9 @@ class SruStudentSource {
           if (profile['name'] != null && profile['name'] != 'Student') {
             await StorageService.saveUserName(profile['name']);
           }
-          if (profile['id'] != null && profile['id'] != 'Unknown') {
+          if (profile['roll_number'] != null && RegExp(r'\b2[0-9][0-9A-Za-z]{2}[A-Za-z0-9]{6}\b').hasMatch(profile['roll_number'])) {
+            await StorageService.saveStudentRollNumber(profile['roll_number']);
+          } else if (profile['id'] != null && RegExp(r'\b2[0-9][0-9A-Za-z]{2}[A-Za-z0-9]{6}\b').hasMatch(profile['id'])) {
             await StorageService.saveStudentRollNumber(profile['id']);
           }
         }

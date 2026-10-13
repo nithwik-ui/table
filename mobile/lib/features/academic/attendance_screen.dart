@@ -27,42 +27,52 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   Future<void> _loadAttendance({bool forceRefresh = false}) async {
+    // 1. Immediately render cached data
+    final cached = SraapAcademicService.instance.getCachedAcademicData();
+    if (cached != null && _data == null) {
+      _data = cached;
+      _isLoading = false;
+    }
+
     if (!mounted) return;
     setState(() {
-      if (forceRefresh) {
-        _isRefreshing = true;
-      } else {
-        _isLoading = _data == null;
-      }
+      _isRefreshing = _data != null;
+      _isLoading = _data == null;
       _errorMessage = null;
     });
 
-    try {
-      final data = await SraapAcademicService.instance.getAcademicData(forceRefresh: forceRefresh);
-      if (!mounted) return;
-      setState(() {
-        _data = data;
-        _isLoading = false;
-        _isRefreshing = false;
-        _isOffline = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      // If network failed, load from cache
-      final cached = await SraapAcademicService.instance.getAcademicData(forceRefresh: false);
-      setState(() {
-        _isLoading = false;
-        _isRefreshing = false;
-        if (_data == null && cached != null) {
-          _data = cached;
-          _isOffline = true;
-        } else if (_data == null) {
-          _errorMessage = "Couldn't load attendance. Check your connection and try again.";
-        } else {
-          _isOffline = true;
+    // 2. Immediately fetch live data from the main SRAAP page!
+    if (StorageService.isSraapConnected()) {
+      try {
+        final fresh = await SraapAcademicService.instance.fetchFreshDataSilently();
+        if (mounted && fresh != null) {
+          setState(() {
+            _data = fresh;
+            _isLoading = false;
+            _isRefreshing = false;
+            _isOffline = false;
+          });
+          return;
         }
-      });
+      } catch (e) {
+        debugPrint('[SRAAP] Live attendance fetch error: $e');
+      }
     }
+
+    if (!mounted) return;
+    setState(() {
+      if (_data == null) {
+        final c = SraapAcademicService.instance.getCachedAcademicData();
+        if (c != null) {
+          _data = c;
+        } else {
+          _errorMessage = "Couldn't load attendance. Check your connection and try again.";
+        }
+      }
+      _isLoading = false;
+      _isRefreshing = false;
+      _isOffline = false;
+    });
   }
 
   String _formatLastUpdated(DateTime? dateTime) {
@@ -309,7 +319,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       return _buildErrorState();
     }
 
-    if (!StorageService.isSraapConnected()) {
+    if (_data == null && !StorageService.isSraapConnected()) {
       return _buildConnectState();
     }
 
@@ -352,7 +362,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             ],
           ),
         ),
-        if (_isOffline) _buildOfflineBanner(),
+        if (_isOffline)
+          _buildOfflineBanner(),
         _buildOverallAttendanceCard(overall, data.lastSynced),
         const SizedBox(height: 14),
         _buildThresholdStatusCards(),
@@ -854,7 +865,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            sub.subjectName.toUpperCase(),
+                            sub.subjectName,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(

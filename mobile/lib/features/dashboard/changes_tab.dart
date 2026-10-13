@@ -1,8 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
 import '../../core/sync.dart';
+import '../../core/timetable/timetable_repository.dart';
+
+enum ChangesViewState { loading, success, empty, error, timeout }
 
 class ChangesTab extends StatefulWidget {
   const ChangesTab({super.key});
@@ -13,14 +17,27 @@ class ChangesTab extends StatefulWidget {
 
 class _ChangesTabState extends State<ChangesTab> {
   List<dynamic> _changes = [];
-  bool _isLoading = true;
+  ChangesViewState _viewState = ChangesViewState.loading;
+  String? _errorMessage;
   bool _isOffline = false;
 
   @override
   void initState() {
     super.initState();
     _loadLocalData();
-    _fetchChanges();
+    SyncService.instance.addListener(_onSyncUpdate);
+  }
+
+  void _onSyncUpdate() {
+    if (mounted) {
+      _loadLocalData();
+    }
+  }
+
+  @override
+  void dispose() {
+    SyncService.instance.removeListener(_onSyncUpdate);
+    super.dispose();
   }
 
   void _loadLocalData() {
@@ -45,34 +62,55 @@ class _ChangesTabState extends State<ChangesTab> {
       }
     }
     
-    setState(() {
-      _changes = filtered;
-      if (filtered.isNotEmpty) {
-        _isLoading = false;
-      }
-    });
+    if (mounted) {
+      setState(() {
+        _changes = filtered;
+        _isOffline = false;
+        _viewState = filtered.isNotEmpty ? ChangesViewState.success : ChangesViewState.empty;
+      });
+    }
   }
 
   Future<void> _fetchChanges() async {
+    if (!mounted) return;
+    setState(() {
+      if (_changes.isEmpty) {
+        _viewState = ChangesViewState.loading;
+      }
+      _errorMessage = null;
+    });
+
     try {
-      if (mounted) setState(() => _isLoading = true);
-      
-      // Trigger a sync which will fetch the latest timetable and detect changes locally
-      await SyncService.instance.syncTimetable();
-      
+      // Bounded timeout: maximum 8 seconds
+      await SyncService.instance.syncTimetable(force: true).timeout(const Duration(seconds: 8));
       _loadLocalData();
-      
+    } on TimeoutException {
       if (mounted) {
         setState(() {
-          _isLoading = false;
-          _isOffline = SyncService.instance.syncState == SyncState.offline;
+          if (_changes.isEmpty) {
+            _viewState = ChangesViewState.timeout;
+            _errorMessage = 'Sync timed out. Please try again.';
+          } else {
+            _isOffline = true;
+          }
         });
       }
     } catch (e) {
+      debugPrint('[CHANGES] Fetch changes non-fatal: $e');
       if (mounted) {
         setState(() {
-          _isLoading = false;
-          _isOffline = true;
+          if (_changes.isEmpty) {
+            _viewState = ChangesViewState.error;
+            _errorMessage = "Couldn't refresh changes. Check connection and try again.";
+          } else {
+            _isOffline = true;
+          }
+        });
+      }
+    } finally {
+      if (mounted && _viewState == ChangesViewState.loading) {
+        setState(() {
+          _viewState = _changes.isNotEmpty ? ChangesViewState.success : ChangesViewState.empty;
         });
       }
     }
@@ -96,15 +134,15 @@ class _ChangesTabState extends State<ChangesTab> {
   Color _getChangeContainerColor(String type) {
     switch (type) {
       case 'CLASS_ADDED':
-        return AppConstants.successContainer.withOpacity(0.5);
+        return AppConstants.successContainer.withValues(alpha: 0.5);
       case 'CLASS_REMOVED':
-        return AppConstants.errorContainer.withOpacity(0.5);
+        return AppConstants.errorContainer.withValues(alpha: 0.5);
       case 'ROOM_CHANGED':
-        return AppConstants.warningContainer.withOpacity(0.5);
+        return AppConstants.warningContainer.withValues(alpha: 0.5);
       case 'FACULTY_CHANGED':
-        return AppConstants.purpleContainer.withOpacity(0.5);
+        return AppConstants.purpleContainer.withValues(alpha: 0.5);
       default:
-        return AppConstants.infoContainer.withOpacity(0.5);
+        return AppConstants.infoContainer.withValues(alpha: 0.5);
     }
   }
 
@@ -165,7 +203,9 @@ class _ChangesTabState extends State<ChangesTab> {
     final newVal = change['new_value'] as String? ?? '';
 
     final isFaculty = StorageService.getUserMode() == 'faculty';
-    final timetable = isFaculty ? StorageService.getFacultyTimetableCache() : StorageService.getTimetableCache();
+    final timetable = TimetableRepository.instance.classes.isNotEmpty
+        ? TimetableRepository.instance.classes
+        : (isFaculty ? StorageService.getFacultyTimetableCache() : StorageService.getTimetableCache());
     
     for (final cls in timetable) {
       bool isMatch = cls['subject'] == subject;
@@ -275,216 +315,274 @@ class _ChangesTabState extends State<ChangesTab> {
 
             // Content Feed
             Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AppConstants.primary))
-                  : _changes.isNotEmpty
-                      ? RefreshIndicator(
-                          color: AppConstants.primary,
-                          onRefresh: _fetchChanges,
-                          child: ListView.builder(
-                            padding: const EdgeInsets.only(
-                              left: AppConstants.paddingContainer,
-                              right: AppConstants.paddingContainer,
-                              bottom: 20,
+              child: _buildContent(),
+            ),
+          ],
+        ),
+      );
+    }
+
+  Widget _buildContent() {
+    switch (_viewState) {
+      case ChangesViewState.loading:
+        return const Center(
+          child: CircularProgressIndicator(color: AppConstants.primary),
+        );
+      case ChangesViewState.timeout:
+      case ChangesViewState.error:
+        if (_changes.isNotEmpty) {
+          return _buildChangesList();
+        }
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  _viewState == ChangesViewState.timeout ? Icons.timer_off_outlined : Icons.cloud_off_outlined,
+                  color: AppConstants.textSecondary,
+                  size: 48,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  _viewState == ChangesViewState.timeout ? 'Request Timed Out' : 'Unable to Load Changes',
+                  style: AppConstants.getHeadline().copyWith(fontSize: 18),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  _errorMessage ?? 'Something went wrong while fetching changes.',
+                  style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                FilledButton.tonal(
+                  onPressed: _fetchChanges,
+                  child: const Text('Try Again'),
+                ),
+              ],
+            ),
+          ),
+        );
+      case ChangesViewState.empty:
+        return RefreshIndicator(
+          color: AppConstants.primary,
+          onRefresh: _fetchChanges,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.check_circle_outline, color: AppConstants.success, size: 48),
+                    const SizedBox(height: 16),
+                    Text(
+                      'You\'re all caught up',
+                      style: AppConstants.getHeadline().copyWith(fontSize: 18),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'No recent changes found for your timetable.',
+                      style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      case ChangesViewState.success:
+        return _buildChangesList();
+    }
+  }
+
+  Widget _buildChangesList() {
+    return RefreshIndicator(
+      color: AppConstants.primary,
+      onRefresh: _fetchChanges,
+      child: ListView.builder(
+        padding: const EdgeInsets.only(
+          left: AppConstants.paddingContainer,
+          right: AppConstants.paddingContainer,
+          bottom: 20,
+        ),
+        itemCount: _changes.length,
+        itemBuilder: (context, index) {
+          final change = _changes[index];
+          final type = change['change_type'] as String;
+          
+          final typeLabel = _getChangeTypeLabel(type);
+          final changeColor = _getChangeColor(type);
+          final containerColor = _getChangeContainerColor(type);
+          final timeText = _formatDetectedTime(change['detected_at'] as String);
+
+          final isCancellation = type == 'CLASS_REMOVED';
+          final isAddition = type == 'CLASS_ADDED';
+
+          final oldVal = change['old_value'] as String? ?? '';
+          final newVal = change['new_value'] as String? ?? '';
+          
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppConstants.surface,
+                borderRadius: BorderRadius.circular(AppConstants.radiusCard),
+                boxShadow: AppConstants.shadowLevel1,
+                border: Border.all(color: AppConstants.outline),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top meta: Change Tag + timestamp
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: containerColor,
+                          borderRadius: BorderRadius.circular(AppConstants.radiusTag),
+                        ),
+                        child: Text(
+                          typeLabel,
+                          style: AppConstants.getLabelSmall(color: changeColor).copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Text(
+                        timeText,
+                        style: AppConstants.getLabelSmall(color: AppConstants.textSecondary),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // Description values
+                  if (isCancellation) ...[
+                    Text(
+                      oldVal.split('(')[0].trim(),
+                      style: AppConstants.getHeadline().copyWith(fontSize: 16),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Cancelled: $oldVal',
+                      style: AppConstants.getBodyMedium(color: AppConstants.error).copyWith(fontWeight: FontWeight.w500),
+                    ),
+                  ] else if (isAddition) ...[
+                    Text(
+                      newVal.split('(')[0].trim(),
+                      style: AppConstants.getHeadline().copyWith(fontSize: 16),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Added: $newVal',
+                      style: AppConstants.getBodyMedium(color: AppConstants.success).copyWith(fontWeight: FontWeight.w500),
+                    ),
+                  ] else if (type == 'FACULTY_CHANGED' || type == 'ROOM_CHANGED') ...[
+                    // Enhanced Faculty Change UI
+                    Builder(
+                      builder: (context) {
+                        final contextData = _getTimetableContext(change) ?? {};
+                        final subject = contextData['subject'] ?? 'Class';
+                        final day = contextData['day'] ?? '';
+                        final time = contextData['time'] ?? '';
+                        
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              subject,
+                              style: AppConstants.getHeadline().copyWith(fontSize: 16),
                             ),
-                            itemCount: _changes.length,
-                            itemBuilder: (context, index) {
-                              final change = _changes[index];
-                              final type = change['change_type'] as String;
-                              
-                              final typeLabel = _getChangeTypeLabel(type);
-                              final changeColor = _getChangeColor(type);
-                              final containerColor = _getChangeContainerColor(type);
-                              final timeText = _formatDetectedTime(change['detected_at'] as String);
-
-                              final isCancellation = type == 'CLASS_REMOVED';
-                              final isAddition = type == 'CLASS_ADDED';
-
-                              final oldVal = change['old_value'] as String? ?? '';
-                              final newVal = change['new_value'] as String? ?? '';
-                              
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: AppConstants.surface,
-                                    borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-                                    boxShadow: AppConstants.shadowLevel1,
-                                    border: Border.all(color: AppConstants.outline),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      // Top meta: Change Tag + timestamp
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                            decoration: BoxDecoration(
-                                              color: containerColor,
-                                              borderRadius: BorderRadius.circular(AppConstants.radiusTag),
-                                            ),
-                                            child: Text(
-                                              typeLabel,
-                                              style: AppConstants.getLabelSmall(color: changeColor).copyWith(fontWeight: FontWeight.bold),
-                                            ),
-                                          ),
-                                          Text(
-                                            timeText,
-                                            style: AppConstants.getLabelSmall(color: AppConstants.textSecondary),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 12),
-                                      
-                                      // Description values
-                                      if (isCancellation) ...[
-                                        Text(
-                                          oldVal.split('(')[0].trim(),
-                                          style: AppConstants.getHeadline().copyWith(fontSize: 16),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          'Cancelled: $oldVal',
-                                          style: AppConstants.getBodyMedium(color: AppConstants.error).copyWith(fontWeight: FontWeight.w500),
-                                        ),
-                                      ] else if (isAddition) ...[
-                                        Text(
-                                          newVal.split('(')[0].trim(),
-                                          style: AppConstants.getHeadline().copyWith(fontSize: 16),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          'Added: $newVal',
-                                          style: AppConstants.getBodyMedium(color: AppConstants.success).copyWith(fontWeight: FontWeight.w500),
-                                        ),
-                                      ] else if (type == 'FACULTY_CHANGED' || type == 'ROOM_CHANGED') ...[
-                                          // Enhanced Faculty Change UI
-                                          Builder(
-                                            builder: (context) {
-                                              final contextData = _getTimetableContext(change) ?? {};
-                                              final subject = contextData['subject'] ?? 'Class';
-                                              final day = contextData['day'] ?? '';
-                                              final time = contextData['time'] ?? '';
-                                              
-                                              return Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    subject,
-                                                    style: AppConstants.getHeadline().copyWith(fontSize: 16),
-                                                  ),
-                                                  if (day.isNotEmpty || time.isNotEmpty) ...[
-                                                    const SizedBox(height: 4),
-                                                    Text(
-                                                      '${day.isNotEmpty ? day : ''}${day.isNotEmpty && time.isNotEmpty ? ' • ' : ''}${time.isNotEmpty ? time : ''}',
-                                                      style: AppConstants.getBodyMedium(color: AppConstants.textSecondary).copyWith(fontWeight: FontWeight.w500),
-                                                    ),
-                                                  ],
-                                                  const SizedBox(height: 10),
-                                                  Container(
-                                                    width: double.infinity,
-                                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                                                    decoration: BoxDecoration(
-                                                      color: AppConstants.background,
-                                                      borderRadius: BorderRadius.circular(AppConstants.radiusButton),
-                                                    ),
-                                                    child: Column(
-                                                      mainAxisAlignment: MainAxisAlignment.center,
-                                                      children: [
-                                                        Text(
-                                                          oldVal,
-                                                          style: AppConstants.getBodyMedium(color: AppConstants.textSecondary).copyWith(
-                                                            decoration: TextDecoration.lineThrough,
-                                                          ),
-                                                          textAlign: TextAlign.center,
-                                                        ),
-                                                        const Padding(
-                                                          padding: EdgeInsets.symmetric(vertical: 4),
-                                                          child: Icon(Icons.arrow_downward, size: 16, color: AppConstants.textSecondary),
-                                                        ),
-                                                        Text(
-                                                          newVal,
-                                                          style: AppConstants.getHeadline(color: AppConstants.primary).copyWith(fontSize: 14),
-                                                          textAlign: TextAlign.center,
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ],
-                                              );
-                                            },
-                                          ),
-                                        ] else ...[
-                                        // Mod
-                                        // We don't have entry details linked directly, but we can print what changed:
-                                        Text(
-                                          change['field_name'] == 'subject' ? 'Subject Update' : 'Schedule Modification',
-                                          style: AppConstants.getHeadline().copyWith(fontSize: 16),
-                                        ),
-                                        const SizedBox(height: 10),
-                                        // Diff layout old -> new
-                                        Container(
-                                          padding: const EdgeInsets.all(12),
-                                          decoration: BoxDecoration(
-                                            color: AppConstants.background,
-                                            borderRadius: BorderRadius.circular(AppConstants.radiusButton),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              Expanded(
-                                                child: Text(
-                                                  oldVal,
-                                                  style: AppConstants.getBodyMedium(color: AppConstants.textSecondary).copyWith(
-                                                    decoration: TextDecoration.lineThrough,
-                                                  ),
-                                                  textAlign: TextAlign.center,
-                                                ),
-                                              ),
-                                              const Padding(
-                                                padding: EdgeInsets.symmetric(horizontal: 8),
-                                                child: Icon(Icons.arrow_forward, size: 16, color: AppConstants.textSecondary),
-                                              ),
-                                              Expanded(
-                                                child: Text(
-                                                  newVal,
-                                                  style: AppConstants.getHeadline(color: AppConstants.primary).copyWith(fontSize: 14),
-                                                  textAlign: TextAlign.center,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        )
-                      : Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.check_circle_outline, color: AppConstants.success, size: 48),
-                              const SizedBox(height: 16),
-                              Text(
-                                'You\'re all caught up',
-                                style: AppConstants.getHeadline().copyWith(fontSize: 18),
-                              ),
+                            if (day.isNotEmpty || time.isNotEmpty) ...[
                               const SizedBox(height: 4),
                               Text(
-                                'No recent changes found for your timetable.',
-                                style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
+                                '${day.isNotEmpty ? day : ''}${day.isNotEmpty && time.isNotEmpty ? ' • ' : ''}${time.isNotEmpty ? time : ''}',
+                                style: AppConstants.getBodyMedium(color: AppConstants.textSecondary).copyWith(fontWeight: FontWeight.w500),
                               ),
                             ],
+                            const SizedBox(height: 10),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                              decoration: BoxDecoration(
+                                color: AppConstants.background,
+                                borderRadius: BorderRadius.circular(AppConstants.radiusButton),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    oldVal,
+                                    style: AppConstants.getBodyMedium(color: AppConstants.textSecondary).copyWith(
+                                      decoration: TextDecoration.lineThrough,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 4),
+                                    child: Icon(Icons.arrow_downward, size: 16, color: AppConstants.textSecondary),
+                                  ),
+                                  Text(
+                                    newVal,
+                                    style: AppConstants.getHeadline(color: AppConstants.primary).copyWith(fontSize: 14),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ] else ...[
+                    // Mod
+                    Text(
+                      change['field_name'] == 'subject' ? 'Subject Update' : 'Schedule Modification',
+                      style: AppConstants.getHeadline().copyWith(fontSize: 16),
+                    ),
+                    const SizedBox(height: 10),
+                    // Diff layout old -> new
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppConstants.background,
+                        borderRadius: BorderRadius.circular(AppConstants.radiusButton),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              oldVal,
+                              style: AppConstants.getBodyMedium(color: AppConstants.textSecondary).copyWith(
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
                           ),
-                        ),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8),
+                            child: Icon(Icons.arrow_forward, size: 16, color: AppConstants.textSecondary),
+                          ),
+                          Expanded(
+                            child: Text(
+                              newVal,
+                              style: AppConstants.getHeadline(color: AppConstants.primary).copyWith(fontSize: 14),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
-        ],
+          );
+        },
       ),
     );
   }

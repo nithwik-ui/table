@@ -62,4 +62,26 @@ class RoomBlockParser {
     if (numB != null) return 1;
     return a.compareTo(b);
   }
+
+  /// Extracts human-readable floor information from room code.
+  /// GF/GL -> Ground Floor, FF/FL -> 1st Floor, SF/SL -> 2nd Floor, TF/TL -> 3rd Floor, 4F -> 4th Floor
+  static String? extractFloor(String roomName) {
+    final upper = roomName.toUpperCase();
+    if (upper.contains('-GF') || upper.contains('_GF') || upper.contains('-GL') || upper.contains('_GL')) {
+      return 'Ground Floor';
+    }
+    if (upper.contains('-FF') || upper.contains('_FF') || upper.contains('-FL') || upper.contains('_FL')) {
+      return '1st Floor';
+    }
+    if (upper.contains('-SF') || upper.contains('_SF') || upper.contains('-SL') || upper.contains('_SL')) {
+      return '2nd Floor';
+    }
+    if (upper.contains('-TF') || upper.contains('_TF') || upper.contains('-TL') || upper.contains('_TL')) {
+      return '3rd Floor';
+    }
+    if (upper.contains('-4F') || upper.contains('_4F') || upper.contains('-4L') || upper.contains('_4L')) {
+      return '4th Floor';
+    }
+    return null;
+  }
 }

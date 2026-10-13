@@ -9,12 +9,23 @@ class SruTimetableParser {
     final slots = document.querySelectorAll('.stt-slot');
     
     for (final slot in slots) {
-      final day = slot.attributes['data-day'] ?? '';
+      String day = slot.attributes['data-day'] ?? '';
       final fromMinutesStr = slot.attributes['data-from'] ?? '';
       final toMinutesStr = slot.attributes['data-to'] ?? '';
 
       if (day.isEmpty || fromMinutesStr.isEmpty || toMinutesStr.isEmpty) {
         continue;
+      }
+
+      // data-day is often numeric (1=Monday, etc). Map it to string to match app logic.
+      switch (day) {
+        case '1': day = 'Monday'; break;
+        case '2': day = 'Tuesday'; break;
+        case '3': day = 'Wednesday'; break;
+        case '4': day = 'Thursday'; break;
+        case '5': day = 'Friday'; break;
+        case '6': day = 'Saturday'; break;
+        case '7': day = 'Sunday'; break;
       }
 
       final fromMinutes = int.tryParse(fromMinutesStr) ?? 0;
@@ -47,7 +58,12 @@ class SruTimetableParser {
         String faculty = personEl?.text.trim() ?? '';
         faculty = faculty.replaceAll('Faculty', '').trim(); // Remove visually-hidden text
 
+        final normSub = subject.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+        final normRoom = room.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+        final id = '${day.toLowerCase()}_${startTime}_${endTime}_${normSub}_$normRoom';
+
         entries.add({
+          'id': id,
           'day': day,
           'start_time': startTime,
           'end_time': endTime,

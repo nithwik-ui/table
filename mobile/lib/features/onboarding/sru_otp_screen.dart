@@ -7,6 +7,7 @@ import '../../core/sync.dart';
 import '../../core/auth/auth_repository.dart';
 import '../../core/sru/sru_auth_client.dart';
 import '../../core/sms_retriever_service.dart';
+import '../../core/timetable/timetable_repository.dart';
 import '../dashboard/dashboard_screen.dart';
 
 class SruOtpScreen extends StatefulWidget {
@@ -20,6 +21,7 @@ class _SruOtpScreenState extends State<SruOtpScreen> with CodeAutoFill {
   final TextEditingController _otpController = TextEditingController();
   late final SmartAuthUserConsentRetriever _smsRetriever;
   bool _isLoading = false;
+  String _loadingMessage = 'Verifying...';
   String? _errorMessage;
 
   @override
@@ -63,6 +65,7 @@ class _SruOtpScreenState extends State<SruOtpScreen> with CodeAutoFill {
     
     setState(() {
       _isLoading = true;
+      _loadingMessage = 'Verifying code...';
       _errorMessage = null;
     });
 
@@ -71,8 +74,20 @@ class _SruOtpScreenState extends State<SruOtpScreen> with CodeAutoFill {
       final role = AuthRepository.instance.currentRole ?? 'student';
       await StorageService.setUserMode(role);
       
-      // Start timetable sync immediately
-      SyncService.instance.syncTimetable();
+      if (mounted) {
+        setState(() {
+          _loadingMessage = 'Loading your timetable...';
+        });
+      }
+      
+      // Await initial timetable sync so the user lands on the dashboard with full timetable ready
+      try {
+        await SyncService.instance.syncTimetable(force: true).timeout(const Duration(seconds: 15));
+      } catch (e) {
+        debugPrint('[OTP] Initial timetable sync caught non-fatal: $e');
+      }
+
+      TimetableRepository.instance.loadFromCache();
       
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
@@ -84,7 +99,16 @@ class _SruOtpScreenState extends State<SruOtpScreen> with CodeAutoFill {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = e.toString();
+          final msg = e.toString();
+          if (msg.contains('TimeoutException')) {
+            _errorMessage = 'Verification request timed out. Please check your connection and try again.';
+          } else if (msg.contains('SocketException') || msg.contains('Failed host lookup')) {
+            _errorMessage = 'Unable to connect to SRU portal. Please check your internet connection.';
+          } else if (e is SruAuthException) {
+            _errorMessage = e.message;
+          } else {
+            _errorMessage = msg.replaceAll(RegExp(r'^(Exception|Error|SruAuthException):\s*'), '');
+          }
         });
       }
     }
@@ -163,7 +187,14 @@ class _SruOtpScreenState extends State<SruOtpScreen> with CodeAutoFill {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 child: _isLoading 
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
+                          const SizedBox(width: 12),
+                          Text(_loadingMessage, style: const TextStyle(color: Colors.white)),
+                        ],
+                      )
                     : const Text('Verify'),
               ),
             ],
