@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'constants.dart';
 import 'timetable_normalizer.dart';
@@ -145,7 +146,13 @@ class ApiService {
     }
   }
 
-  static Future<bool> registerDevice(String fcmToken, String batchId, {String userMode = 'student', String? facultyId}) async {
+  static Future<bool> registerDevice(
+    String fcmToken, 
+    String batchId, {
+    String userMode = 'student', 
+    String? facultyId,
+    String? platform,
+  }) async {
     try {
       final response = await http.post(
         Uri.parse('${AppConstants.apiBaseUrl}/api/devices/register'),
@@ -155,6 +162,7 @@ class ApiService {
           'batch_id': batchId,
           'user_mode': userMode,
           'faculty_id': facultyId,
+          'platform': platform ?? (kIsWeb ? 'web' : 'android'),
         }),
       ).timeout(timeoutDuration);
       

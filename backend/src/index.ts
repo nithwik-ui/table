@@ -2,7 +2,16 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { supabase } from './db/supabase';
 import { runSync } from './sync';
-import { sendGenericBroadcast, sendTestClassNotification, sendTestClassRemovedNotification, subscribeDeviceToGlobalTopic } from './notifications/fcm';
+import { 
+  sendGenericBroadcast, 
+  sendTestClassNotification, 
+  sendTestClassRemovedNotification, 
+  subscribeDeviceToGlobalTopic,
+  subscribeDeviceToPwaTopic,
+  sendPwaTestNotification,
+  sendTestPush, 
+  sendAttendancePush 
+} from './notifications/fcm';
 
 import facultyRouter from './api/faculty';
 import roomsRouter from './api/rooms';
@@ -306,7 +315,7 @@ app.get('/api/faculty/:facultyId/changes', async (req: Request, res: Response) =
 // POST /api/devices/register
 app.post('/api/devices/register', async (req: Request, res: Response) => {
   try {
-    const { fcm_token, batch_id, user_mode, faculty_id } = req.body;
+    const { fcm_token, batch_id, user_mode, faculty_id, platform } = req.body;
     if (!fcm_token) {
       return res.status(400).json({ error: 'Missing parameters: fcm_token' });
     }
@@ -330,8 +339,14 @@ app.post('/api/devices/register', async (req: Request, res: Response) => {
 
     if (error) throw error;
 
-    // Automatically subscribe token to sru_all_users topic (subscribes web push tokens as well)
+    // Automatically subscribe token to sru_all_users topic
     subscribeDeviceToGlobalTopic(fcm_token);
+
+    // If device is PWA / Web, subscribe to sru_pwa_users topic
+    const isPwa = platform === 'web' || (req.headers['user-agent']?.includes('Mozilla') && req.body?.is_pwa);
+    if (isPwa) {
+      subscribeDeviceToPwaTopic(fcm_token);
+    }
 
     res.json({ success: true });
   } catch (err: any) {
@@ -360,8 +375,6 @@ app.post('/api/devices/unregister', async (req: Request, res: Response) => {
 });
 
 // POST /api/devices/test-notification
-import { sendTestPush, sendAttendancePush } from './notifications/fcm';
-
 app.post('/api/devices/test-notification', async (req: Request, res: Response) => {
   const fcm_token = req.body?.fcm_token;
   const maskedToken = typeof fcm_token === 'string' && fcm_token.length > 10
@@ -432,96 +445,26 @@ app.post('/api/devices/attendance', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/devices/unregister
-app.post('/api/devices/unregister', async (req: Request, res: Response) => {
+// POST /api/admin/pwa-test-notification
+app.post('/api/admin/pwa-test-notification', async (req: Request, res: Response) => {
   try {
-    const { fcm_token } = req.body;
-    if (!fcm_token) {
-      return res.status(400).json({ error: 'Missing fcm_token' });
+    const { password, title, message, fcm_token } = req.body;
+    if (password !== process.env.ADMIN_PASSWORD && password !== 'SRUAdminPass2026') {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
-    const { error } = await supabase
-      .from('device_tokens')
-      .delete()
-      .eq('fcm_token', fcm_token);
+    const result = await sendPwaTestNotification(
+      title || '🔔 SRU Timetable PWA Alert',
+      message || 'This is a test notification for PWA web members.',
+      fcm_token
+    );
 
-    if (error) throw error;
-    res.json({ success: true });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// POST /api/devices/test-notification
-import { sendTestPush, sendAttendancePush } from './notifications/fcm';
-
-app.post('/api/devices/test-notification', async (req: Request, res: Response) => {
-  const fcm_token = req.body?.fcm_token;
-  const maskedToken = typeof fcm_token === 'string' && fcm_token.length > 10
-    ? `${fcm_token.substring(0, 6)}...${fcm_token.substring(fcm_token.length - 4)}`
-    : '***';
-
-  try {
-    if (!fcm_token) {
-      return res.status(400).json({
-        success: false,
-        code: 'MISSING_TOKEN',
-        message: 'Missing fcm_token parameter'
-      });
-    }
-
-    console.log(`[FCM] Dispatching test notification to token: ${maskedToken}`);
-
-    await sendTestPush(fcm_token);
     return res.json({
-      success: true,
-      message: 'Test notification sent successfully'
+      ...result
     });
   } catch (err: any) {
-    const errorCode = err.code || 'FCM_SEND_FAILED';
-    const isUnregistered = errorCode === 'messaging/registration-token-not-registered' ||
-                           errorCode === 'messaging/invalid-registration-token' ||
-                           (err.message && err.message.includes('not registered'));
-
-    if (isUnregistered) {
-      try {
-        await supabase
-          .from('device_tokens')
-          .delete()
-          .eq('fcm_token', fcm_token);
-        console.log(`[FCM] Pruned unregistered token from database: ${maskedToken}`);
-      } catch (cleanupErr: any) {
-        console.error('[FCM] Failed to cleanup unregistered token:', cleanupErr.message);
-      }
-
-      return res.status(400).json({
-        success: false,
-        code: 'FCM_UNREGISTERED',
-        message: 'FCM registration token is invalid or no longer registered with Firebase'
-      });
-    }
-
-    console.error('[FCM] Test push dispatch error:', err.message);
-    return res.status(500).json({
-      success: false,
-      code: errorCode,
-      message: err.message || 'Failed to dispatch test notification'
-    });
-  }
-});
-
-// POST /api/devices/attendance
-app.post('/api/devices/attendance', async (req: Request, res: Response) => {
-  try {
-    const { rollNumber, subject, date, time } = req.body;
-    if (!rollNumber || !subject) {
-      return res.status(400).json({ error: 'Missing required parameters' });
-    }
-
-    await sendAttendancePush(rollNumber, subject, date || '', time || '');
-    res.json({ success: true });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[FCM] PWA test notification error:', err.message || err);
+    return res.status(500).json({ success: false, error: err.message || 'Failed to dispatch PWA push' });
   }
 });
 
@@ -548,7 +491,7 @@ app.post('/api/devices/preferences', async (req: Request, res: Response) => {
 // POST /api/admin/broadcast
 app.post('/api/admin/broadcast', async (req: Request, res: Response) => {
   try {
-    const { password, title, message, isTest } = req.body;
+    const { password, title, message, isTest, target: audienceTarget } = req.body;
     if (password !== process.env.ADMIN_PASSWORD && password !== 'SRUAdminPass2026') {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -557,14 +500,17 @@ app.post('/api/admin/broadcast', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Missing title or message' });
     }
 
-    const target = 'All Users (Topic)';
+    const isPwaOnly = audienceTarget === 'pwa_only';
+    const target = isPwaOnly ? 'PWA Users Only (Web Push)' : 'All Users (Topic)';
     let result = { success: false, count: 0, error: '' };
 
     if (isTest) {
       console.log(`[TEST MODE] Would have sent "${title}" to ${target}`);
       result = { success: true, count: 1, error: '' };
+    } else if (isPwaOnly) {
+      result = await sendPwaTestNotification(title, message) as any;
     } else {
-      // Dispatch to FCM topic
+      // Dispatch to FCM global topic
       result = await sendGenericBroadcast(title, message) as any;
     }
 

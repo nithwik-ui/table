@@ -90,6 +90,63 @@ export async function subscribeDeviceToGlobalTopic(fcmToken: string) {
   }
 }
 
+export async function subscribeDeviceToPwaTopic(fcmToken: string) {
+  if (!fcmInitialized || !fcmToken) return;
+  try {
+    await admin.messaging().subscribeToTopic([fcmToken], 'sru_pwa_users');
+    console.log(`[FCM] Subscribed PWA token ${fcmToken.substring(0, 10)}... to sru_pwa_users topic`);
+  } catch (err: any) {
+    console.warn('[FCM] Could not subscribe token to sru_pwa_users:', err.message || err);
+  }
+}
+
+export async function sendPwaTestNotification(title?: string, body?: string, token?: string) {
+  if (!fcmInitialized) {
+    throw new Error('Firebase Admin SDK is not initialized.');
+  }
+
+  const notificationTitle = title?.trim() || '🔔 SRU Timetable PWA Alert';
+  const notificationBody = body?.trim() || 'This is a test notification for PWA web members.';
+
+  // If targeting a specific PWA token directly
+  if (token && token.trim().length > 0) {
+    const directPayload = {
+      token: token.trim(),
+      notification: {
+        title: notificationTitle,
+        body: notificationBody,
+      },
+      data: {
+        click_action: 'FLUTTER_NOTIFICATION_CLICK',
+        type: 'pwa_test',
+        timestamp: new Date().toISOString(),
+      },
+      webpush: getWebpushPayload(notificationTitle, notificationBody),
+    };
+
+    const res = await admin.messaging().send(directPayload);
+    return { success: true, count: 1, mode: 'direct_token', messageId: res };
+  }
+
+  // Otherwise, broadcast to the sru_pwa_users topic
+  const topicPayload = {
+    topic: 'sru_pwa_users',
+    notification: {
+      title: notificationTitle,
+      body: notificationBody,
+    },
+    data: {
+      click_action: 'FLUTTER_NOTIFICATION_CLICK',
+      type: 'pwa_test',
+      timestamp: new Date().toISOString(),
+    },
+    webpush: getWebpushPayload(notificationTitle, notificationBody),
+  };
+
+  const res = await admin.messaging().send(topicPayload);
+  return { success: true, count: 1, mode: 'pwa_topic', messageId: res, topic: 'sru_pwa_users' };
+}
+
 export async function sendBatchNotifications(batchId: string, changes: TimetableChangeInsert[]) {
   if (!fcmInitialized) {
     console.warn('Skipping push notification dispatch: Firebase Admin SDK is not initialized.');
