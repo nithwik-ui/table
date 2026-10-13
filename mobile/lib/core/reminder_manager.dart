@@ -29,8 +29,11 @@ class ReminderManager {
     final dateString = _formatDate(targetDate);
     
     try {
-      final matchingOverrides = overrides.where((ov) => ov['override_date'] == dateString);
-      if (matchingOverrides.isNotEmpty) return false;
+      final matchingHolidays = overrides.where((ov) => 
+        ov['override_date'] == dateString && 
+        ov['is_holiday'] != false
+      );
+      if (matchingHolidays.isNotEmpty) return false;
     } catch (_) {}
 
     final startTimeStr = event['start_time']?.toString();
@@ -71,8 +74,11 @@ class ReminderManager {
       final dayName = _getDayName(targetDate.weekday);
       final dateString = _formatDate(targetDate);
 
-      // Get classes for day and sort by start time
-      List<dynamic> dayClasses = timetable.where((c) => c['day']?.toString() == dayName).toList();
+      // Get classes for day and sort by start time (case-insensitive day comparison)
+      List<dynamic> dayClasses = timetable.where((c) {
+        final cDay = c['day']?.toString().toLowerCase().trim() ?? '';
+        return cDay == dayName.toLowerCase().trim();
+      }).toList();
       dayClasses.sort((a, b) => _timeToMinutes(a['start_time'] ?? '00:00').compareTo(_timeToMinutes(b['start_time'] ?? '00:00')));
 
       // Merge continuous classes
@@ -191,14 +197,46 @@ class ReminderManager {
               presentSound: true,
             ),
           ),
-          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
           payload: entry['payload'] as String,
         );
         scheduledCount++;
-        debugPrint('[ReminderManager] scheduled id=$id time=$reminderTime');
+        debugPrint('[ReminderManager] scheduled exact id=$id time=$reminderTime');
       } catch (e) {
-        debugPrint('[ReminderManager] failed to schedule: $e');
+        debugPrint('[ReminderManager] exact alarm failed ($e), falling back to inexact...');
+        try {
+          await _notificationsPlugin.zonedSchedule(
+            id,
+            entry['title'] as String,
+            entry['body'] as String,
+            tz.TZDateTime.from(reminderTime, tz.local),
+            const NotificationDetails(
+              android: AndroidNotificationDetails(
+                'class_reminders',
+                'Class Reminders',
+                channelDescription: 'Reminders 9 minutes before class starts',
+                importance: Importance.max,
+                priority: Priority.high,
+                autoCancel: true,
+                playSound: true,
+                enableVibration: true,
+              ),
+              iOS: DarwinNotificationDetails(
+                presentAlert: true,
+                presentBadge: true,
+                presentSound: true,
+              ),
+            ),
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+            payload: entry['payload'] as String,
+          );
+          scheduledCount++;
+          debugPrint('[ReminderManager] scheduled inexact fallback id=$id time=$reminderTime');
+        } catch (e2) {
+          debugPrint('[ReminderManager] failed to schedule fallback: $e2');
+        }
       }
     }
 

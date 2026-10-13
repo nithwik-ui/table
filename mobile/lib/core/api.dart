@@ -24,7 +24,7 @@ class FreeRoomsMalformedException extends FreeRoomsException {
 }
 
 class ApiService {
-  static const Duration timeoutDuration = Duration(seconds: 60);
+  static const Duration timeoutDuration = Duration(seconds: 12);
 
   static Future<List<dynamic>> fetchDegrees() async {
     final response = await http
@@ -161,6 +161,60 @@ class ApiService {
       return response.statusCode == 200;
     } catch (_) {
       return false;
+    }
+  }
+
+  static Future<bool> unregisterDevice(String fcmToken) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${AppConstants.apiBaseUrl}/api/devices/unregister'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'fcm_token': fcmToken}),
+      ).timeout(timeoutDuration);
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<bool> sendTestNotification(String fcmToken) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${AppConstants.apiBaseUrl}/api/devices/test-notification'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'fcm_token': fcmToken}),
+      ).timeout(timeoutDuration);
+      if (response.statusCode != 200) {
+        String detail = 'Server returned ${response.statusCode}';
+        try {
+          final decoded = json.decode(response.body);
+          if (decoded is Map && decoded['message'] != null) {
+            final code = decoded['code'] != null ? '[${decoded['code']}] ' : '';
+            detail = '$code${decoded['message']}';
+          }
+        } catch (_) {}
+        throw Exception(detail);
+      }
+      return true;
+    } catch (e) {
+      if (e is Exception) rethrow;
+      throw Exception('Network error: $e');
+    }
+  }
+
+  static Future<bool> sendAttendanceNotification(String rollNumber, String subject) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${AppConstants.apiBaseUrl}/api/devices/attendance'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'rollNumber': rollNumber, 'subject': subject}),
+      ).timeout(timeoutDuration);
+      if (response.statusCode != 200) {
+        throw Exception('Server returned ${response.statusCode}');
+      }
+      return true;
+    } catch (e) {
+      throw Exception('Network error: $e');
     }
   }
 

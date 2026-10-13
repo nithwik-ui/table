@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
 import '../../core/sync.dart';
+import '../../core/timetable/timetable_repository.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -146,25 +147,46 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
     
     final userMode = StorageService.getUserMode();
-    final timetable = userMode == 'faculty' ? StorageService.getFacultyTimetableCache() : StorageService.getTimetableCache();
+    final timetable = TimetableRepository.instance.classes.isNotEmpty
+        ? TimetableRepository.instance.classes
+        : (userMode == 'faculty' ? StorageService.getFacultyTimetableCache() : StorageService.getTimetableCache());
     
-    for (final dayData in timetable) {
-      final classes = dayData['classes'] as List<dynamic>? ?? [];
-      for (final cls in classes) {
-        if (entryId != null && cls['id'] == entryId) {
-          return {
-            'day': dayData['day'] as String,
-            'time': cls['start_time'] as String,
-            'subject': cls['subject'] as String? ?? subject,
-          };
+    for (final item in timetable) {
+      if (item is Map) {
+        // Flat class map support (v3 standard)
+        if (item.containsKey('start_time') || item.containsKey('subject')) {
+          if (entryId != null && item['id'] == entryId) {
+            return {
+              'day': item['day'] as String? ?? '',
+              'time': item['start_time'] as String? ?? '',
+              'subject': item['subject'] as String? ?? subject,
+            };
+          }
+          if (entryId == null && item['subject'] == subject) {
+            return {
+              'day': item['day'] as String? ?? '',
+              'time': item['start_time'] as String? ?? '',
+              'subject': subject,
+            };
+          }
         }
-        
-        if (entryId == null && cls['subject'] == subject) {
-          return {
-            'day': dayData['day'] as String,
-            'time': cls['start_time'] as String,
-            'subject': subject,
-          };
+        // Legacy nested day map support
+        final classes = item['classes'] as List<dynamic>? ?? [];
+        for (final cls in classes) {
+          if (entryId != null && cls['id'] == entryId) {
+            return {
+              'day': item['day'] as String? ?? '',
+              'time': cls['start_time'] as String? ?? '',
+              'subject': cls['subject'] as String? ?? subject,
+            };
+          }
+          if (entryId == null && cls['subject'] == subject) {
+            return {
+              'day': item['day'] as String? ?? '',
+              'time': cls['start_time'] as String? ?? '',
+              'subject': subject,
+            };
+          }
         }
       }
     }

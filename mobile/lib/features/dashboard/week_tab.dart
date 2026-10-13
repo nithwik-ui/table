@@ -4,10 +4,14 @@ import '../../core/constants.dart';
 import '../../core/storage.dart';
 import '../../core/utils.dart';
 import '../../core/sync.dart';
+import '../../core/timetable_status_engine.dart';
 import '../notifications/notifications_screen.dart';
 import 'changes_tab.dart';
 import 'widgets/live_class_progress.dart';
 import '../../widgets/class_details_bottom_sheet.dart';
+import '../../core/timetable/timetable_repository.dart';
+import '../../core/auth/auth_repository.dart';
+import '../../core/auth/auth_state.dart';
 
 enum ScheduleBlockType {
   classBlock,
@@ -64,7 +68,14 @@ class _WeekTabState extends State<WeekTab> {
     super.initState();
     _calculateCurrentWeek();
     _loadLocalData();
+    TimetableRepository.instance.addListener(_onTimetableRepoUpdate);
     SyncService.instance.addListener(_onSyncUpdate);
+  }
+
+  void _onTimetableRepoUpdate() {
+    if (mounted) {
+      _loadLocalData();
+    }
   }
 
   void _onSyncUpdate() {
@@ -77,6 +88,7 @@ class _WeekTabState extends State<WeekTab> {
 
   @override
   void dispose() {
+    TimetableRepository.instance.removeListener(_onTimetableRepoUpdate);
     SyncService.instance.removeListener(_onSyncUpdate);
     super.dispose();
   }
@@ -94,13 +106,11 @@ class _WeekTabState extends State<WeekTab> {
   }
 
   void _loadLocalData() {
-    final userMode = StorageService.getUserMode();
-    final cached = userMode == 'faculty'
-        ? StorageService.getFacultyTimetableCache()
-        : StorageService.getTimetableCache();
-        
+    final repo = TimetableRepository.instance;
     setState(() {
-      _timetable = cached;
+      _timetable = repo.classes;
+      // Only display offline banner if there is literally NO timetable in storage
+      _isOffline = repo.classes.isEmpty && SyncService.instance.syncState != SyncState.online;
     });
     _calculateNextClassHighlight();
   }
@@ -108,7 +118,7 @@ class _WeekTabState extends State<WeekTab> {
   void _calculateNextClassHighlight() {
     if (_timetable.isEmpty) return;
 
-    final nowLocal = TimeUtils.getKolkataTime();
+    final nowLocal = TimeUtils.nowInSruTime();
     final currentDayIndex = nowLocal.weekday - 1;
     
     // Highlight is only computed if the selected day index matches today
@@ -119,20 +129,18 @@ class _WeekTabState extends State<WeekTab> {
 
     final weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     final currentDay = weekdays[currentDayIndex];
-    final currentMinutes = nowLocal.hour * 60 + nowLocal.minute;
+    
+    final todayClasses = _timetable.where((e) => (e['day']?.toString() ?? '').toLowerCase() == currentDay.toLowerCase()).toList();
 
-    final todayClasses = _timetable.where((e) => e['day'] == currentDay).toList();
-    todayClasses.sort((a, b) => (a['start_time'] as String).compareTo(b['start_time'] as String));
-
-    // Find first class starting in the future
+    final nextId = TimetableStatusEngine.getNextClassId(
+      dayClasses: todayClasses,
+      referenceDate: nowLocal,
+      nowLocal: nowLocal,
+    );
+    
     Map<String, dynamic>? next;
-    for (final c in todayClasses) {
-      final startParts = (c['start_time'] as String).split(':').map(int.parse).toList();
-      final startMinutes = startParts[0] * 60 + startParts[1];
-      if (startMinutes > currentMinutes) {
-        next = Map<String, dynamic>.from(c);
-        break;
-      }
+    if (nextId != null) {
+      next = todayClasses.firstWhere((e) => e['id'] == nextId, orElse: () => null);
     }
 
     setState(() {
@@ -326,7 +334,10 @@ class _WeekTabState extends State<WeekTab> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'You\'re offline',
+                              (SyncService.instance.syncState == SyncState.sessionExpired &&
+                                      AuthRepository.instance.state == AuthState.sessionExpired)
+                                  ? 'Session expired'
+                                  : 'Sync unavailable',
                               style: AppConstants.getHeadline().copyWith(fontSize: 14, color: AppConstants.error),
                             ),
                             Text(
@@ -338,8 +349,7 @@ class _WeekTabState extends State<WeekTab> {
                       ),
                       TextButton(
                         onPressed: () {
-                          setState(() => _isOffline = false);
-                          SyncService.instance.syncTimetable();
+                          TimetableRepository.instance.refresh();
                         },
                         child: Text(
                           'Try again',
@@ -452,7 +462,12 @@ class _WeekTabState extends State<WeekTab> {
             Expanded(
               child: timelineBlocks.isNotEmpty
                   ? ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer),
+                      padding: EdgeInsets.fromLTRB(
+                        AppConstants.paddingContainer,
+                        0,
+                        AppConstants.paddingContainer,
+                        MediaQuery.of(context).padding.bottom + 96,
+                      ),
                       itemCount: timelineBlocks.length + 1, // list + end of classes divider
                       itemBuilder: (context, index) {
                         if (index == timelineBlocks.length) {
@@ -603,39 +618,58 @@ class _WeekTabState extends State<WeekTab> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                      Text(
+                                        c['subject'] as String? ?? 'No Subject',
+                                        style: AppConstants.getHeadline().copyWith(
+                                          fontSize: 18,
+                                          decoration: isCancelled ? TextDecoration.lineThrough : null,
+                                          color: isCancelled ? AppConstants.textSecondary : null,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 6,
+                                        crossAxisAlignment: WrapCrossAlignment.center,
                                         children: [
-                                          Expanded(
-                                            child: Text(
-                                              c['subject'] as String? ?? 'No Subject',
-                                              style: AppConstants.getHeadline().copyWith(
-                                                fontSize: 18,
-                                                decoration: isCancelled ? TextDecoration.lineThrough : null,
-                                                color: isCancelled ? AppConstants.textSecondary : null,
-                                              ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: isCancelled
+                                                  ? AppConstants.errorContainer.withValues(alpha: 0.5)
+                                                  : AppConstants.secondaryContainer.withValues(alpha: 0.6),
+                                              borderRadius: BorderRadius.circular(AppConstants.radiusTag),
                                             ),
-                                          ),
-                                          Row(
-                                            children: [
-                                              Text(
-                                                '${TimeUtils.format12Hour(c['start_time'] as String? ?? '00:00')} - ${TimeUtils.format12Hour(c['end_time'] as String? ?? '00:00')}',
-                                                style: AppConstants.getLabelSmall(
-                                                  color: isCancelled ? AppConstants.textSecondary : AppConstants.primary
-                                                ).copyWith(
-                                                  fontWeight: FontWeight.w600,
-                                                  decoration: isCancelled ? TextDecoration.lineThrough : null,
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  Icons.access_time_rounded,
+                                                  size: 13,
+                                                  color: isCancelled ? AppConstants.error : AppConstants.primary,
                                                 ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              if (!isCancelled)
-                                                LiveClassProgressIndicator(
-                                                  startTime: c['start_time'] as String? ?? '00:00',
-                                                  endTime: c['end_time'] as String? ?? '00:00',
-                                                  isToday: _selectedDayIndex == TimeUtils.getKolkataTime().weekday - 1,
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  '${TimeUtils.format12Hour(c['start_time'] as String? ?? '00:00')} - ${TimeUtils.format12Hour(c['end_time'] as String? ?? '00:00')}',
+                                                  style: AppConstants.getLabelSmall(
+                                                    color: isCancelled ? AppConstants.error : AppConstants.primary
+                                                  ).copyWith(
+                                                    fontWeight: FontWeight.w700,
+                                                    fontSize: 11,
+                                                    decoration: isCancelled ? TextDecoration.lineThrough : null,
+                                                  ),
                                                 ),
-                                            ],
+                                                if (!isCancelled) ...[
+                                                  const SizedBox(width: 6),
+                                                  LiveClassProgressIndicator(
+                                                    startTime: c['start_time'] as String? ?? '00:00',
+                                                    endTime: c['end_time'] as String? ?? '00:00',
+                                                    isToday: _selectedDayIndex == DateTime.now().weekday - 1,
+                                                    referenceDate: selectedDate,
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
                                           ),
                                         ],
                                       ),

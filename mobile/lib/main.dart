@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'core/constants.dart';
+import 'core/ad_service.dart';
 import 'core/storage.dart';
 import 'core/api.dart';
 import 'core/notifications.dart';
@@ -12,7 +12,10 @@ import 'core/sync.dart';
 import 'core/auth/auth_repository.dart';
 import 'core/auth/auth_state.dart';
 import 'core/auth/secure_session_store.dart';
+import 'core/migration.dart';
 import 'core/sraap/sraap_session_manager.dart';
+import 'core/sraap/sraap_academic_service.dart';
+import 'core/timetable/timetable_repository.dart';
 import 'features/onboarding/mode_selection_screen.dart';
 import 'features/dashboard/dashboard_screen.dart';
 
@@ -119,11 +122,12 @@ Future<void> _initFirebaseSafely() async {
               profile?['roll_no']?.toString() ?? 
               StorageService.getStudentRollNumber() ?? 
               StorageService.getUserIdentifier() ?? '';
+          final batchId = profile?['batch_id']?.toString() ?? '63a84ab2-8ee2-4ea7-b473-38858889428a';
           await ApiService.registerDevice(
             webToken,
-            userMode == 'student' ? id : '',
+            userMode == 'student' ? batchId : '',
             userMode: userMode,
-            facultyId: userMode == 'faculty' ? id : null,
+            facultyId: userMode == 'faculty' ? id : id,
           );
         }
       } catch (e) {
@@ -159,12 +163,14 @@ Future<void> _initFirebaseSafely() async {
           StorageService.getStudentRollNumber() ?? 
           StorageService.getUserIdentifier() ?? '';
 
+      final batchId = profile?['batch_id']?.toString() ?? '63a84ab2-8ee2-4ea7-b473-38858889428a';
+
       try {
         await ApiService.registerDevice(
           fcmToken,
-          userMode == 'student' ? id : '',
+          userMode == 'student' ? batchId : '',
           userMode: userMode,
-          facultyId: userMode == 'faculty' ? id : null,
+          facultyId: userMode == 'faculty' ? id : id,
         );
       } catch (_) {}
     });
@@ -177,6 +183,12 @@ Future<void> _initFirebaseSafely() async {
 void main() {
   // Ensure Flutter engine bindings are initialized first
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Prevent any unhandled widget build exception from rendering an ugly grey box
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    debugPrint('[ERROR_CATCHER] Widget build error intercepted: ${details.exception}');
+    return const SizedBox.shrink();
+  };
 
   // Launch the UI immediately to prevent black screen delay
   runApp(const MyApp());
@@ -191,10 +203,12 @@ void main() {
 
     await _initFirebaseSafely();
 
-    try {
-      await MobileAds.instance.initialize();
-    } catch (e) {
-      debugPrint('AdMob initialization failed (non-fatal): $e');
+    if (!kIsWeb) {
+      try {
+        await AdService.instance.init();
+      } catch (e) {
+        debugPrint('AdMob initialization failed (non-fatal): $e');
+      }
     }
   });
 }
@@ -276,12 +290,13 @@ class _SplashControllerState extends State<SplashController> {
   Future<void> _initApp() async {
     try {
       await StorageService.init();
+      await AppDataMigrationManager.runMigrationIfNeeded();
+      TimetableRepository.instance.init();
       await SraapSessionManager.instance.restoreSession();
+      SraapAcademicService.instance.startKeepAlive();
       await NotificationService.reconcileReminders();
       
       await AuthRepository.instance.restoreSession();
-      
-      SyncService.instance.syncTimetable();
     } catch (e) {
       debugPrint('Local storage initialization failed: $e');
     }
@@ -300,7 +315,7 @@ class _SplashControllerState extends State<SplashController> {
       Widget nextScreen;
       
       final session = await SecureSessionStore.getSession();
-      final hasCachedStudentTimetable = StorageService.getTimetableCache().isNotEmpty;
+      final hasCachedStudentTimetable = TimetableRepository.instance.classes.isNotEmpty || StorageService.getTimetableCache().isNotEmpty;
       final hasCachedFacultyTimetable = StorageService.getFacultyTimetableCache().isNotEmpty;
       final hasRollNo = StorageService.getStudentRollNumber() != null || StorageService.getUserIdentifier() != null;
       final hasSession = session != null;

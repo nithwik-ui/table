@@ -22,7 +22,27 @@ class TimeUtils {
     }
   }
 
-  static DateTime getKolkataTime() {
-    return DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30));
+  /// Returns the current time at SR University (India Standard Time, UTC+5:30)
+  /// as a standard DateTime so all hour/minute comparisons remain mathematically correct.
+  static DateTime nowInSruTime() {
+    final utc = DateTime.now().toUtc();
+    final ist = utc.add(const Duration(hours: 5, minutes: 30));
+    return DateTime(ist.year, ist.month, ist.day, ist.hour, ist.minute, ist.second, ist.millisecond);
+  }
+
+  /// Backward-compatible alias for nowInSruTime().
+  static DateTime getKolkataTime() => nowInSruTime();
+
+  /// Parses a timetable time string ("HH:MM") on a given reference calendar date
+  /// into a DateTime in the exact same frame of reference as nowInSruTime().
+  static DateTime parseClassDateTime(DateTime referenceDate, String timeStr) {
+    int hour = 0;
+    int min = 0;
+    if (timeStr.isNotEmpty) {
+      final parts = timeStr.split(':');
+      if (parts.isNotEmpty) hour = int.tryParse(parts[0]) ?? 0;
+      if (parts.length > 1) min = int.tryParse(parts[1]) ?? 0;
+    }
+    return DateTime(referenceDate.year, referenceDate.month, referenceDate.day, hour, min);
   }
 }

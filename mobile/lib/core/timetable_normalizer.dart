@@ -24,72 +24,73 @@ class TimetableNormalizer {
       return startA.compareTo(startB);
     });
 
-    // 3. Merge contiguous classes and group simultaneous options
-    final List<Map<String, dynamic>> merged = [];
-    
+    // 3. Group simultaneous options
+    final List<Map<String, dynamic>> groupedClasses = [];
     for (final c in uniqueClasses) {
-      if (merged.isEmpty) {
-        merged.add(_createClassGroup(c));
-        continue;
+      if (groupedClasses.isEmpty) {
+        groupedClasses.add(_createClassGroup(c));
+      } else {
+        final last = groupedClasses.last;
+        if (last['day'] == c['day'] && last['start_time'] == c['start_time'] && last['end_time'] == c['end_time']) {
+          if (!_isEffectivelySameClass(last, c, ignoreTime: true)) {
+            last['is_choice'] = true;
+            if (last['options'] == null) {
+              last['options'] = [_createClassGroup(last)];
+            }
+            last['options'].add(_createClassGroup(c));
+          }
+        } else {
+          groupedClasses.add(_createClassGroup(c));
+        }
       }
-
-      final prev = merged.last;
-      
-      // Are they on the same day?
-      if (_dayValue(c['day']) != _dayValue(prev['day'])) {
-        merged.add(_createClassGroup(c));
-        continue;
-      }
-
-      // Are they simultaneous options?
-      if (c['start_time'] == prev['start_time'] && c['end_time'] == prev['end_time']) {
-         if (_isEffectivelySameClass(prev, c)) {
-             // Already in there, skip
-         } else {
-             // Add as an option
-             prev['options'] ??= [Map<String, dynamic>.from(prev)..remove('options')];
-             
-             // Ensure this option isn't already added
-             bool optionExists = false;
-             for (final opt in prev['options']) {
-                if (_isEffectivelySameClass(opt, c)) {
-                   optionExists = true;
-                   break;
-                }
-             }
-             
-             if (!optionExists) {
-               final opt = Map<String, dynamic>.from(c);
-               opt.remove('options');
-               prev['options'].add(opt);
-               prev['is_choice'] = true;
-               
-               // Use a generic placeholder for the main display if there are multiple choices
-               prev['subject'] = 'Course Option';
-               prev['faculty'] = 'Multiple';
-               prev['room'] = 'Multiple';
-               prev['ltp'] = '';
-             }
-         }
-         continue;
-      }
-      
-      // Are they contiguous blocks of the SAME class?
-      if (c['start_time'] == prev['end_time'] && prev['options'] == null && _isEffectivelySameClass(prev, c, ignoreTime: true)) {
-          // Merge them!
-          prev['end_time'] = c['end_time'];
-          continue;
-      }
-      
-      // Otherwise, just a new class
-      merged.add(_createClassGroup(c));
     }
-    
-    return merged;
+
+    // 4. Merge contiguous blocks
+    final List<Map<String, dynamic>> mergedClasses = [];
+    for (final c in groupedClasses) {
+      if (mergedClasses.isEmpty) {
+        mergedClasses.add(c);
+      } else {
+        final last = mergedClasses.last;
+        if (last['day'] == c['day'] && last['end_time'] == c['start_time'] && _isEffectivelySameGroup(last, c)) {
+          last['end_time'] = c['end_time'];
+        } else {
+          mergedClasses.add(c);
+        }
+      }
+    }
+
+    for (final c in mergedClasses) {
+      final day = (c['day']?.toString() ?? '').toLowerCase();
+      final start = c['start_time']?.toString() ?? '';
+      final end = c['end_time']?.toString() ?? '';
+      final sub = _normalizeString(c['subject']?.toString() ?? '');
+      final room = _normalizeString(c['room']?.toString() ?? '');
+      c['id'] = '${day}_${start}_${end}_${sub}_$room';
+    }
+
+    return mergedClasses;
   }
 
   static Map<String, dynamic> _createClassGroup(Map<String, dynamic> c) {
-    return Map<String, dynamic>.from(c);
+    final copy = Map<String, dynamic>.from(c);
+    copy.remove('is_choice');
+    copy.remove('options');
+    return copy;
+  }
+
+  static bool _isEffectivelySameGroup(Map<String, dynamic> a, Map<String, dynamic> b) {
+    if (a['is_choice'] != b['is_choice']) return false;
+    if (a['is_choice'] == true) {
+      final optsA = a['options'] as List;
+      final optsB = b['options'] as List;
+      if (optsA.length != optsB.length) return false;
+      for (int i = 0; i < optsA.length; i++) {
+        if (!_isEffectivelySameClass(optsA[i], optsB[i], ignoreTime: true)) return false;
+      }
+      return true;
+    }
+    return _isEffectivelySameClass(a, b, ignoreTime: true);
   }
 
   static String _generateUniqueKey(Map<String, dynamic> c) {

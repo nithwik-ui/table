@@ -13,6 +13,10 @@ import '../onboarding/mode_selection_screen.dart';
 import 'sync_center_screen.dart';
 import '../../core/sraap/sraap_academic_service.dart';
 import '../../core/auth/auth_repository.dart';
+import '../../core/timetable/timetable_repository.dart';
+import '../onboarding/sru_login_screen.dart';
+import '../../core/auth/secure_session_store.dart';
+import 'dashboard_screen.dart';
 
 class ProfileTab extends StatefulWidget {
   const ProfileTab({super.key});
@@ -162,28 +166,49 @@ class _ProfileTabState extends State<ProfileTab> {
   void _onSwitchMode() {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         final isFaculty = StorageService.getUserMode() == 'faculty';
         final targetMode = isFaculty ? 'Student' : 'Faculty';
+        final targetRole = isFaculty ? 'student' : 'faculty';
         return AlertDialog(
           title: Text('Switch to $targetMode?'),
           content: Text('This will switch your timetable mode to $targetMode. Your existing configurations will be saved.'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Cancel', style: TextStyle(color: AppConstants.textSecondary)),
             ),
             TextButton(
               onPressed: () async {
-                final navigator = Navigator.of(context);
-                navigator.pop();
+                Navigator.of(dialogContext).pop();
                 
-                // ModeSelectionScreen handles cancellation of the outgoing mode's notifications
-                navigator.push(
-                  MaterialPageRoute(
-                    builder: (context) => const ModeSelectionScreen(isSwitching: true),
-                  ),
-                );
+                final hasTargetCache = targetRole == 'faculty'
+                    ? StorageService.getFacultyTimetableCache().isNotEmpty
+                    : (StorageService.getTimetableCache().isNotEmpty || StorageService.getStudentRollNumber() != null);
+                
+                final targetSession = await SecureSessionStore.getSession(role: targetRole);
+                
+                if (hasTargetCache || targetSession != null) {
+                  // Instant switch without relogin!
+                  await StorageService.setUserMode(targetRole);
+                  await AuthRepository.instance.restoreSession(targetRole: targetRole);
+                  TimetableRepository.instance.loadFromCache();
+                  await NotificationService.reconcileReminders();
+                  if (mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => const DashboardScreen(initialTab: 0)),
+                      (route) => false,
+                    );
+                  }
+                } else {
+                  // No credentials or cache for target role yet: prompt login for that role ONLY
+                  // Existing session is preserved untouched if user backs out
+                  if (mounted) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => SruLoginScreen(role: targetRole)),
+                    );
+                  }
+                }
               },
               child: const Text('Switch', style: TextStyle(color: AppConstants.primary)),
             ),
@@ -212,7 +237,9 @@ class _ProfileTabState extends State<ProfileTab> {
     setState(() => _remindersEnabled = val);
     await StorageService.setClassRemindersEnabled(val);
     if (val) {
-      final list = StorageService.getTimetableCache();
+      final list = TimetableRepository.instance.classes.isNotEmpty
+          ? TimetableRepository.instance.classes
+          : StorageService.getTimetableCache();
       if (list.isNotEmpty) {
         await NotificationService.reconcileReminders();
       }
@@ -249,7 +276,6 @@ class _ProfileTabState extends State<ProfileTab> {
         break;
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -300,9 +326,9 @@ class _ProfileTabState extends State<ProfileTab> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                             decoration: BoxDecoration(
-                              color: AppConstants.primaryContainer.withOpacity(0.35),
+                              color: AppConstants.primaryContainer.withValues(alpha: 0.35),
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppConstants.primary.withOpacity(0.25)),
+                              border: Border.all(color: AppConstants.primary.withValues(alpha: 0.25)),
                             ),
                             child: Text(
                               'Roll No: $_rollNumber',
@@ -444,13 +470,13 @@ class _ProfileTabState extends State<ProfileTab> {
                               title: Text('Refresh Academic Data', style: AppConstants.getBodyLarge()),
                               trailing: const Icon(Icons.chevron_right, color: AppConstants.textSecondary),
                               onTap: () async {
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Refreshing...')));
+                                final messenger = ScaffoldMessenger.of(context);
+                                messenger.showSnackBar(const SnackBar(content: Text('Refreshing...')));
                                 await SraapAcademicService.instance.getAcademicData(forceRefresh: true);
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Refreshed.')));
-                                  setState(() {});
-                                }
+                                if (!mounted) return;
+                                messenger.hideCurrentSnackBar();
+                                messenger.showSnackBar(const SnackBar(content: Text('Refreshed.')));
+                                setState(() {});
                               },
                             ),
                             const Divider(height: 1, color: AppConstants.outline),
@@ -525,6 +551,7 @@ class _ProfileTabState extends State<ProfileTab> {
                           trailing: const Icon(Icons.open_in_new, color: AppConstants.textSecondary, size: 20),
                           onTap: _onCheckAppUpdate,
                         ),
+
                         const Divider(height: 1, color: AppConstants.outline),
                         ListTile(
                           leading: Icon(

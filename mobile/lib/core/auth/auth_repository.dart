@@ -15,7 +15,6 @@ class AuthRepository extends ChangeNotifier {
   String? get currentRole => _currentRole;
 
   String? _savedIdentifier;
-  String? _savedPassword;
   bool _rememberMe = true;
 
   void _setState(AuthState newState) {
@@ -30,38 +29,31 @@ class AuthRepository extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> restoreSession() async {
+  Future<void> restoreSession({String? targetRole}) async {
     _setState(AuthState.restoringSession);
-    final sessionData = await SecureSessionStore.getSession();
-    final cachedRole = StorageService.getUserMode();
-    final hasCache = StorageService.getTimetableCache().isNotEmpty || 
-                     StorageService.getFacultyTimetableCache().isNotEmpty ||
-                     StorageService.getStudentRollNumber() != null;
+    final cachedRole = targetRole ?? StorageService.getUserMode() ?? 'student';
+    final sessionData = await SecureSessionStore.getSession(role: cachedRole);
+    final hasCache = (cachedRole == 'faculty'
+        ? StorageService.getFacultyTimetableCache().isNotEmpty
+        : StorageService.getTimetableCache().isNotEmpty) ||
+        StorageService.getStudentRollNumber() != null;
 
     if (sessionData != null && (sessionData['cookie'] != null || sessionData['identifier'] != null)) {
       if (sessionData['cookie'] != null) {
         SruAuthClient.instance.restoreCookies(sessionData['cookie']);
       }
-      _currentRole = sessionData['role'] ?? cachedRole ?? 'student';
+      _currentRole = sessionData['role'] ?? cachedRole;
       await StorageService.setUserMode(_currentRole!);
 
       if (sessionData['identifier'] != null) {
         _savedIdentifier = sessionData['identifier'];
       }
-      if (sessionData['password'] != null) {
-        _savedPassword = sessionData['password'];
-      }
 
-      // CRITICAL FIX: The user is already authenticated on this device!
-      // Immediately set AuthState.ready so the app opens the Dashboard with cached timetable.
-      // NEVER block the user or bounce them to ModeSelectionScreen after 8 hours!
       _setState(AuthState.ready);
-
-      // Perform non-blocking background validation / silent refresh
-      _validateAndRefreshInBackground(sessionData);
       return;
-    } else if (hasCache && cachedRole != null) {
+    } else if (hasCache) {
       _currentRole = cachedRole;
+      await StorageService.setUserMode(_currentRole!);
       _setState(AuthState.ready);
       return;
     } else {
@@ -69,56 +61,16 @@ class AuthRepository extends ChangeNotifier {
     }
   }
 
-  void _validateAndRefreshInBackground(Map<String, dynamic> sessionData) async {
-    try {
-      final isValid = await _validateSession();
-      if (isValid) {
-        _setState(AuthState.authenticated);
-        _setState(AuthState.ready);
-        return;
-      }
-
-      // Session expired on remote PHP portal (e.g. after 8 hours)
-      // If credentials were saved with Remember Me, attempt silent background re-authentication
-      final id = sessionData['identifier'] as String? ?? _savedIdentifier;
-      final pwd = sessionData['password'] as String? ?? _savedPassword;
-      if (id != null && id.isNotEmpty && pwd != null && pwd.isNotEmpty) {
-        try {
-          final result = await SruAuthClient.instance.login(id, pwd);
-          if (result['status'] == 'authenticated') {
-            await _saveSession();
-            _setState(AuthState.authenticated);
-            _setState(AuthState.ready);
-            return;
-          }
-        } catch (_) {}
-      }
-
-      // Even if remote session requires an OTP for fresh scrape,
-      // the user MUST NOT be logged out of their mobile app or kicked to login!
-      // Cached timetable and FCM updates remain fully available.
-      _setState(AuthState.ready);
-    } catch (_) {
-      // Offline / network error: maintain ready state with cached data
-      _setState(AuthState.ready);
-    }
-  }
-
-  Future<bool> _validateSession() async {
-    try {
-      final response = await SruAuthClient.instance.getAuthenticated('${SruAuthClient.baseUrl}/student/timetable');
-      if (response.statusCode == 200 && !response.body.toLowerCase().contains('login')) {
-        return true;
-      }
-      return false;
-    } catch (_) {
-      throw Exception('Network Error');
-    }
-  }
+  bool _isLoginInProgress = false;
+  bool _isVerifyInProgress = false;
 
   Future<void> login(String identifier, String password, {bool rememberMe = true}) async {
+    if (_isLoginInProgress) {
+      debugPrint('[AUTH] Login already in flight, ignoring duplicate call.');
+      return;
+    }
+    _isLoginInProgress = true;
     _savedIdentifier = identifier;
-    _savedPassword = password;
     _rememberMe = rememberMe;
     _setState(AuthState.authenticating);
     try {
@@ -136,10 +88,17 @@ class AuthRepository extends ChangeNotifier {
     } catch (e) {
       _setState(AuthState.networkError);
       rethrow;
+    } finally {
+      _isLoginInProgress = false;
     }
   }
 
   Future<void> verifyOtp(String otp) async {
+    if (_isVerifyInProgress) {
+      debugPrint('[AUTH] OTP verification already in flight, ignoring duplicate call.');
+      return;
+    }
+    _isVerifyInProgress = true;
     _setState(AuthState.verifyingOTP);
     try {
       final result = await SruAuthClient.instance.verifyOtp(otp);
@@ -154,6 +113,8 @@ class AuthRepository extends ChangeNotifier {
     } catch (e) {
       _setState(AuthState.networkError);
       rethrow;
+    } finally {
+      _isVerifyInProgress = false;
     }
   }
 
@@ -167,12 +128,11 @@ class AuthRepository extends ChangeNotifier {
       'role': role,
       'lastAuthenticated': DateTime.now().toIso8601String(),
     };
-    if (_rememberMe && _savedIdentifier != null && _savedPassword != null) {
+    if (_rememberMe && _savedIdentifier != null) {
       sessionMap['identifier'] = _savedIdentifier;
-      sessionMap['password'] = _savedPassword;
       sessionMap['rememberMe'] = true;
     }
-    await SecureSessionStore.saveSession(sessionMap);
+    await SecureSessionStore.saveSession(sessionMap, role: role);
   }
 
   Future<void> logout() async {
@@ -180,7 +140,6 @@ class AuthRepository extends ChangeNotifier {
     SruAuthClient.instance.clearSession();
     await SecureSessionStore.clearSession();
     _savedIdentifier = null;
-    _savedPassword = null;
     _currentRole = null;
     _setState(AuthState.unauthenticated);
   }

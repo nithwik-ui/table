@@ -39,7 +39,7 @@ class SraapSessionManager {
   Future<bool> fetchLoginPage() async {
     try {
       final res = await _client.get(
-        Uri.parse(SraapSessionManager.baseUrl + '/student_login.php'),
+        Uri.parse('$baseUrl/student_login.php'),
         headers: _headers(),
       );
       _updateCookies(res.headers);
@@ -56,7 +56,7 @@ class SraapSessionManager {
       if (_cookieHeader.isEmpty) {
         lastDebugLog += '1. No session cookie. Initializing via /student_login.php\n';
         final initRes = await _client.get(
-          Uri.parse(SraapSessionManager.baseUrl + '/student_login.php'),
+          Uri.parse('$baseUrl/student_login.php'),
           headers: _headers(),
         ).timeout(const Duration(seconds: 15));
         lastDebugLog += '   -> Status: ${initRes.statusCode}\n';
@@ -66,7 +66,7 @@ class SraapSessionManager {
 
       lastDebugLog += '2. Requesting /captcha/image.php\n';
       final res = await _client.get(
-        Uri.parse(SraapSessionManager.baseUrl + '/captcha/image.php?${DateTime.now().millisecondsSinceEpoch}'),
+        Uri.parse('$baseUrl/captcha/image.php?${DateTime.now().millisecondsSinceEpoch}'),
         headers: _headers(),
       ).timeout(const Duration(seconds: 15));
       
@@ -98,7 +98,7 @@ class SraapSessionManager {
     required String password,
     required String captcha,
   }) async {
-    final req = http.Request('POST', Uri.parse(SraapSessionManager.baseUrl + '/student_login.php'));
+    final req = http.Request('POST', Uri.parse('$baseUrl/student_login.php'));
     req.headers.addAll(_headers(isForm: true));
     if (!kIsWeb) {
       req.followRedirects = false; // CRITICAL: Stop auto-redirect to capture cookies correctly on mobile
@@ -110,8 +110,8 @@ class SraapSessionManager {
       'submit': 'Sign in',
     };
 
-    final stream = await _client.send(req);
-    final res = await http.Response.fromStream(stream);
+    final stream = await _client.send(req).timeout(const Duration(seconds: 15));
+    final res = await http.Response.fromStream(stream).timeout(const Duration(seconds: 15));
 
     _updateCookies(res.headers);
     return res;
@@ -122,7 +122,7 @@ class SraapSessionManager {
     if (_cookieHeader.isEmpty) return false;
     try {
       final res = await _client.get(
-        Uri.parse(SraapSessionManager.baseUrl + '/student_login.php'),
+        Uri.parse('$baseUrl/student_login.php'),
         headers: _headers(),
       );
       _updateCookies(res.headers);
@@ -145,9 +145,9 @@ class SraapSessionManager {
   /// General authenticated GET request (for fetching academic data later).
   Future<http.Response> get(String path) async {
     final res = await _client.get(
-      Uri.parse(SraapSessionManager.baseUrl + '$path'),
+      Uri.parse('${SraapSessionManager.baseUrl}$path'),
       headers: _headers(),
-    );
+    ).timeout(const Duration(seconds: 15));
     _updateCookies(res.headers);
     return res;
   }
@@ -166,20 +166,24 @@ class SraapSessionManager {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
       'Accept-Language': 'en-US,en;q=0.9',
-      'Referer': SraapSessionManager.baseUrl + '/student_login.php',
+      'Referer': '${SraapSessionManager.baseUrl}/student_login.php',
       'Connection': 'keep-alive',
     };
     if (isForm) {
       headers['Content-Type'] = 'application/x-www-form-urlencoded';
     }
     if (_cookieHeader.isNotEmpty) {
-      headers['Cookie'] = _cookieHeader;
+      if (kIsWeb) {
+        headers['x-proxy-cookie'] = _cookieHeader;
+      } else {
+        headers['Cookie'] = _cookieHeader;
+      }
     }
     return headers;
   }
 
   void _updateCookies(Map<String, String> responseHeaders) {
-    final setCookie = responseHeaders['set-cookie'];
+    final setCookie = responseHeaders['set-cookie'] ?? responseHeaders['x-proxy-set-cookie'];
     if (setCookie != null && setCookie.isNotEmpty) {
       // Dart http joins multiple set-cookie headers with a comma.
       // We split carefully to avoid splitting commas within date strings like 'Expires=Thu, 01 Jan...'

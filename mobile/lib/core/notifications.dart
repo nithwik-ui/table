@@ -10,6 +10,7 @@ import '../main.dart';
 import '../features/dashboard/dashboard_screen.dart';
 
 import 'reminder_manager.dart';
+import 'timetable/timetable_repository.dart';
 import 'analytics_service.dart';
 
 class NotificationService {
@@ -56,6 +57,9 @@ class NotificationService {
     final androidPlugin = _notificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     if (androidPlugin != null) {
       await androidPlugin.requestNotificationsPermission();
+      try {
+        await androidPlugin.requestExactAlarmsPermission();
+      } catch (_) {}
       await androidPlugin.createNotificationChannel(const AndroidNotificationChannel(
         'fcm_default_channel',
         'Timetable Updates',
@@ -81,7 +85,6 @@ class NotificationService {
   }
 
   static Future<void> showForegroundNotification(String? title, String? body, Map<String, dynamic> data) async {
-    if (kIsWeb) return;
     if (!StorageService.isNotificationsEnabled()) return;
 
     final type = data['type']?.toString();
@@ -90,6 +93,40 @@ class NotificationService {
     if (type == 'faculty_change' && !StorageService.isFacultyChangesEnabled()) return;
     if (type == 'class_cancelled' && !StorageService.isCancelledClassesEnabled()) return;
     if (type == 'general_announcement' && !StorageService.isGeneralAnnouncementsEnabled()) return;
+
+    if (kIsWeb) {
+      try {
+        final ctx = navigatorKey.currentContext;
+        if (ctx != null) {
+          ScaffoldMessenger.of(ctx).showSnackBar(
+            SnackBar(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title ?? 'SRU Timetable Update', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  if (body != null) Text(body),
+                ],
+              ),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 6),
+              action: SnackBarAction(
+                label: 'View',
+                onPressed: () {
+                  navigatorKey.currentState?.pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const DashboardScreen(initialTab: 0)),
+                    (route) => false,
+                  );
+                },
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        debugPrint('[NOTIFICATIONS] Web foreground banner error: $e');
+      }
+      return;
+    }
 
     const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
       'fcm_default_channel',
@@ -130,6 +167,12 @@ class NotificationService {
       return;
     }
 
+    if (!StorageService.isClassRemindersEnabled()) {
+      await ReminderManager.instance.clearAllForMode('student');
+      await ReminderManager.instance.clearAllForMode('faculty');
+      return;
+    }
+
     // Always clear the inactive mode
     final inactiveMode = userMode == 'student' ? 'faculty' : 'student';
     await ReminderManager.instance.clearAllForMode(inactiveMode);
@@ -139,7 +182,9 @@ class NotificationService {
     if (userMode == 'faculty') {
       timetable = StorageService.getFacultyTimetableCache();
     } else {
-      timetable = StorageService.getTimetableCache();
+      timetable = TimetableRepository.instance.classes.isNotEmpty
+          ? TimetableRepository.instance.classes
+          : StorageService.getTimetableCache();
       overrides = StorageService.getStudentCalendarOverridesCache();
     }
 

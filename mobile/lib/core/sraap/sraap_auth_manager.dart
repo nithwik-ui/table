@@ -21,10 +21,9 @@ class SraapAuthManager extends ChangeNotifier {
 
   // ─── Public API ─────────────────────────────────────────────────────────────
 
-  /// Attempt to restore a previous session from secure storage.
-  /// Returns true if the session is still valid on the server.
+  /// Attempt to restore a previous session from storage.
+  /// Decoupled from network so boot is instant and offline cache remains usable.
   Future<bool> restoreSession() async {
-    _setState(SraapSessionState.checkingSession);
     final stored = await StorageService.loadSessionState();
     if (stored == null) {
       _setState(SraapSessionState.notConnected);
@@ -38,18 +37,8 @@ class SraapAuthManager extends ChangeNotifier {
     }
     
     await SraapSessionManager.instance.restoreSession();
-    final valid = await SraapSessionManager.instance.checkSession();
-    
-    if (valid) {
-      _lastSuccessfulRequest = DateTime.now();
-      _setState(SraapSessionState.connected);
-      return true;
-    } else {
-      await StorageService.clearSessionState();
-      await SraapSessionManager.instance.clearSession();
-      _setState(SraapSessionState.sessionExpired);
-      return false;
-    }
+    _setState(SraapSessionState.connected);
+    return true;
   }
 
   /// Check whether the currently held session is still valid.
@@ -74,6 +63,7 @@ class SraapAuthManager extends ChangeNotifier {
   Future<void> onLoginSuccess() async {
     final cookieHeader = SraapSessionManager.instance.cookieHeader;
     await StorageService.saveSessionState({'cookieHeader': cookieHeader});
+    await StorageService.setSraapConnected(true);
     _lastSuccessfulRequest = DateTime.now();
     _setState(SraapSessionState.connected);
   }
@@ -82,6 +72,7 @@ class SraapAuthManager extends ChangeNotifier {
   /// Does NOT touch timetable, notifications, or student/faculty mode.
   Future<void> disconnect() async {
     await StorageService.clearSessionState();
+    await StorageService.setSraapConnected(false);
     await SraapSessionManager.instance.clearSession();
     _lastSuccessfulRequest = null;
     _setState(SraapSessionState.notConnected);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants.dart';
 import '../../core/sync.dart';
 import '../../core/storage.dart';
+import '../onboarding/sru_login_screen.dart';
 
 class SyncCenterScreen extends StatefulWidget {
   const SyncCenterScreen({super.key});
@@ -93,18 +94,38 @@ class _SyncCenterScreenState extends State<SyncCenterScreen> {
             subtitle: '✓ Last checked: ${_formatDate(lastChecked)}',
           ),
           const SizedBox(height: 24),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppConstants.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusButton)),
+          if (syncState == SyncState.sessionExpired)
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppConstants.error,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusButton)),
+              ),
+              onPressed: () async {
+                final currentRole = StorageService.getUserMode() ?? 'student';
+                final result = await Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => SruLoginScreen(role: currentRole)), 
+                );
+                if (result == true) {
+                  SyncService.instance.syncTimetable();
+                }
+              },
+              child: const Text('Re-Authenticate', style: TextStyle(fontWeight: FontWeight.bold)),
+            )
+          else
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppConstants.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusButton)),
+              ),
+              onPressed: isSyncing ? null : () => SyncService.instance.syncTimetable(),
+              child: isSyncing 
+                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Text('Sync Now', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
-            onPressed: isSyncing ? null : () => SyncService.instance.syncTimetable(),
-            child: isSyncing 
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Text('Sync Now', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
         ],
       ),
     );

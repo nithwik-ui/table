@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { supabase } from './db/supabase';
 import { runSync } from './sync';
-import { sendGenericBroadcast } from './notifications/fcm';
+import { sendGenericBroadcast, sendTestClassNotification, sendTestClassRemovedNotification, subscribeDeviceToGlobalTopic } from './notifications/fcm';
 
 import facultyRouter from './api/faculty';
 import roomsRouter from './api/rooms';
@@ -329,6 +329,103 @@ app.post('/api/devices/register', async (req: Request, res: Response) => {
       );
 
     if (error) throw error;
+
+    // Automatically subscribe token to sru_all_users topic (subscribes web push tokens as well)
+    subscribeDeviceToGlobalTopic(fcm_token);
+
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/devices/unregister
+app.post('/api/devices/unregister', async (req: Request, res: Response) => {
+  try {
+    const { fcm_token } = req.body;
+    if (!fcm_token) {
+      return res.status(400).json({ error: 'Missing fcm_token' });
+    }
+
+    const { error } = await supabase
+      .from('device_tokens')
+      .delete()
+      .eq('fcm_token', fcm_token);
+
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/devices/test-notification
+import { sendTestPush, sendAttendancePush } from './notifications/fcm';
+
+app.post('/api/devices/test-notification', async (req: Request, res: Response) => {
+  const fcm_token = req.body?.fcm_token;
+  const maskedToken = typeof fcm_token === 'string' && fcm_token.length > 10
+    ? `${fcm_token.substring(0, 6)}...${fcm_token.substring(fcm_token.length - 4)}`
+    : '***';
+
+  try {
+    if (!fcm_token) {
+      return res.status(400).json({
+        success: false,
+        code: 'MISSING_TOKEN',
+        message: 'Missing fcm_token parameter'
+      });
+    }
+
+    console.log(`[FCM] Dispatching test notification to token: ${maskedToken}`);
+
+    await sendTestPush(fcm_token);
+    return res.json({
+      success: true,
+      message: 'Test notification sent successfully'
+    });
+  } catch (err: any) {
+    const errorCode = err.code || 'FCM_SEND_FAILED';
+    const isUnregistered = errorCode === 'messaging/registration-token-not-registered' ||
+      errorCode === 'messaging/invalid-registration-token' ||
+      (err.message && err.message.includes('not registered'));
+
+    if (isUnregistered) {
+      try {
+        await supabase
+          .from('device_tokens')
+          .delete()
+          .eq('fcm_token', fcm_token);
+        console.log(`[FCM] Pruned unregistered token from database: ${maskedToken}`);
+      } catch (cleanupErr: any) {
+        console.error('[FCM] Failed to cleanup unregistered token:', cleanupErr.message);
+      }
+
+      return res.status(400).json({
+        success: false,
+        code: 'FCM_UNREGISTERED',
+        message: 'FCM registration token is invalid or no longer registered with Firebase'
+      });
+    }
+
+    console.error('[FCM] Test push dispatch error:', err.message);
+    return res.status(500).json({
+      success: false,
+      code: errorCode,
+      message: err.message || 'Failed to dispatch test notification'
+    });
+  }
+});
+
+// POST /api/devices/attendance
+app.post('/api/devices/attendance', async (req: Request, res: Response) => {
+  try {
+    const { rollNumber, subject, date, time } = req.body;
+    if (!rollNumber || !subject) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    await sendAttendancePush(rollNumber, subject, date || '', time || '');
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

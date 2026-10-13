@@ -3,16 +3,20 @@ import 'package:flutter/material.dart';
 import '../../../core/constants.dart';
 import '../../../core/utils.dart';
 
+import '../../../core/timetable_status_engine.dart';
+
 class LiveFreeSlotProgressIndicator extends StatefulWidget {
   final String startTime;
   final String endTime;
   final bool isToday;
+  final DateTime? referenceDate;
 
   const LiveFreeSlotProgressIndicator({
     super.key,
     required this.startTime,
     required this.endTime,
     this.isToday = true,
+    this.referenceDate,
   });
 
   @override
@@ -48,17 +52,14 @@ class _LiveFreeSlotProgressIndicatorState extends State<LiveFreeSlotProgressIndi
   void _updateProgress() {
     if (!mounted || !widget.isToday) return;
 
-    final now = TimeUtils.getKolkataTime();
+    final now = DateTime.now();
+    final refDate = widget.referenceDate ?? now;
+    
     try {
-      final startParts = widget.startTime.split(':');
-      final endParts = widget.endTime.split(':');
-      
-      if (startParts.length != 2 || endParts.length != 2) return;
+      final startDt = TimetableStatusEngine.parseSruTimeToLocal(refDate, widget.startTime);
+      final endDt = TimetableStatusEngine.parseSruTimeToLocal(refDate, widget.endTime);
 
-      final startDt = DateTime(now.year, now.month, now.day, int.parse(startParts[0]), int.parse(startParts[1]));
-      final endDt = DateTime(now.year, now.month, now.day, int.parse(endParts[0]), int.parse(endParts[1]));
-
-      if (now.compareTo(startDt) >= 0 && now.isBefore(endDt)) {
+      if (!now.isBefore(startDt) && now.isBefore(endDt)) {
         final totalMins = endDt.difference(startDt).inMinutes;
         final elapsedMins = now.difference(startDt).inMinutes;
         final remaining = endDt.difference(now).inMinutes;
@@ -80,7 +81,7 @@ class _LiveFreeSlotProgressIndicatorState extends State<LiveFreeSlotProgressIndi
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppConstants.secondaryContainer.withOpacity(0.4),
+        color: AppConstants.secondaryContainer.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
         border: Border.all(color: AppConstants.secondaryContainer),
       ),

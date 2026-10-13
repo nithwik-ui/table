@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -8,11 +9,13 @@ import '../../core/sync.dart';
 import '../../core/updater.dart';
 import '../../core/notifications.dart';
 import '../../core/api.dart';
+import '../../core/timetable/timetable_repository.dart';
 import 'home_tab.dart';
 import 'week_tab.dart';
 import 'changes_tab.dart';
 import 'profile_tab.dart';
 import '../academic/academic_tab.dart';
+import '../../core/sraap/sraap_academic_service.dart';
 import 'ad_banner.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -24,26 +27,31 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingObserver {
   late int _currentIndex;
   bool _hasUnreadChanges = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _currentIndex = widget.initialTab;
     
     // Explicitly restore/schedule exact alarms on startup for existing timetable
     final userMode = StorageService.getUserMode() ?? 'student';
-    final cachedTimetable = userMode == 'faculty' 
-        ? StorageService.getFacultyTimetableCache() 
-        : StorageService.getTimetableCache();
+    final cachedTimetable = TimetableRepository.instance.classes.isNotEmpty
+        ? TimetableRepository.instance.classes
+        : (userMode == 'faculty' 
+            ? StorageService.getFacultyTimetableCache() 
+            : StorageService.getTimetableCache());
         
     if (cachedTimetable.isNotEmpty) {
       NotificationService.reconcileReminders();
     } else {
-      // If timetable cache is empty, trigger an immediate sync
-      SyncService.instance.syncTimetable();
+      // If timetable cache is empty and not already syncing, trigger an immediate sync
+      if (!SyncService.instance.isSyncing) {
+        SyncService.instance.syncTimetable();
+      }
     }
     
     // Check for updates silently on startup (after 3 seconds politeness delay)
@@ -58,7 +66,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           );
           if (settings.authorizationStatus == AuthorizationStatus.authorized ||
               settings.authorizationStatus == AuthorizationStatus.provisional) {
-            final token = await FirebaseMessaging.instance.getToken();
+            final token = kIsWeb
+                ? await FirebaseMessaging.instance.getToken(vapidKey: AppConstants.fcmVapidKey)
+                : await FirebaseMessaging.instance.getToken();
             if (token != null && token.isNotEmpty) {
               final userMode = StorageService.getUserMode() ?? 'student';
               final profile = StorageService.getProfile();
@@ -66,13 +76,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   profile?['roll_no']?.toString() ?? 
                   StorageService.getStudentRollNumber() ?? 
                   StorageService.getUserIdentifier() ?? '';
+              final batchId = profile?['batch_id']?.toString() ?? '';
               await ApiService.registerDevice(
                 token,
-                userMode == 'student' ? id : '',
+                userMode == 'student' ? (batchId.isNotEmpty ? batchId : id) : '',
                 userMode: userMode,
-                facultyId: userMode == 'faculty' ? id : null,
+                facultyId: userMode == 'faculty' ? id : id,
               );
-              debugPrint('FCM device successfully registered with backend');
+              debugPrint('FCM device successfully registered with backend: $token');
             }
           }
         } catch (e) {
@@ -83,7 +94,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      SraapAcademicService.instance.pingKeepAlive();
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -93,7 +112,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     // Peer tab views
     final tabs = [
-      const HomeTab(),
+      HomeTab(
+        onNavigateToWeek: () {
+          setState(() {
+            _currentIndex = 1;
+          });
+        },
+      ),
       const WeekTab(),
       isStudent ? const AcademicTab() : const ChangesTab(),
       const ProfileTab(),
@@ -108,7 +133,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: tabs,
             ),
           ),
-          if (_currentIndex != 3) const AdBanner(),
+          Offstage(
+            offstage: _currentIndex == 3,
+            child: const AdBanner(),
+          ),
         ],
       ),
       bottomNavigationBar: Container(
