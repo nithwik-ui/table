@@ -293,11 +293,11 @@ class _SplashControllerState extends State<SplashController> {
       await StorageService.init();
       await AppDataMigrationManager.runMigrationIfNeeded();
 
-      const int currentBuild = 30;
+      const int currentBuild = 31;
       final int lastOpenedBuild = StorageService.getInt('last_opened_build_number') ?? 0;
-      final bool v30ResetDone = (StorageService.getInt('v30_fresh_start_done') ?? 0) == 1;
+      final bool v31ResetDone = (StorageService.getInt('v31_fresh_start_done') ?? 0) == 1;
 
-      if (lastOpenedBuild < currentBuild || !v30ResetDone) {
+      if (lastOpenedBuild < currentBuild || !v31ResetDone) {
         debugPrint('[APP_INIT] Version update to build $currentBuild detected. Performing fresh start.');
         isFreshUpdate = true;
         await AuthRepository.instance.logout();
@@ -305,7 +305,7 @@ class _SplashControllerState extends State<SplashController> {
         await SraapSessionManager.instance.clearSession();
         await StorageService.clearAll();
         await StorageService.setInt('last_opened_build_number', currentBuild);
-        await StorageService.setInt('v30_fresh_start_done', 1);
+        await StorageService.setInt('v31_fresh_start_done', 1);
       }
 
       TimetableRepository.instance.init();
