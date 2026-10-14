@@ -1,5 +1,5 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
 import '../../core/auth/secure_session_store.dart';
@@ -89,7 +89,8 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
       if (!mounted) return;
 
       if (res.statusCode == 302 || res.statusCode == 301 || res.body.toLowerCase().contains('logout') || res.bodyBytes.length > 10000) {
-        // Success
+        // Success - prompt OS / Google Password Manager to save credentials
+        TextInput.finishAutofillContext(shouldSave: true);
         await StorageService.setSraapConnected(true);
         await StorageService.saveStudentRollNumber(_enrollmentCtrl.text.trim());
         await SecureSessionStore.saveSession({
@@ -187,54 +188,66 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
                 const SizedBox(height: 16),
               ],
 
-              // Enrollment Field
-              _buildLabel('Roll Number'),
-              TextField(
-                controller: _enrollmentCtrl,
-                decoration: InputDecoration(
-                  hintText: 'Enter roll number',
-                  filled: true,
-                  fillColor: AppConstants.surface,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppConstants.radiusButton),
-                    borderSide: const BorderSide(color: AppConstants.outline),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppConstants.radiusButton),
-                    borderSide: const BorderSide(color: AppConstants.outline),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Password Field
-              _buildLabel('Password'),
-              TextField(
-                controller: _passwordCtrl,
-                obscureText: _obscurePassword,
-                decoration: InputDecoration(
-                  hintText: 'Enter password',
-                  filled: true,
-                  fillColor: AppConstants.surface,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppConstants.radiusButton),
-                    borderSide: const BorderSide(color: AppConstants.outline),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppConstants.radiusButton),
-                    borderSide: const BorderSide(color: AppConstants.outline),
-                  ),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                      color: AppConstants.textSecondary,
+              // Credentials with Autofill Support (sraap.in)
+              AutofillGroup(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildLabel('Roll Number'),
+                    TextField(
+                      controller: _enrollmentCtrl,
+                      autofillHints: const [AutofillHints.username],
+                      keyboardType: TextInputType.text,
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        hintText: 'Enter roll number',
+                        filled: true,
+                        fillColor: AppConstants.surface,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppConstants.radiusButton),
+                          borderSide: const BorderSide(color: AppConstants.outline),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppConstants.radiusButton),
+                          borderSide: const BorderSide(color: AppConstants.outline),
+                        ),
+                      ),
                     ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  ),
+                    const SizedBox(height: 16),
+
+                    // Password Field
+                    _buildLabel('Password'),
+                    TextField(
+                      controller: _passwordCtrl,
+                      obscureText: _obscurePassword,
+                      autofillHints: const [AutofillHints.password],
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        hintText: 'Enter password',
+                        filled: true,
+                        fillColor: AppConstants.surface,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppConstants.radiusButton),
+                          borderSide: const BorderSide(color: AppConstants.outline),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppConstants.radiusButton),
+                          borderSide: const BorderSide(color: AppConstants.outline),
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                            color: AppConstants.textSecondary,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 16),

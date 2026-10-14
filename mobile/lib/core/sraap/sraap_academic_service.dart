@@ -6,6 +6,13 @@ import 'sraap_session_manager.dart';
 import 'sraap_parser.dart';
 import 'models/sraap_academic_data.dart';
 
+class SraapSessionExpiredException implements Exception {
+  final String message;
+  const SraapSessionExpiredException([this.message = 'SRAAP session has expired. Please re-authenticate.']);
+  @override
+  String toString() => message;
+}
+
 class SraapAcademicService {
   // Singleton
   static final SraapAcademicService instance = SraapAcademicService._internal();
@@ -29,6 +36,12 @@ class SraapAcademicService {
       return await _fetchFreshData();
     } catch (e) {
       debugPrint('SRAAP Fetch Error: $e');
+      if (e is SraapSessionExpiredException) {
+        SraapSessionManager.instance.isSessionExpired = true;
+        if (forceRefresh) {
+          rethrow;
+        }
+      }
       final cached = _getCachedData();
       if (cached != null) {
         return cached;
@@ -89,14 +102,24 @@ class SraapAcademicService {
     // Fetch Dashboard Page (contains Overall Attendance, CGPA, Mentor, and Subject Attendance)
     final dashboardRes = await SraapSessionManager.instance.get('/student/dash_board.php');
     final body = dashboardRes.body;
+
+    final isLoginPage = body.contains('student_login') ||
+        body.contains('Enter Enrolment No') ||
+        body.contains('user_password') ||
+        dashboardRes.statusCode == 302 ||
+        dashboardRes.statusCode == 301;
+
     final isDashboardHtml = body.contains('Attendance') ||
         body.toLowerCase().contains('logout') ||
         body.contains('attendanceTable') ||
         body.contains('Welcome to');
 
-    if (dashboardRes.statusCode != 200 || (!isDashboardHtml && dashboardRes.bodyBytes.length < 5000)) {
-      throw Exception('Access denied or invalid response.');
+    if (isLoginPage || (!isDashboardHtml && dashboardRes.bodyBytes.length < 5000)) {
+      SraapSessionManager.instance.isSessionExpired = true;
+      throw const SraapSessionExpiredException();
     }
+
+    SraapSessionManager.instance.isSessionExpired = false;
     
     // Parse Dashboard
     SraapAcademicData data = SraapParser.parseDashboard(dashboardRes.body);

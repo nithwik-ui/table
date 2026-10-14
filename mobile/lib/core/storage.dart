@@ -325,4 +325,12 @@ class StorageService {
 
   static Future<void> setWebNotificationPromptDismissed(bool dismissed) async => await _prefsBox?.put('web_notification_prompt_dismissed', dismissed);
   static bool isWebNotificationPromptDismissed() => _prefsBox?.get('web_notification_prompt_dismissed', defaultValue: false) as bool? ?? false;
+
+  static int? getInt(String key) => _prefsBox?.get(key) as int?;
+  static Future<void> setInt(String key, int value) async => await _prefsBox?.put(key, value);
+
+  static Future<void> clearAll() async {
+    await _prefsBox?.clear();
+    await _cacheBox?.clear();
+  }
 }

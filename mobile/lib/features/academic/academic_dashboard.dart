@@ -1,7 +1,10 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
 import '../../core/utils.dart';
+import '../../core/auth/secure_session_store.dart';
+import '../../core/sraap/sraap_session_manager.dart';
 import '../../core/sraap/sraap_academic_service.dart';
 import '../../core/sraap/models/sraap_academic_data.dart';
 import 'academic_login_screen.dart';
@@ -17,12 +20,14 @@ class AcademicDashboard extends StatefulWidget {
 class _AcademicDashboardState extends State<AcademicDashboard> {
   bool _isLoading = true;
   bool _isSyncing = false;
+  bool _isSessionExpired = false;
   SraapAcademicData? _data;
   String? _error;
 
   @override
   void initState() {
     super.initState();
+    _isSessionExpired = SraapSessionManager.instance.isSessionExpired;
     _loadData();
   }
 
@@ -39,23 +44,56 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
         if (_data == null) _isLoading = true;
         _isSyncing = true;
         _error = null;
+        _isSessionExpired = SraapSessionManager.instance.isSessionExpired;
       });
     }
 
-    // 2. Immediately fetch live data from the main SRAAP page!
+    // 2. Fetch live data from the main SRAAP page
     if (StorageService.isSraapConnected()) {
       try {
-        final fresh = await SraapAcademicService.instance.fetchFreshDataSilently();
+        final fresh = await SraapAcademicService.instance.getAcademicData(forceRefresh: forceRefresh);
         if (mounted && fresh != null) {
           setState(() {
             _data = fresh;
             _isLoading = false;
             _isSyncing = false;
+            _isSessionExpired = false;
           });
+          if (forceRefresh) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Attendance updated from SRAAP'),
+                duration: Duration(seconds: 2),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+          return;
+        }
+      } on SraapSessionExpiredException {
+        debugPrint('[SRAAP] Session expired on sraap.in');
+        if (mounted) {
+          setState(() {
+            _isSyncing = false;
+            _isLoading = false;
+            _isSessionExpired = true;
+          });
+          if (forceRefresh) {
+            _showQuickReconnectSheet();
+          }
           return;
         }
       } catch (e) {
         debugPrint('[SRAAP] Live dashboard fetch error: $e');
+        if (mounted && forceRefresh) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not reach SRAAP. Showing saved attendance.'),
+              duration: Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       }
     }
 
@@ -185,13 +223,55 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
                     )
                   : const Icon(Icons.refresh_rounded, color: AppConstants.primary),
               onPressed: _isSyncing ? null : () => _loadData(forceRefresh: true),
-              tooltip: 'Sync Academic Data',
             ),
           ],
         ),
-
         const SizedBox(height: 16),
 
+        if (_isSessionExpired) ...[
+          Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppConstants.warningContainer.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(AppConstants.radiusCard),
+              border: Border.all(color: AppConstants.warning.withValues(alpha: 0.6)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded, color: AppConstants.warning, size: 24),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'SRAAP Session Expired',
+                        style: AppConstants.getBodyMedium(color: AppConstants.textPrimary).copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Tap RENEW to enter CAPTCHA and refresh live attendance.',
+                        style: AppConstants.getBodyMedium(color: AppConstants.textSecondary).copyWith(fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppConstants.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    elevation: 0,
+                  ),
+                  onPressed: _showQuickReconnectSheet,
+                  child: const Text('RENEW', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                ),
+              ],
+            ),
+          ),
+        ],
 
         // 1. Featured Overall Attendance Card
         Container(
@@ -448,6 +528,254 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
             child: const Text('OK'),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _showQuickReconnectSheet() async {
+    final creds = await SecureSessionStore.getSession(role: 'sraap_credentials');
+    final roll = creds?['sraap_roll']?.toString() ?? StorageService.getStudentRollNumber() ?? '';
+    final pass = creds?['sraap_pass']?.toString() ?? '';
+
+    if (!mounted) return;
+
+    if (roll.isEmpty || pass.isEmpty) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const AcademicLoginScreen()),
+      ).then((_) => _loadData(forceRefresh: true));
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _QuickReconnectModal(
+        rollNumber: roll,
+        password: pass,
+        onSuccess: () {
+          Navigator.of(ctx).pop();
+          _loadData(forceRefresh: true);
+        },
+      ),
+    );
+  }
+}
+
+class _QuickReconnectModal extends StatefulWidget {
+  final String rollNumber;
+  final String password;
+  final VoidCallback onSuccess;
+
+  const _QuickReconnectModal({
+    required this.rollNumber,
+    required this.password,
+    required this.onSuccess,
+  });
+
+  @override
+  State<_QuickReconnectModal> createState() => _QuickReconnectModalState();
+}
+
+class _QuickReconnectModalState extends State<_QuickReconnectModal> {
+  final TextEditingController _captchaCtrl = TextEditingController();
+  bool _isLoadingCaptcha = true;
+  bool _isSubmitting = false;
+  Uint8List? _captchaBytes;
+  String? _errorMsg;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCaptcha();
+  }
+
+  @override
+  void dispose() {
+    _captchaCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchCaptcha() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingCaptcha = true;
+      _errorMsg = null;
+    });
+
+    final bytes = await SraapSessionManager.instance.fetchCaptcha();
+
+    if (mounted) {
+      setState(() {
+        _captchaBytes = bytes;
+        _isLoadingCaptcha = false;
+        if (bytes == null) {
+          _errorMsg = 'Could not load CAPTCHA. Tap image to reload.';
+        }
+      });
+    }
+  }
+
+  Future<void> _submit() async {
+    final code = _captchaCtrl.text.trim();
+    if (code.isEmpty) {
+      setState(() => _errorMsg = 'Please enter the CAPTCHA code.');
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+      _errorMsg = null;
+    });
+
+    try {
+      final res = await SraapSessionManager.instance.login(
+        enrollment: widget.rollNumber,
+        password: widget.password,
+        captcha: code,
+      );
+
+      final body = res.body.toLowerCase();
+      if (res.statusCode == 302 || res.statusCode == 301 || body.contains('logout') || res.bodyBytes.length > 10000) {
+        // Success
+        await StorageService.setSraapConnected(true);
+        SraapSessionManager.instance.isSessionExpired = false;
+        SraapAcademicService.instance.startKeepAlive();
+        widget.onSuccess();
+      } else if (body.contains('captcha')) {
+        setState(() => _errorMsg = 'Incorrect CAPTCHA code. Tap to refresh.');
+        _captchaCtrl.clear();
+        _fetchCaptcha();
+      } else {
+        setState(() => _errorMsg = 'Authentication failed. Please check credentials.');
+      }
+    } catch (e) {
+      setState(() => _errorMsg = 'Connection error: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppConstants.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          boxShadow: AppConstants.shadowLevel2,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 18),
+                decoration: BoxDecoration(
+                  color: AppConstants.outline.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                const Icon(Icons.sync_lock_rounded, color: AppConstants.primary, size: 24),
+                const SizedBox(width: 10),
+                Text(
+                  'Renew SRAAP Session',
+                  style: AppConstants.getHeadline(color: AppConstants.primary).copyWith(fontSize: 18),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Your university session timed out. Solve the CAPTCHA code below to instantly refresh your attendance.',
+              style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppConstants.surface,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.person_outline, size: 18, color: AppConstants.textSecondary),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Roll No: ${widget.rollNumber}',
+                    style: AppConstants.getBodyMedium().copyWith(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: _fetchCaptcha,
+                  child: Container(
+                    height: 52,
+                    width: 140,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppConstants.outline),
+                    ),
+                    child: _isLoadingCaptcha
+                        ? const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
+                        : _captchaBytes != null
+                            ? ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.memory(_captchaBytes!, fit: BoxFit.fill))
+                            : const Center(child: Icon(Icons.refresh, color: AppConstants.primary)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _captchaCtrl,
+                    autofocus: true,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: const InputDecoration(
+                       hintText: 'Enter code',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    ),
+                    onSubmitted: (_) => _submit(),
+                  ),
+                ),
+              ],
+            ),
+            if (_errorMsg != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                _errorMsg!,
+                style: AppConstants.getBodyMedium(color: AppConstants.error).copyWith(fontSize: 12, fontWeight: FontWeight.w600),
+              ),
+            ],
+            const SizedBox(height: 20),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppConstants.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusButton)),
+              ),
+              onPressed: _isSubmitting ? null : _submit,
+              child: _isSubmitting
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('VERIFY & REFRESH ATTENDANCE', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }

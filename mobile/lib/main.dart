@@ -16,7 +16,7 @@ import 'core/migration.dart';
 import 'core/sraap/sraap_session_manager.dart';
 import 'core/sraap/sraap_academic_service.dart';
 import 'core/timetable/timetable_repository.dart';
-import 'features/onboarding/mode_selection_screen.dart';
+import 'features/onboarding/sru_login_screen.dart';
 import 'features/dashboard/dashboard_screen.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -288,15 +288,33 @@ class _SplashControllerState extends State<SplashController> {
   }
 
   Future<void> _initApp() async {
+    bool isFreshUpdate = false;
     try {
       await StorageService.init();
       await AppDataMigrationManager.runMigrationIfNeeded();
+
+      const int currentBuild = 30;
+      final int lastOpenedBuild = StorageService.getInt('last_opened_build_number') ?? 0;
+      final bool v30ResetDone = (StorageService.getInt('v30_fresh_start_done') ?? 0) == 1;
+
+      if (lastOpenedBuild < currentBuild || !v30ResetDone) {
+        debugPrint('[APP_INIT] Version update to build $currentBuild detected. Performing fresh start.');
+        isFreshUpdate = true;
+        await AuthRepository.instance.logout();
+        await SecureSessionStore.clearSession();
+        await SraapSessionManager.instance.clearSession();
+        await StorageService.clearAll();
+        await StorageService.setInt('last_opened_build_number', currentBuild);
+        await StorageService.setInt('v30_fresh_start_done', 1);
+      }
+
       TimetableRepository.instance.init();
-      await SraapSessionManager.instance.restoreSession();
-      SraapAcademicService.instance.startKeepAlive();
-      await NotificationService.reconcileReminders();
-      
-      await AuthRepository.instance.restoreSession();
+      if (!isFreshUpdate) {
+        await SraapSessionManager.instance.restoreSession();
+        SraapAcademicService.instance.startKeepAlive();
+        await NotificationService.reconcileReminders();
+        await AuthRepository.instance.restoreSession();
+      }
     } catch (e) {
       debugPrint('Local storage initialization failed: $e');
     }
@@ -314,22 +332,26 @@ class _SplashControllerState extends State<SplashController> {
       
       Widget nextScreen;
       
-      final session = await SecureSessionStore.getSession();
-      final hasCachedStudentTimetable = TimetableRepository.instance.classes.isNotEmpty || StorageService.getTimetableCache().isNotEmpty;
-      final hasCachedFacultyTimetable = StorageService.getFacultyTimetableCache().isNotEmpty;
-      final hasRollNo = StorageService.getStudentRollNumber() != null || StorageService.getUserIdentifier() != null;
-      final hasSession = session != null;
-
-      if (authState == AuthState.ready || 
-          authState == AuthState.authenticated || 
-          authState == AuthState.networkError ||
-          hasSession ||
-          hasCachedStudentTimetable || 
-          hasCachedFacultyTimetable || 
-          hasRollNo) {
-         nextScreen = DashboardScreen(initialTab: launchedFromNotification ? 0 : 0);
+      if (isFreshUpdate) {
+        nextScreen = const SruLoginScreen(role: 'student');
       } else {
-        nextScreen = const ModeSelectionScreen();
+        final session = await SecureSessionStore.getSession();
+        final hasCachedStudentTimetable = TimetableRepository.instance.classes.isNotEmpty || StorageService.getTimetableCache().isNotEmpty;
+        final hasCachedFacultyTimetable = StorageService.getFacultyTimetableCache().isNotEmpty;
+        final hasRollNo = StorageService.getStudentRollNumber() != null || StorageService.getUserIdentifier() != null;
+        final hasSession = session != null;
+
+        if (authState == AuthState.ready || 
+            authState == AuthState.authenticated || 
+            authState == AuthState.networkError ||
+            hasSession ||
+            hasCachedStudentTimetable || 
+            hasCachedFacultyTimetable || 
+            hasRollNo) {
+           nextScreen = DashboardScreen(initialTab: launchedFromNotification ? 0 : 0);
+        } else {
+          nextScreen = const SruLoginScreen(role: 'student');
+        }
       }
 
       if (!mounted) return;

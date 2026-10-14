@@ -17,14 +17,17 @@ class SraapSessionManager {
   /// Contains diagnostic info for the developer prototype UI.
   String lastDebugLog = '';
 
+  bool isSessionExpired = false;
+
   /// Gets the current session cookies.
   String get cookieHeader => _cookieHeader;
 
   /// Restores a previously saved session.
   Future<void> restoreSession() async {
     final state = await StorageService.loadSessionState();
-    if (state != null && state['cookie'] != null) {
-      _cookieHeader = state['cookie'];
+    final cookie = state?['cookie'] ?? state?['cookieHeader'];
+    if (cookie != null && cookie is String && cookie.isNotEmpty) {
+      _cookieHeader = cookie;
       final parts = _cookieHeader.split(';');
       for (var p in parts) {
         final kv = p.trim().split('=');
@@ -156,6 +159,7 @@ class SraapSessionManager {
   Future<void> clearSession() async {
     _cookieHeader = '';
     _cookies.clear();
+    isSessionExpired = false;
     _client.close();
     _client = http.Client();
     await StorageService.clearSessionState();
@@ -201,8 +205,11 @@ class SraapSessionManager {
       
       if (_cookies.isNotEmpty) {
         _cookieHeader = _cookies.entries.map((e) => '${e.key}=${e.value}').join('; ');
-        // Persist the sanitized cookie string
-        StorageService.saveSessionState({'cookie': _cookieHeader});
+        // Persist both keys for full backward and cross-module compatibility
+        StorageService.saveSessionState({
+          'cookie': _cookieHeader,
+          'cookieHeader': _cookieHeader,
+        });
       }
     }
   }

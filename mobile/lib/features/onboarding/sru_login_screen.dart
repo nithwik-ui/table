@@ -83,12 +83,12 @@ class _SruLoginScreenState extends State<SruLoginScreen> {
 
       if (mounted) {
         if (AuthRepository.instance.state == AuthState.awaitingOTP) {
-          TextInput.finishAutofillContext();
+          TextInput.finishAutofillContext(shouldSave: true);
           Navigator.of(context).push(
             MaterialPageRoute(builder: (context) => const SruOtpScreen()),
           );
         } else if (AuthRepository.instance.state == AuthState.authenticated) {
-          TextInput.finishAutofillContext();
+          TextInput.finishAutofillContext(shouldSave: true);
           try {
             await SyncService.instance.syncTimetable(force: true).timeout(const Duration(seconds: 20));
           } catch (e) {
@@ -273,21 +273,42 @@ class _SruLoginScreenState extends State<SruLoginScreen> {
               ),
               const SizedBox(height: 4),
               Center(
-                child: TextButton(
-                  onPressed: () async {
-                    final url = Uri.parse(widget.role == 'student'
-                        ? 'https://www.sruniv.com/student-login'
-                        : 'https://timetable.sruniv.com/login');
-                    if (await canLaunchUrl(url)) {
-                      await launchUrl(url, mode: LaunchMode.externalApplication);
-                    }
-                  },
-                  child: Text(
-                    widget.role == 'student' ? 'Student Portal' : 'Help / Support',
-                    style: AppConstants.getBodyMedium(color: AppConstants.primary).copyWith(
-                      fontWeight: FontWeight.w600,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (context) => SruLoginScreen(
+                              role: widget.role == 'student' ? 'faculty' : 'student',
+                            ),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        widget.role == 'student' ? 'Faculty Login' : 'Student Login',
+                        style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
+                      ),
                     ),
-                  ),
+                    const Text(' • ', style: TextStyle(color: AppConstants.textSecondary)),
+                    TextButton(
+                      onPressed: () async {
+                        final url = Uri.parse(widget.role == 'student'
+                            ? 'https://www.sruniv.com/student-login'
+                            : 'https://timetable.sruniv.com/login');
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url, mode: LaunchMode.externalApplication);
+                        }
+                      },
+                      child: Text(
+                        widget.role == 'student' ? 'Student Portal' : 'Help / Support',
+                        style: AppConstants.getBodyMedium(color: AppConstants.primary).copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
