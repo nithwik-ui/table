@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppConstants {
-  // CONFIGURATION
-  // Replace this URL with your live deployed Render REST API URL when ready.
-  // When testing with local server on emulator, use 'http://10.0.2.2:3000'.
-  static const String apiBaseUrl = 'https://table-ij9g.onrender.com';
+  // BACKEND CONFIGURATION (Cloudflare Primary with Render Fallback)
+  static String cloudflarePrimaryUrl = 'https://sru-cloudflare-backend.nithwik-ui.workers.dev';
+  static const String renderFallbackUrl = 'https://table-ij9g.onrender.com';
+  static String get apiBaseUrl => cloudflarePrimaryUrl;
   static const String currentVersion = '3.0.0';
   static const String githubRepo = 'nithwik-ui/table';
   static const String fcmVapidKey = 'BLfXNackp6Rs_phEfbaIPWdKm7HADbl3RYGEhjU2qocshKk7CbeIX0Gb5zLQ9EH84nkSaZSiJCcENw4wWf7e12M';
@@ -36,15 +36,65 @@ class AppConstants {
   static const Color purpleAccent = Color(0xFF7C3AED); // Third distinct state color (Faculty Change)
   static const Color purpleContainer = Color(0xFFF5F3FF);
 
+  static bool useSystemFontInTests = false;
+
+  static TextStyle _fontInter({
+    double? fontSize,
+    FontWeight? fontWeight,
+    double? letterSpacing,
+    Color? color,
+    double? height,
+  }) {
+    if (useSystemFontInTests) {
+      return TextStyle(
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        letterSpacing: letterSpacing,
+        color: color,
+        height: height,
+      );
+    }
+    return GoogleFonts.inter(
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      letterSpacing: letterSpacing,
+      color: color,
+      height: height,
+    );
+  }
+
+  static TextStyle _fontSpaceMono({
+    double? fontSize,
+    FontWeight? fontWeight,
+    double? letterSpacing,
+    Color? color,
+  }) {
+    if (useSystemFontInTests) {
+      return TextStyle(
+        fontFamily: 'monospace',
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        letterSpacing: letterSpacing,
+        color: color,
+      );
+    }
+    return GoogleFonts.spaceMono(
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      letterSpacing: letterSpacing,
+      color: color,
+    );
+  }
+
   // TYPOGRAPHY (Inter & Geist-equivalent)
-  static TextStyle getDisplay({Color color = textPrimary}) => GoogleFonts.inter(
+  static TextStyle getDisplay({Color color = textPrimary}) => _fontInter(
         fontSize: 28,
         fontWeight: FontWeight.bold,
         letterSpacing: -0.5,
         color: color,
       );
 
-  static TextStyle getHeadline({Color color = textPrimary, double? height}) => GoogleFonts.inter(
+  static TextStyle getHeadline({Color color = textPrimary, double? height}) => _fontInter(
         fontSize: 18,
         fontWeight: FontWeight.w600,
         letterSpacing: -0.2,
@@ -52,26 +102,26 @@ class AppConstants {
         height: height,
       );
 
-  static TextStyle getBodyLarge({Color color = textPrimary}) => GoogleFonts.inter(
+  static TextStyle getBodyLarge({Color color = textPrimary}) => _fontInter(
         fontSize: 16,
         fontWeight: FontWeight.normal,
         color: color,
       );
 
-  static TextStyle getBodyMedium({Color color = textPrimary}) => GoogleFonts.inter(
+  static TextStyle getBodyMedium({Color color = textPrimary}) => _fontInter(
         fontSize: 14,
         fontWeight: FontWeight.normal,
         color: color,
       );
 
-  static TextStyle getLabelSmall({Color color = textSecondary}) => GoogleFonts.spaceMono(
+  static TextStyle getLabelSmall({Color color = textSecondary}) => _fontSpaceMono(
         fontSize: 12,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.2,
         color: color,
       );
 
-  static TextStyle getMonoLabel({Color color = textPrimary}) => GoogleFonts.spaceMono(
+  static TextStyle getMonoLabel({Color color = textPrimary}) => _fontSpaceMono(
         fontSize: 13,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.1,
