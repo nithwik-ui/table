@@ -15,6 +15,7 @@ class TimetableCard extends StatelessWidget {
   final String? dateStr;
   final bool isToday;
   final DateTime? referenceDate;
+  final DateTime? nowLocal;
   final bool isFeatured;
   final VoidCallback? onTap;
 
@@ -25,6 +26,7 @@ class TimetableCard extends StatelessWidget {
     this.dateStr,
     this.isToday = true,
     this.referenceDate,
+    this.nowLocal,
     this.isFeatured = false,
     this.onTap,
   });
@@ -60,12 +62,13 @@ class TimetableCard extends StatelessWidget {
         c['is_changed'] == true ||
         c['change_type'] != null;
 
-    // Determine canonical status
-    final nowLocal = referenceDate ?? TimeUtils.nowInSruTime();
+    // Determine canonical status using class calendar date + current IST time
+    final sruNow = nowLocal ?? TimeUtils.nowInSruTime();
+    final effectiveClassDate = referenceDate ?? sruNow;
     final classStatus = TimetableStatusEngine.getStatus(
       classData: c,
-      referenceDate: nowLocal,
-      nowLocal: nowLocal,
+      referenceDate: effectiveClassDate,
+      nowLocal: sruNow,
     );
 
     final bool isCompleted = classStatus == ClassStatus.completed;
@@ -127,9 +130,10 @@ class TimetableCard extends StatelessWidget {
       statusBg = AppConstants.warningContainer;
       statusIcon = Icons.edit_calendar_outlined;
     } else {
-      statusText = 'Scheduled';
+      statusText = 'Upcoming';
       statusColor = AppConstants.upcomingText;
       statusBg = AppConstants.upcomingBg;
+      statusIcon = null;
     }
 
     // Left accent indicator based on class type and status
@@ -245,7 +249,7 @@ class TimetableCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // 1. Subject Section (Bold, high-contrast, never washed out)
+                    // 1. Subject Section (Bold, high-contrast, strong dark text, never washed out)
                     Text(
                       subject,
                       style: AppConstants.getHeadline().copyWith(
@@ -256,9 +260,7 @@ class TimetableCard extends StatelessWidget {
                             isCancelled ? TextDecoration.lineThrough : null,
                         color: isCancelled
                             ? AppConstants.textMuted
-                            : (isCompleted
-                                ? AppConstants.textPrimary.withValues(alpha: 0.8)
-                                : AppConstants.textPrimary),
+                            : AppConstants.textPrimary,
                       ),
                       softWrap: true,
                     ),
@@ -273,7 +275,7 @@ class TimetableCard extends StatelessWidget {
                           runSpacing: 6,
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            // Time item
+                            // Time item (Strong dark text with semantic clock icon)
                             ConstrainedBox(
                               constraints:
                                   BoxConstraints(maxWidth: maxItemWidth),
@@ -313,14 +315,13 @@ class TimetableCard extends StatelessWidget {
                                       startTime: startTime,
                                       endTime: endTime,
                                       isToday: isToday,
-                                      referenceDate:
-                                          referenceDate ?? DateTime.now(),
+                                      referenceDate: effectiveClassDate,
                                     ),
                                   ],
                                 ],
                               ),
                             ),
-                            // Room item
+                            // Room item (Muted secondary metadata)
                             ConstrainedBox(
                               constraints:
                                   BoxConstraints(maxWidth: maxItemWidth),
@@ -360,7 +361,7 @@ class TimetableCard extends StatelessWidget {
                       },
                     ),
 
-                    // 3. Faculty Metadata (if available)
+                    // 3. Faculty Metadata (Strong dark text with neutral person icon)
                     if (faculty.isNotEmpty) ...[
                       const SizedBox(height: 6),
                       Row(
@@ -375,9 +376,11 @@ class TimetableCard extends StatelessWidget {
                             child: Text(
                               faculty,
                               style: AppConstants.getBodyMedium(
-                                  color: AppConstants.textSecondary).copyWith(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
+                                  color: isCancelled
+                                      ? AppConstants.textMuted
+                                      : AppConstants.textPrimary).copyWith(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w600,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),

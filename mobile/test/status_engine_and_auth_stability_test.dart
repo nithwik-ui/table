@@ -149,6 +149,199 @@ void main() {
       );
       expect(nextClassId, isNull);
     });
+
+    test('Future calendar dates ALWAYS return Upcoming, NEVER Completed', () {
+      // Current time is Wednesday, Oct 28, 2026, 10:30 PM (22:30 IST)
+      final nowCurrent = DateTime(2026, 10, 28, 22, 30);
+
+      // Tomorrow is Thursday, Oct 29, 2026
+      final tomorrowDate = DateTime(2026, 10, 29);
+
+      final classMorning = {
+        'subject': 'Artificial Intelligence and Deep Learning',
+        'start_time': '09:30',
+        'end_time': '10:30',
+        'room': '1106-B',
+        'faculty': 'Mr. Lade Gunakar Rao',
+      };
+
+      final classMidday = {
+        'subject': 'Algorithms',
+        'start_time': '10:30',
+        'end_time': '11:30',
+        'room': '1106-B',
+        'faculty': 'Mr. Srinivas',
+      };
+
+      final classAfternoon = {
+        'subject': 'Statistics for Computer Science',
+        'start_time': '11:30',
+        'end_time': '12:30',
+        'room': '1106-B',
+        'faculty': 'Dr. Raman',
+      };
+
+      // Even though 22:30 > 10:30 clock-time, tomorrow's classes must be UPCOMING!
+      expect(
+        TimetableStatusEngine.getStatus(
+          classData: classMorning,
+          referenceDate: tomorrowDate,
+          nowLocal: nowCurrent,
+        ),
+        equals(ClassStatus.upcoming),
+      );
+
+      expect(
+        TimetableStatusEngine.getStatus(
+          classData: classMidday,
+          referenceDate: tomorrowDate,
+          nowLocal: nowCurrent,
+        ),
+        equals(ClassStatus.upcoming),
+      );
+
+      expect(
+        TimetableStatusEngine.getStatus(
+          classData: classAfternoon,
+          referenceDate: tomorrowDate,
+          nowLocal: nowCurrent,
+        ),
+        equals(ClassStatus.upcoming),
+      );
+
+      // Next week class must also be UPCOMING
+      final nextWeekDate = DateTime(2026, 11, 4);
+      expect(
+        TimetableStatusEngine.getStatus(
+          classData: classMorning,
+          referenceDate: nextWeekDate,
+          nowLocal: nowCurrent,
+        ),
+        equals(ClassStatus.upcoming),
+      );
+    });
+
+    test('Past calendar dates return Completed', () {
+      // Current time is Wednesday, Oct 28, 2026, 10:30 PM IST
+      final nowCurrent = DateTime(2026, 10, 28, 22, 30);
+
+      // Yesterday was Tuesday, Oct 27, 2026
+      final yesterdayDate = DateTime(2026, 10, 27);
+
+      final classMorning = {
+        'subject': 'Artificial Intelligence and Deep Learning',
+        'start_time': '09:30',
+        'end_time': '10:30',
+        'room': '1106-B',
+      };
+
+      expect(
+        TimetableStatusEngine.getStatus(
+          classData: classMorning,
+          referenceDate: yesterdayDate,
+          nowLocal: nowCurrent,
+        ),
+        equals(ClassStatus.completed),
+      );
+    });
+
+    test('Today boundaries: before start, during, exact end, after end', () {
+      final todayDate = DateTime(2026, 10, 28);
+      final classEvent = {
+        'subject': 'Operating Systems',
+        'start_time': '09:30',
+        'end_time': '10:30',
+      };
+
+      // 09:29:59 (before start) -> upcoming
+      expect(
+        TimetableStatusEngine.getStatus(
+          classData: classEvent,
+          referenceDate: todayDate,
+          nowLocal: DateTime(2026, 10, 28, 9, 29, 59),
+        ),
+        equals(ClassStatus.upcoming),
+      );
+
+      // 09:30:00 (exact start) -> ongoing
+      expect(
+        TimetableStatusEngine.getStatus(
+          classData: classEvent,
+          referenceDate: todayDate,
+          nowLocal: DateTime(2026, 10, 28, 9, 30, 0),
+        ),
+        equals(ClassStatus.ongoing),
+      );
+
+      // 10:00:00 (middle of class) -> ongoing
+      expect(
+        TimetableStatusEngine.getStatus(
+          classData: classEvent,
+          referenceDate: todayDate,
+          nowLocal: DateTime(2026, 10, 28, 10, 0, 0),
+        ),
+        equals(ClassStatus.ongoing),
+      );
+
+      // 10:30:00 (exact end time) -> completed
+      expect(
+        TimetableStatusEngine.getStatus(
+          classData: classEvent,
+          referenceDate: todayDate,
+          nowLocal: DateTime(2026, 10, 28, 10, 30, 0),
+        ),
+        equals(ClassStatus.completed),
+      );
+
+      // 10:31:00 (after end time) -> completed
+      expect(
+        TimetableStatusEngine.getStatus(
+          classData: classEvent,
+          referenceDate: todayDate,
+          nowLocal: DateTime(2026, 10, 28, 10, 31, 0),
+        ),
+        equals(ClassStatus.completed),
+      );
+    });
+
+    test('Midnight crossing class spans into next calendar day correctly', () {
+      final todayDate = DateTime(2026, 10, 28);
+      final overnightClass = {
+        'subject': 'Night Lab Session',
+        'start_time': '23:00',
+        'end_time': '01:00',
+      };
+
+      // 23:30 (during overnight class) -> ongoing
+      expect(
+        TimetableStatusEngine.getStatus(
+          classData: overnightClass,
+          referenceDate: todayDate,
+          nowLocal: DateTime(2026, 10, 28, 23, 30),
+        ),
+        equals(ClassStatus.ongoing),
+      );
+
+      // 00:30 of next day (still during overnight class) -> ongoing
+      expect(
+        TimetableStatusEngine.getStatus(
+          classData: overnightClass,
+          referenceDate: todayDate,
+          nowLocal: DateTime(2026, 10, 29, 0, 30),
+        ),
+        equals(ClassStatus.ongoing),
+      );
+
+      // 01:00 of next day (exact end time) -> completed
+      expect(
+        TimetableStatusEngine.getStatus(
+          classData: overnightClass,
+          referenceDate: todayDate,
+          nowLocal: DateTime(2026, 10, 29, 1, 0),
+        ),
+        equals(ClassStatus.completed),
+      );
+    });
   });
 
   group('SRAAP Decoupled Cache & Session Stability Tests', () {

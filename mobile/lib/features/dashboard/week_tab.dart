@@ -97,9 +97,9 @@ class _WeekTabState extends State<WeekTab> {
     // Current Local Time
     final nowLocal = TimeUtils.getKolkataTime();
     
-    // Find the Monday of the current week
+    // Find the Monday of the current week (normalized to midnight)
     final weekday = nowLocal.weekday; // 1 = Mon, 7 = Sun
-    _startOfWeek = nowLocal.subtract(Duration(days: weekday - 1));
+    _startOfWeek = DateTime(nowLocal.year, nowLocal.month, nowLocal.day).subtract(Duration(days: weekday - 1));
     
     // Select current day index by default (0-6)
     _selectedDayIndex = weekday - 1;
@@ -603,7 +603,7 @@ class _WeekTabState extends State<WeekTab> {
                             _nextClassToday!['start_time'] == c['start_time'] &&
                             _nextClassToday!['subject'] == c['subject'];
 
-                        final isTodayTab = _selectedDayIndex == DateTime.now().weekday - 1;
+                        final isTodayTab = _selectedDayIndex == TimeUtils.nowInSruTime().weekday - 1;
 
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),

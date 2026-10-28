@@ -50,7 +50,12 @@ class TimetableStatusEngine {
     final endTimeStr = classData['end_time'] as String? ?? '00:00';
 
     final startDt = TimeUtils.parseClassDateTime(referenceDate, startTimeStr);
-    final endDt = TimeUtils.parseClassDateTime(referenceDate, endTimeStr);
+    var endDt = TimeUtils.parseClassDateTime(referenceDate, endTimeStr);
+
+    // If endDt is before startDt, the class spans past midnight into the next calendar day
+    if (endDt.isBefore(startDt)) {
+      endDt = endDt.add(const Duration(days: 1));
+    }
 
     // COMPLETED: now >= endTime (end boundary is inclusive)
     if (nowLocal.isAfter(endDt) || nowLocal.isAtSameMomentAs(endDt)) {
@@ -164,7 +169,10 @@ class TimetableStatusEngine {
 
     for (final c in sorted) {
       final startDt = TimeUtils.parseClassDateTime(referenceDate, c['start_time'] as String? ?? '00:00');
-      final endDt = TimeUtils.parseClassDateTime(referenceDate, c['end_time'] as String? ?? '00:00');
+      var endDt = TimeUtils.parseClassDateTime(referenceDate, c['end_time'] as String? ?? '00:00');
+      if (endDt.isBefore(startDt)) {
+        endDt = endDt.add(const Duration(days: 1));
+      }
 
       if (endDt.isBefore(nowLocal) || endDt.isAtSameMomentAs(nowLocal)) {
         prevCompleted = c;

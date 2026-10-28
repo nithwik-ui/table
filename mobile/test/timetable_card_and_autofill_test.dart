@@ -237,6 +237,65 @@ void main() {
         expect(find.text(st), findsOneWidget);
       }
     });
+
+    testWidgets('Future date class shows Upcoming (NEVER Completed) and strong dark text for subject, time, faculty',
+        (WidgetTester tester) async {
+      AppConstants.useSystemFontInTests = true;
+
+      // Simulated scenario: Current time is Oct 28 22:30 IST
+      final nowCurrent = DateTime(2026, 10, 28, 22, 30);
+      // Viewed date is tomorrow: Oct 29
+      final tomorrow = DateTime(2026, 10, 29);
+
+      final classEvent = {
+        'id': 'test_future_1',
+        'subject': 'Artificial Intelligence and Deep Learning',
+        'start_time': '09:30',
+        'end_time': '10:30',
+        'room': '1106-B',
+        'faculty': 'Mr. Lade Gunakar Rao',
+        'ltp': 'Lecture',
+      };
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TimetableCard(
+              classEvent: classEvent,
+              referenceDate: tomorrow,
+              nowLocal: nowCurrent,
+              isToday: false,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Badge MUST be Upcoming, NOT Completed
+      expect(find.text('Upcoming'), findsOneWidget);
+      expect(find.text('Completed'), findsNothing);
+
+      // Verify text elements exist
+      expect(find.text('Artificial Intelligence and Deep Learning'), findsOneWidget);
+      expect(find.text('9:30 AM – 10:30 AM'), findsOneWidget);
+      expect(find.text('Mr. Lade Gunakar Rao'), findsOneWidget);
+      expect(find.text('1106-B'), findsOneWidget);
+      expect(find.text('Lecture'), findsOneWidget);
+
+      // Verify colors: Subject, Time, Faculty MUST be strong dark text (textPrimary / 0xFF0F172A)
+      final Text subjectWidget = tester.widget(find.text('Artificial Intelligence and Deep Learning'));
+      expect(subjectWidget.style?.color, equals(AppConstants.textPrimary));
+
+      final Text timeWidget = tester.widget(find.text('9:30 AM – 10:30 AM'));
+      expect(timeWidget.style?.color, equals(AppConstants.textPrimary));
+
+      final Text facultyWidget = tester.widget(find.text('Mr. Lade Gunakar Rao'));
+      expect(facultyWidget.style?.color, equals(AppConstants.textPrimary));
+
+      // Room remains secondary muted text (textSecondary / 0xFF475569)
+      final Text roomWidget = tester.widget(find.text('1106-B'));
+      expect(roomWidget.style?.color, equals(AppConstants.textSecondary));
+    });
   });
 
   group('SRUNIV Login Autofill & Security Semantics Tests', () {
