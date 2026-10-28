@@ -1,23 +1,21 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
 import '../../core/utils.dart';
 import '../../core/api.dart';
 import '../../core/sync.dart';
-import '../../core/timetable_status_engine.dart';
 import '../notifications/notifications_screen.dart';
 import 'dashboard_screen.dart';
 import 'free_rooms_screen.dart';
 import 'changes_tab.dart';
-import 'widgets/live_class_progress.dart';
-import '../../widgets/class_details_bottom_sheet.dart';
 import '../../core/timetable/timetable_repository.dart';
 import '../../core/auth/auth_repository.dart';
 import '../../core/auth/auth_state.dart';
+import '../onboarding/sru_login_screen.dart';
+import '../../widgets/timetable_card.dart';
 
 class HomeTab extends StatefulWidget {
   final VoidCallback? onNavigateToWeek;
@@ -285,7 +283,7 @@ class _HomeTabState extends State<HomeTab> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              (SyncService.instance.syncState == SyncState.sessionExpired &&
+                              (SyncService.instance.syncState == SyncState.sessionExpired ||
                                       AuthRepository.instance.state == AuthState.sessionExpired)
                                   ? 'Session expired'
                                   : 'Sync unavailable',
@@ -300,10 +298,21 @@ class _HomeTabState extends State<HomeTab> {
                       ),
                       TextButton(
                         onPressed: () {
-                          TimetableRepository.instance.refresh(force: true);
+                          if (SyncService.instance.syncState == SyncState.sessionExpired ||
+                              AuthRepository.instance.state == AuthState.sessionExpired) {
+                            final role = StorageService.getUserMode() ?? 'student';
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (context) => SruLoginScreen(role: role)),
+                            );
+                          } else {
+                            TimetableRepository.instance.refresh(force: true);
+                          }
                         },
                         child: Text(
-                          'Try again',
+                          (SyncService.instance.syncState == SyncState.sessionExpired ||
+                                  AuthRepository.instance.state == AuthState.sessionExpired)
+                              ? 'Log in'
+                              : 'Try again',
                           style: AppConstants.getBodyMedium(color: AppConstants.error).copyWith(fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -450,107 +459,17 @@ class _HomeTabState extends State<HomeTab> {
                     // "Up Next" Section
                     Text(
                       'Up Next',
-                      style: AppConstants.getHeadline().copyWith(fontSize: 16, color: AppConstants.textSecondary),
+                      style: AppConstants.getHeadline().copyWith(fontSize: 16, fontWeight: FontWeight.w700, color: AppConstants.textPrimary),
                     ),
                     const SizedBox(height: 8),
                     if (_upNextClass != null) ...[
-                      Container(
-                        decoration: BoxDecoration(
-                          color: AppConstants.surface,
-                          borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-                          boxShadow: AppConstants.shadowLevel2,
-                          border: Border.all(color: AppConstants.primary.withValues(alpha: 0.15)),
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-                            onTap: () {
-                              showModalBottomSheet(
-                                context: context,
-                                isScrollControlled: true,
-                                backgroundColor: Colors.transparent,
-                                builder: (context) => ClassDetailsBottomSheet(
-                                  classEvent: _upNextClass!,
-                                  status: _upNextStatus,
-                                  dateStr: DateFormat('EEEE, d MMMM').format(TimeUtils.getKolkataTime()),
-                                ),
-                              );
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(20),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                            // State Tag
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: _upNextStatus == 'Ongoing' 
-                                    ? AppConstants.successContainer 
-                                    : AppConstants.infoContainer,
-                                borderRadius: BorderRadius.circular(AppConstants.radiusTag),
-                              ),
-                              child: Text(
-                                _upNextStatus,
-                                style: AppConstants.getLabelSmall(
-                                  color: _upNextStatus == 'Ongoing' 
-                                      ? AppConstants.success 
-                                      : AppConstants.info
-                                ).copyWith(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              _upNextClass!['subject'] as String? ?? 'No Subject',
-                              style: AppConstants.getHeadline().copyWith(fontSize: 20),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                const Icon(Icons.access_time, size: 16, color: AppConstants.textSecondary),
-                                const SizedBox(width: 6),
-                                Text(
-                                  '${TimeUtils.format12Hour(_upNextClass!['start_time'] as String? ?? '00:00')} - ${TimeUtils.format12Hour(_upNextClass!['end_time'] as String? ?? '00:00')}',
-                                  style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
-                                ),
-                                const SizedBox(width: 12),
-                                LiveClassProgressIndicator(
-                                  startTime: _upNextClass!['start_time'] as String? ?? '00:00',
-                                  endTime: _upNextClass!['end_time'] as String? ?? '00:00',
-                                  isToday: true,
-                                ),
-                                const SizedBox(width: 12),
-                                const Icon(Icons.place_outlined, size: 16, color: AppConstants.textSecondary),
-                                const SizedBox(width: 6),
-                                Text(
-                                  (_upNextClass!['room'] as String? ?? 'No Room').split('_')[0],
-                                  style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
-                                ),
-                              ],
-                            ),
-                            if (_upNextClass!['faculty'] != null && (_upNextClass!['faculty'] as String? ?? '').isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  const Icon(Icons.person_outline, size: 16, color: AppConstants.textSecondary),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
-                                      _upNextClass!['faculty'] as String? ?? '',
-                                      style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ]
-                          ],
-                        ),
+                      TimetableCard(
+                        classEvent: _upNextClass!,
+                        status: _upNextStatus.isNotEmpty ? _upNextStatus : 'Up Next',
+                        isFeatured: true,
+                        isToday: true,
                       ),
-                    ),
-                  ),
-                ),
-              ] else ...[
+                    ] else ...[
                       // Empty state for Up Next
                       Container(
                         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
@@ -598,7 +517,7 @@ class _HomeTabState extends State<HomeTab> {
                       children: [
                         Text(
                           'Today',
-                          style: AppConstants.getHeadline().copyWith(fontSize: 16, color: AppConstants.textSecondary),
+                          style: AppConstants.getHeadline().copyWith(fontSize: 16, fontWeight: FontWeight.w700, color: AppConstants.textPrimary),
                         ),
                         TextButton(
                           onPressed: () {
@@ -627,174 +546,18 @@ class _HomeTabState extends State<HomeTab> {
                         separatorBuilder: (context, index) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
                           final c = Map<String, dynamic>.from(_todayClasses[index] as Map);
-                          final room = (c['room'] as String? ?? 'No Room').split('_')[0];
-                          final ltp = c['ltp'] as String? ?? '';
-                          final isLab = ltp.toLowerCase().contains('lab') || ltp.toLowerCase().contains('practical') || ltp == 'P';
-                          final isCancelled = c['isCancelled'] == true;
-
-                          final nowLocal = TimeUtils.nowInSruTime();
-                          final classStatus = TimetableStatusEngine.getStatus(
-                            classData: c,
-                            referenceDate: nowLocal,
-                            nowLocal: nowLocal,
-                          );
-
-                          String itemStatus;
-                          Color statusColor;
-                          Color statusBg;
-                          bool isCompleted = classStatus == ClassStatus.completed;
-                          bool isOngoing = classStatus == ClassStatus.ongoing;
-
-                          if (classStatus == ClassStatus.cancelled) {
-                            itemStatus = 'Cancelled';
-                            statusColor = AppConstants.error;
-                            statusBg = AppConstants.errorContainer;
-                          } else if (classStatus == ClassStatus.ongoing) {
-                            itemStatus = 'Ongoing';
-                            statusColor = AppConstants.success;
-                            statusBg = AppConstants.successContainer;
-                          } else if (classStatus == ClassStatus.completed) {
-                            itemStatus = 'Completed';
-                            statusColor = AppConstants.textSecondary;
-                            statusBg = AppConstants.outline.withValues(alpha: 0.12);
-                          } else if (_upNextClass != null && ((c['id'] != null && c['id'] == _upNextClass!['id']) || (c['start_time'] == _upNextClass!['start_time'] && c['subject'] == _upNextClass!['subject']))) {
+                          String? itemStatus;
+                          if (_upNextClass != null &&
+                              ((c['id'] != null && c['id'] == _upNextClass!['id']) ||
+                               (c['start_time'] == _upNextClass!['start_time'] &&
+                                   c['subject'] == _upNextClass!['subject']))) {
                             itemStatus = _upNextStatus.isNotEmpty ? _upNextStatus : 'Up Next';
-                            statusColor = AppConstants.info;
-                            statusBg = AppConstants.infoContainer;
-                          } else {
-                            itemStatus = 'Scheduled';
-                            statusColor = AppConstants.primary;
-                            statusBg = AppConstants.primaryContainer.withValues(alpha: 0.35);
                           }
 
-                          return Container(
-                            decoration: BoxDecoration(
-                              color: isCancelled 
-                                  ? AppConstants.surface.withValues(alpha: 0.5) 
-                                  : (isCompleted ? AppConstants.surface.withValues(alpha: 0.85) : AppConstants.surface),
-                              borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-                              boxShadow: isCancelled ? null : AppConstants.shadowLevel1,
-                              border: isCancelled 
-                                  ? Border.all(color: AppConstants.outline) 
-                                  : (isOngoing ? Border.all(color: AppConstants.success.withValues(alpha: 0.4), width: 1.5) : null),
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-                                onTap: () {
-                                  showModalBottomSheet(
-                                    context: context,
-                                    isScrollControlled: true,
-                                    backgroundColor: Colors.transparent,
-                                    builder: (context) => ClassDetailsBottomSheet(
-                                      classEvent: c,
-                                      status: itemStatus,
-                                      dateStr: DateFormat('EEEE, d MMMM').format(TimeUtils.getKolkataTime()),
-                                    ),
-                                  );
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Row(
-                                    children: [
-                                      // Left accent type bar
-                                      Container(
-                                        width: 4,
-                                        height: 42,
-                                        decoration: BoxDecoration(
-                                          color: isCancelled 
-                                              ? AppConstants.textSecondary.withValues(alpha: 0.3) 
-                                              : (isOngoing 
-                                                  ? AppConstants.success 
-                                                  : (isCompleted 
-                                                      ? AppConstants.textSecondary.withValues(alpha: 0.25) 
-                                                      : (isLab ? AppConstants.warning : AppConstants.primary))),
-                                          borderRadius: BorderRadius.circular(AppConstants.radiusTag),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              c['subject'] as String? ?? 'No Subject',
-                                              style: AppConstants.getHeadline().copyWith(
-                                                fontSize: 16,
-                                                decoration: isCancelled ? TextDecoration.lineThrough : null,
-                                                color: (isCancelled || isCompleted) ? AppConstants.textSecondary : null,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Row(
-                                              children: [
-                                                Text(
-                                                  '${TimeUtils.format12Hour(c['start_time'] as String? ?? '00:00')} - ${TimeUtils.format12Hour(c['end_time'] as String? ?? '00:00')}',
-                                                  style: AppConstants.getBodyMedium(color: AppConstants.textSecondary).copyWith(
-                                                    decoration: isCancelled ? TextDecoration.lineThrough : null,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 10),
-                                                if (!isCancelled && isOngoing) ...[
-                                                  LiveClassProgressIndicator(
-                                                    startTime: c['start_time'] as String? ?? '00:00',
-                                                    endTime: c['end_time'] as String? ?? '00:00',
-                                                    isToday: true,
-                                                    referenceDate: DateTime.now(),
-                                                  ),
-                                                  const SizedBox(width: 10),
-                                                ],
-                                                Text(
-                                                  isCancelled ? 'Cancelled' : room,
-                                                  style: AppConstants.getBodyMedium(
-                                                    color: isCancelled ? AppConstants.error : AppConstants.textSecondary
-                                                  ).copyWith(
-                                                    fontWeight: isCancelled ? FontWeight.bold : null,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      // Status tag
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: statusBg,
-                                          borderRadius: BorderRadius.circular(AppConstants.radiusTag),
-                                        ),
-                                        child: Text(
-                                          itemStatus,
-                                          style: AppConstants.getLabelSmall(
-                                            color: statusColor,
-                                          ).copyWith(fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                      // LTP type badge if lab
-                                      if (ltp.isNotEmpty && !isCancelled && isLab) ...[
-                                        const SizedBox(width: 6),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: AppConstants.warningContainer.withValues(alpha: 0.5),
-                                            borderRadius: BorderRadius.circular(AppConstants.radiusTag),
-                                          ),
-                                          child: Text(
-                                            ltp,
-                                            style: AppConstants.getLabelSmall(
-                                              color: AppConstants.warning,
-                                            ).copyWith(fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
+                          return TimetableCard(
+                            classEvent: c,
+                            status: itemStatus,
+                            isToday: true,
                           );
                         },
                       ),
@@ -831,8 +594,7 @@ class _HomeTabState extends State<HomeTab> {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 24),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 36),
                   ],
                 ),
               ),

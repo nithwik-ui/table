@@ -1,4 +1,4 @@
-﻿.env
+.env
 **/key.properties
 **/*.jks
 **/google-services.json
@@ -19,3 +19,5 @@ dist/
 *.json
 *.apk
 *.aab
+cookies.txt
+release/

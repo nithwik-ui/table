@@ -1,5 +1,6 @@
 class SraapAcademicData {
   final double? overallAttendance;
+  final double? placementAttendance;
   final List<SraapSubjectAttendance> subjects;
   final String? cgpa;
   final SraapMentor? mentor;
@@ -7,6 +8,7 @@ class SraapAcademicData {
 
   SraapAcademicData({
     this.overallAttendance,
+    this.placementAttendance,
     this.subjects = const [],
     this.cgpa,
     this.mentor,
@@ -26,6 +28,7 @@ class SraapAcademicData {
   Map<String, dynamic> toJson() {
     return {
       'overallAttendance': overallAttendance,
+      'placementAttendance': placementAttendance,
       'subjects': subjects.map((x) => x.toJson()).toList(),
       'cgpa': cgpa,
       'mentor': mentor?.toJson(),
@@ -36,6 +39,7 @@ class SraapAcademicData {
   factory SraapAcademicData.fromJson(Map<String, dynamic> json) {
     return SraapAcademicData(
       overallAttendance: (json['overallAttendance'] as num?)?.toDouble(),
+      placementAttendance: (json['placementAttendance'] as num?)?.toDouble(),
       subjects: (json['subjects'] as List<dynamic>?)
               ?.map((x) => SraapSubjectAttendance.fromJson(Map<String, dynamic>.from(x as Map)))
               .toList() ??

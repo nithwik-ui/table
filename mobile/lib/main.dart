@@ -16,7 +16,7 @@ import 'core/migration.dart';
 import 'core/sraap/sraap_session_manager.dart';
 import 'core/sraap/sraap_academic_service.dart';
 import 'core/timetable/timetable_repository.dart';
-import 'features/onboarding/sru_login_screen.dart';
+import 'features/onboarding/mode_selection_screen.dart';
 import 'features/dashboard/dashboard_screen.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -147,11 +147,21 @@ Future<void> _initFirebaseSafely() async {
     });
 
     // Handle background notification clicks
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      navigatorKey.currentState?.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const DashboardScreen(initialTab: 0)),
-        (route) => false,
-      );
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
+      final currentRole = StorageService.getUserMode();
+      final session = currentRole != null && currentRole.isNotEmpty
+          ? await SecureSessionStore.getSession(role: currentRole)
+          : await SecureSessionStore.getSession();
+      final hasValidSession = session != null &&
+          session['cookie'] != null &&
+          (session['cookie'] as String).trim().isNotEmpty;
+
+      if (hasValidSession) {
+        navigatorKey.currentState?.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const DashboardScreen(initialTab: 0)),
+          (route) => false,
+        );
+      }
     });
 
     // Auto-refresh token if server rotates it
@@ -333,24 +343,22 @@ class _SplashControllerState extends State<SplashController> {
       Widget nextScreen;
       
       if (isFreshUpdate) {
-        nextScreen = const SruLoginScreen(role: 'student');
+        nextScreen = const ModeSelectionScreen();
       } else {
-        final session = await SecureSessionStore.getSession();
-        final hasCachedStudentTimetable = TimetableRepository.instance.classes.isNotEmpty || StorageService.getTimetableCache().isNotEmpty;
-        final hasCachedFacultyTimetable = StorageService.getFacultyTimetableCache().isNotEmpty;
-        final hasRollNo = StorageService.getStudentRollNumber() != null || StorageService.getUserIdentifier() != null;
-        final hasSession = session != null;
+        final currentRole = StorageService.getUserMode();
+        final session = currentRole != null && currentRole.isNotEmpty
+            ? await SecureSessionStore.getSession(role: currentRole)
+            : await SecureSessionStore.getSession();
 
-        if (authState == AuthState.ready || 
-            authState == AuthState.authenticated || 
-            authState == AuthState.networkError ||
-            hasSession ||
-            hasCachedStudentTimetable || 
-            hasCachedFacultyTimetable || 
-            hasRollNo) {
-           nextScreen = DashboardScreen(initialTab: launchedFromNotification ? 0 : 0);
+        final hasValidSession = session != null &&
+            session['cookie'] != null &&
+            (session['cookie'] as String).trim().isNotEmpty &&
+            (authState == AuthState.ready || authState == AuthState.authenticated);
+
+        if (hasValidSession) {
+          nextScreen = DashboardScreen(initialTab: launchedFromNotification ? 0 : 0);
         } else {
-          nextScreen = const SruLoginScreen(role: 'student');
+          nextScreen = const ModeSelectionScreen();
         }
       }
 

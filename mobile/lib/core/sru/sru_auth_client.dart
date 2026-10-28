@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html_parser;
 import 'package:flutter/foundation.dart';
@@ -36,6 +37,7 @@ class SruAuthClient {
   }
 
   String? _cachedOtpToken;
+  String? _cachedOtpJsproof;
   String _otpTargetUrl = '$baseUrl/login/otp-verification';
 
   Future<void> prefetchOtpToken([String? customUrl]) async {
@@ -44,6 +46,7 @@ class SruAuthClient {
       final token = await _getCsrfToken(url);
       if (token != null && token.isNotEmpty) {
         _cachedOtpToken = token;
+        _cachedOtpJsproof = await _getChallengeProof(token);
       }
     } catch (_) {}
   }
@@ -55,8 +58,64 @@ class SruAuthClient {
       _updateCookies(response.headers);
       if (response.statusCode == 200) {
         final document = html_parser.parse(response.body);
-        final tokenInput = document.querySelector('input[name="_token"]');
-        return tokenInput?.attributes['value'];
+        final tokenInput = document.querySelector('input[name="_token"]') ??
+            document.querySelector('meta[name="csrf-token"]');
+        return tokenInput?.attributes['value'] ?? tokenInput?.attributes['content'];
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// Fetches SRU's anti-bot challenge proof (`jsproof`) required by Laravel login & OTP verification
+  Future<String?> _getChallengeProof(String? csrfToken) async {
+    try {
+      final challengeUrl = '$baseUrl/auth/challenge';
+      final headers = _headers();
+      headers['Accept'] = 'application/json, text/javascript, */*; q=0.01';
+      headers['X-Requested-With'] = 'XMLHttpRequest';
+      if (csrfToken != null && csrfToken.isNotEmpty) {
+        headers['X-CSRF-TOKEN'] = csrfToken;
+      }
+      if (!kIsWeb) {
+        headers['Origin'] = baseUrl;
+        headers['Referer'] = '$baseUrl/';
+        headers['Sec-Fetch-Dest'] = 'empty';
+        headers['Sec-Fetch-Mode'] = 'cors';
+        headers['Sec-Fetch-Site'] = 'same-origin';
+      }
+      final response = await _client.get(Uri.parse(challengeUrl), headers: headers)
+          .timeout(const Duration(seconds: 15));
+      _updateCookies(response.headers);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is Map && data['n'] != null) {
+          final proof = data['n'].toString();
+          debugPrint('[AUTH] Successfully obtained challenge proof: ${proof.substring(0, 4)}...');
+          return proof;
+        }
+      } else {
+        debugPrint('[AUTH] Challenge endpoint returned status ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('[AUTH] Fetch challenge proof non-fatal error: $e');
+    }
+    return null;
+  }
+
+  String? _extractErrorMessage(String html) {
+    try {
+      final doc = html_parser.parse(html);
+      final dangerEl = doc.querySelector('.text-danger') ??
+          doc.querySelector('.alert-danger') ??
+          doc.querySelector('.alert') ??
+          doc.querySelector('.error-message');
+      if (dangerEl != null) {
+        final text = dangerEl.text.trim();
+        if (text.isNotEmpty &&
+            !text.toLowerCase().contains('page expired') &&
+            !text.toLowerCase().contains('10 minutes')) {
+          return text;
+        }
       }
     } catch (_) {}
     return null;
@@ -74,8 +133,10 @@ class SruAuthClient {
       final getCsrfUrl = '$baseUrl/';
       final postLoginUrl = '$baseUrl/';
       _cachedOtpToken = null;
+      _cachedOtpJsproof = null;
       
       final token = await _getCsrfToken(getCsrfUrl);
+      final jsproof = await _getChallengeProof(token);
       
       final request = http.Request('POST', Uri.parse(postLoginUrl));
       if (!kIsWeb) {
@@ -84,6 +145,7 @@ class SruAuthClient {
       request.headers.addAll(_headers(isForm: true));
       request.bodyFields = {
         '_token': token ?? '',
+        'jsproof': jsproof ?? '',
         'login_identifier': identifier,
         'password': password,
       };
@@ -100,12 +162,25 @@ class SruAuthClient {
         
         if (location.contains('otp') || location.contains('verification')) {
           _otpTargetUrl = rawLocation(redirectLocation, postLoginUrl);
-          // Prefetch OTP CSRF token immediately in the background
+          // Prefetch OTP CSRF token & challenge immediately in the background
           prefetchOtpToken(_otpTargetUrl);
           return {'status': 'otp_required'};
         } else if (location.contains('dashboard') || location.contains('student') || location.contains('faculty')) {
           return {'status': 'authenticated'};
         } else {
+          // Follow redirect back to login page to extract actual flashed error
+          try {
+            final followUrl = rawLocation(redirectLocation, postLoginUrl);
+            final followRes = await _client.get(Uri.parse(followUrl), headers: _headers())
+                .timeout(const Duration(seconds: 10));
+            _updateCookies(followRes.headers);
+            final errorText = _extractErrorMessage(followRes.body);
+            if (errorText != null && errorText.isNotEmpty) {
+              throw SruAuthException(errorText);
+            }
+          } on SruAuthException {
+            rethrow;
+          } catch (_) {}
           throw SruAuthException('Invalid credentials or SRU rejected the login.');
         }
       } else {
@@ -142,6 +217,7 @@ class SruAuthClient {
           final tokenInput = document.querySelector('input[name="_token"]');
           if (tokenInput != null) {
             _cachedOtpToken = tokenInput.attributes['value'];
+            _getChallengeProof(_cachedOtpToken).then((p) => _cachedOtpJsproof = p);
           } else {
             prefetchOtpToken(_otpTargetUrl);
           }
@@ -150,6 +226,11 @@ class SruAuthClient {
 
         if (isDashboardByUrl || isDashboardByBody) {
           return {'status': 'authenticated'};
+        }
+
+        final flashed = _extractErrorMessage(body);
+        if (flashed != null && flashed.isNotEmpty) {
+          throw SruAuthException(flashed);
         }
 
         if (bodyLower.contains('invalid') || bodyLower.contains('wrong') ||
@@ -178,6 +259,11 @@ class SruAuthClient {
       if (token == null || token.isEmpty) {
         token = await _getCsrfToken(otpUrl);
       }
+
+      String? jsproof = _cachedOtpJsproof;
+      if (jsproof == null || jsproof.isEmpty) {
+        jsproof = await _getChallengeProof(token);
+      }
       
       final request = http.Request('POST', Uri.parse(otpUrl));
       if (!kIsWeb) {
@@ -186,6 +272,7 @@ class SruAuthClient {
       request.headers.addAll(_headers(isForm: true));
       request.bodyFields = {
         '_token': token ?? '',
+        'jsproof': jsproof ?? '',
         'otp': otp,
       };
       
@@ -209,8 +296,22 @@ class SruAuthClient {
             debugPrint('[AUTH] Handshake GET to dashboard non-fatal: $e');
           }
           return {'status': 'authenticated'};
+        } else {
+          // Follow redirect to read flashed verification error
+          try {
+            final followUrl = rawLocation(rawLoc, otpUrl);
+            final followRes = await _client.get(Uri.parse(followUrl), headers: _headers())
+                .timeout(const Duration(seconds: 10));
+            _updateCookies(followRes.headers);
+            final errorText = _extractErrorMessage(followRes.body);
+            if (errorText != null && errorText.isNotEmpty) {
+              throw SruAuthException(errorText);
+            }
+          } on SruAuthException {
+            rethrow;
+          } catch (_) {}
+          throw SruAuthException('Verification code is invalid.');
         }
-        throw SruAuthException('Verification code is invalid.');
       } else {
         final body = response.body.toLowerCase();
         final finalUrl = response.request?.url.toString().toLowerCase() ?? '';
@@ -218,6 +319,11 @@ class SruAuthClient {
         // On Web, HTTP client automatically follows redirects, so we get 200 instead of 302
         if (finalUrl.contains('dashboard') || finalUrl.contains('student') || finalUrl.contains('faculty')) {
           return {'status': 'authenticated'};
+        }
+
+        final flashed = _extractErrorMessage(response.body);
+        if (flashed != null && flashed.isNotEmpty) {
+          throw SruAuthException(flashed);
         }
 
         if (body.contains('invalid') || body.contains('wrong') || body.contains('incorrect')) {
@@ -272,6 +378,8 @@ class SruAuthClient {
   void clearSession() {
     _cookieHeader = '';
     _cookies.clear();
+    _cachedOtpToken = null;
+    _cachedOtpJsproof = null;
     _client.close();
     _client = http.Client();
   }

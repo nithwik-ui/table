@@ -7,11 +7,11 @@ import '../../core/sync.dart';
 import '../../core/timetable_status_engine.dart';
 import '../notifications/notifications_screen.dart';
 import 'changes_tab.dart';
-import 'widgets/live_class_progress.dart';
-import '../../widgets/class_details_bottom_sheet.dart';
 import '../../core/timetable/timetable_repository.dart';
 import '../../core/auth/auth_repository.dart';
 import '../../core/auth/auth_state.dart';
+import '../onboarding/sru_login_screen.dart';
+import '../../widgets/timetable_card.dart';
 
 enum ScheduleBlockType {
   classBlock,
@@ -334,7 +334,7 @@ class _WeekTabState extends State<WeekTab> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              (SyncService.instance.syncState == SyncState.sessionExpired &&
+                              (SyncService.instance.syncState == SyncState.sessionExpired ||
                                       AuthRepository.instance.state == AuthState.sessionExpired)
                                   ? 'Session expired'
                                   : 'Sync unavailable',
@@ -349,10 +349,21 @@ class _WeekTabState extends State<WeekTab> {
                       ),
                       TextButton(
                         onPressed: () {
-                          TimetableRepository.instance.refresh();
+                          if (SyncService.instance.syncState == SyncState.sessionExpired ||
+                              AuthRepository.instance.state == AuthState.sessionExpired) {
+                            final role = StorageService.getUserMode() ?? 'student';
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (context) => SruLoginScreen(role: role)),
+                            );
+                          } else {
+                            TimetableRepository.instance.refresh();
+                          }
                         },
                         child: Text(
-                          'Try again',
+                          (SyncService.instance.syncState == SyncState.sessionExpired ||
+                                  AuthRepository.instance.state == AuthState.sessionExpired)
+                              ? 'Log in'
+                              : 'Try again',
                           style: AppConstants.getBodyMedium(color: AppConstants.error).copyWith(fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -363,18 +374,23 @@ class _WeekTabState extends State<WeekTab> {
               const SizedBox(height: 12),
             ],
             
-            // Headline
+            // Headline (Stronger hierarchy, tight typography)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer, vertical: 8),
               child: Text(
                 'This week.',
-                style: AppConstants.getDisplay().copyWith(fontSize: 24),
+                style: AppConstants.getDisplay().copyWith(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.6,
+                  color: AppConstants.textPrimary,
+                ),
               ),
             ),
 
             // Horizontal Day Pills Row
             SizedBox(
-              height: 72,
+              height: 74,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -397,12 +413,13 @@ class _WeekTabState extends State<WeekTab> {
                       },
                       borderRadius: BorderRadius.circular(AppConstants.radiusCard),
                       child: Container(
-                        width: 52,
+                        width: 54,
                         decoration: BoxDecoration(
                           color: isSelected ? AppConstants.primary : AppConstants.surface,
                           borderRadius: BorderRadius.circular(AppConstants.radiusCard),
                           border: Border.all(
                             color: isSelected ? AppConstants.primary : AppConstants.outline,
+                            width: isSelected ? 1.2 : 1.0,
                           ),
                           boxShadow: isSelected ? AppConstants.shadowLevel2 : AppConstants.shadowLevel1,
                         ),
@@ -412,15 +429,15 @@ class _WeekTabState extends State<WeekTab> {
                             Text(
                               shortDay,
                               style: AppConstants.getLabelSmall(
-                                color: isSelected ? Colors.white70 : AppConstants.textSecondary,
-                              ).copyWith(fontSize: 11, fontWeight: FontWeight.w600),
+                                color: isSelected ? Colors.white.withValues(alpha: 0.9) : AppConstants.textMuted,
+                              ).copyWith(fontSize: 11.5, fontWeight: FontWeight.w700),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               dateNum,
                               style: AppConstants.getHeadline(
                                 color: isSelected ? Colors.white : AppConstants.textPrimary,
-                              ).copyWith(fontSize: 16),
+                              ).copyWith(fontSize: 17, fontWeight: FontWeight.w800),
                             ),
                           ],
                         ),
@@ -432,7 +449,7 @@ class _WeekTabState extends State<WeekTab> {
             ),
             const SizedBox(height: 16),
 
-            // Selected Day date Sub-headline
+            // Selected Day date Sub-headline (High contrast anchor)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer),
               child: Row(
@@ -440,7 +457,11 @@ class _WeekTabState extends State<WeekTab> {
                 children: [
                   Text(
                     subHeadlineText,
-                    style: AppConstants.getHeadline().copyWith(fontSize: 16, color: AppConstants.textSecondary),
+                    style: AppConstants.getHeadline().copyWith(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppConstants.textPrimary,
+                    ),
                   ),
                   if (holidayTitle != null)
                     Expanded(
@@ -448,7 +469,7 @@ class _WeekTabState extends State<WeekTab> {
                         holidayMessage != null && holidayMessage.isNotEmpty 
                             ? '$holidayTitle - $holidayMessage'
                             : holidayTitle,
-                        style: AppConstants.getBodyMedium(color: AppConstants.info).copyWith(fontWeight: FontWeight.bold),
+                        style: AppConstants.getBodyMedium(color: AppConstants.infoText).copyWith(fontWeight: FontWeight.bold),
                         textAlign: TextAlign.right,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -491,9 +512,9 @@ class _WeekTabState extends State<WeekTab> {
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
+                              color: AppConstants.background,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                              border: Border.all(color: AppConstants.outline),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -503,8 +524,8 @@ class _WeekTabState extends State<WeekTab> {
                                     Container(
                                       width: 8,
                                       height: 8,
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFF94A3B8),
+                                      decoration: BoxDecoration(
+                                        color: AppConstants.primary.withValues(alpha: 0.6),
                                         shape: BoxShape.circle,
                                       ),
                                     ),
@@ -513,8 +534,8 @@ class _WeekTabState extends State<WeekTab> {
                                       'Free Time',
                                       style: TextStyle(
                                         fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF64748B),
+                                        fontWeight: FontWeight.w700,
+                                        color: AppConstants.textSecondary,
                                       ),
                                     ),
                                   ],
@@ -524,7 +545,7 @@ class _WeekTabState extends State<WeekTab> {
                                   style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
-                                    color: Color(0xFF64748B),
+                                    color: AppConstants.textMuted,
                                   ),
                                 ),
                               ],
@@ -538,23 +559,23 @@ class _WeekTabState extends State<WeekTab> {
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFFF7ED),
+                              color: AppConstants.practicalBg,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFFED7AA)),
+                              border: Border.all(color: AppConstants.practicalAccent.withValues(alpha: 0.25)),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Row(
                                   children: [
-                                    const Icon(Icons.restaurant_rounded, size: 16, color: Color(0xFFEA580C)),
+                                    const Icon(Icons.restaurant_rounded, size: 16, color: AppConstants.practicalAccent),
                                     const SizedBox(width: 8),
                                     const Text(
                                       'Lunch',
                                       style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w700,
-                                        color: Color(0xFFC2410C),
+                                        color: AppConstants.practicalText,
                                       ),
                                     ),
                                   ],
@@ -564,7 +585,7 @@ class _WeekTabState extends State<WeekTab> {
                                   style: const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
-                                    color: Color(0xFF9A3412),
+                                    color: AppConstants.practicalText,
                                   ),
                                 ),
                               ],
@@ -574,9 +595,6 @@ class _WeekTabState extends State<WeekTab> {
 
                         // Class block
                         final c = block.classEvent!;
-                        final room = (c['room'] as String? ?? 'No Room').split('_')[0];
-                        final ltp = c['ltp'] as String? ?? '';
-                        final isLab = ltp.toLowerCase().contains('lab') || ltp.toLowerCase().contains('practical') || ltp == 'P';
                         final isCancelled = c['isCancelled'] == true;
                         
                         // Check if this class is the "Next" class highlighted
@@ -585,160 +603,16 @@ class _WeekTabState extends State<WeekTab> {
                             _nextClassToday!['start_time'] == c['start_time'] &&
                             _nextClassToday!['subject'] == c['subject'];
 
+                        final isTodayTab = _selectedDayIndex == DateTime.now().weekday - 1;
+
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: isCancelled ? AppConstants.surface.withValues(alpha: 0.5) : AppConstants.surface,
-                              borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-                              boxShadow: isCancelled ? null : AppConstants.shadowLevel1,
-                              border: Border.all(
-                                color: isNext ? AppConstants.primary : AppConstants.outline,
-                                width: isNext ? 1.5 : 1.0,
-                              ),
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-                                onTap: () {
-                                  showModalBottomSheet(
-                                    context: context,
-                                    isScrollControlled: true,
-                                    backgroundColor: Colors.transparent,
-                                    builder: (ctx) => ClassDetailsBottomSheet(
-                                      classEvent: c,
-                                      status: isCancelled ? 'Cancelled' : (isNext ? 'Up Next' : 'Scheduled'),
-                                      dateStr: subHeadlineText,
-                                    ),
-                                  );
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        c['subject'] as String? ?? 'No Subject',
-                                        style: AppConstants.getHeadline().copyWith(
-                                          fontSize: 18,
-                                          decoration: isCancelled ? TextDecoration.lineThrough : null,
-                                          color: isCancelled ? AppConstants.textSecondary : null,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Wrap(
-                                        spacing: 8,
-                                        runSpacing: 6,
-                                        crossAxisAlignment: WrapCrossAlignment.center,
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: isCancelled
-                                                  ? AppConstants.errorContainer.withValues(alpha: 0.5)
-                                                  : AppConstants.secondaryContainer.withValues(alpha: 0.6),
-                                              borderRadius: BorderRadius.circular(AppConstants.radiusTag),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(
-                                                  Icons.access_time_rounded,
-                                                  size: 13,
-                                                  color: isCancelled ? AppConstants.error : AppConstants.primary,
-                                                ),
-                                                const SizedBox(width: 4),
-                                                Text(
-                                                  '${TimeUtils.format12Hour(c['start_time'] as String? ?? '00:00')} - ${TimeUtils.format12Hour(c['end_time'] as String? ?? '00:00')}',
-                                                  style: AppConstants.getLabelSmall(
-                                                    color: isCancelled ? AppConstants.error : AppConstants.primary
-                                                  ).copyWith(
-                                                    fontWeight: FontWeight.w700,
-                                                    fontSize: 11,
-                                                    decoration: isCancelled ? TextDecoration.lineThrough : null,
-                                                  ),
-                                                ),
-                                                if (!isCancelled) ...[
-                                                  const SizedBox(width: 6),
-                                                  LiveClassProgressIndicator(
-                                                    startTime: c['start_time'] as String? ?? '00:00',
-                                                    endTime: c['end_time'] as String? ?? '00:00',
-                                                    isToday: _selectedDayIndex == DateTime.now().weekday - 1,
-                                                    referenceDate: selectedDate,
-                                                  ),
-                                                ],
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Row(
-                                        children: [
-                                          const Icon(Icons.place_outlined, size: 16, color: AppConstants.textSecondary),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            isCancelled ? 'Cancelled' : room,
-                                            style: AppConstants.getBodyMedium(
-                                              color: isCancelled ? AppConstants.error : AppConstants.textSecondary
-                                            ).copyWith(
-                                              fontWeight: isCancelled ? FontWeight.bold : null,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 16),
-                                          const Icon(Icons.person_outline, size: 16, color: AppConstants.textSecondary),
-                                          const SizedBox(width: 6),
-                                          Expanded(
-                                            child: Text(
-                                              c['faculty'] as String? ?? 'Unknown Faculty',
-                                              style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      if (!isCancelled && (isNext || ltp.isNotEmpty)) ...[
-                                        const SizedBox(height: 12),
-                                        Row(
-                                          children: [
-                                            if (isNext)
-                                              Container(
-                                                margin: const EdgeInsets.only(right: 8),
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                                decoration: BoxDecoration(
-                                                  color: AppConstants.primary,
-                                                  borderRadius: BorderRadius.circular(AppConstants.radiusTag),
-                                                ),
-                                                child: Text(
-                                                  'Next',
-                                                  style: AppConstants.getLabelSmall(color: Colors.white).copyWith(fontWeight: FontWeight.bold),
-                                                ),
-                                              ),
-                                            if (ltp.isNotEmpty)
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                                decoration: BoxDecoration(
-                                                  color: isLab
-                                                      ? AppConstants.warningContainer.withValues(alpha: 0.5)
-                                                      : AppConstants.secondaryContainer.withValues(alpha: 0.5),
-                                                  borderRadius: BorderRadius.circular(AppConstants.radiusTag),
-                                                ),
-                                                child: Text(
-                                                  ltp,
-                                                  style: AppConstants.getLabelSmall(
-                                                    color: isLab ? AppConstants.warning : AppConstants.textSecondary,
-                                                  ).copyWith(fontWeight: FontWeight.bold),
-                                                ),
-                                              ),
-                                          ],
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
+                          child: TimetableCard(
+                            classEvent: c,
+                            status: isCancelled ? 'Cancelled' : (isNext ? 'Up Next' : null),
+                            dateStr: subHeadlineText,
+                            isToday: isTodayTab,
+                            referenceDate: selectedDate,
                           ),
                         );
                       },

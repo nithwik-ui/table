@@ -488,6 +488,9 @@ app.post('/api/devices/preferences', async (req: Request, res: Response) => {
   }
 });
 
+// In-memory fallback if announcement_history table is missing in Supabase
+const sessionAnnouncements: any[] = [];
+
 // POST /api/admin/broadcast
 app.post('/api/admin/broadcast', async (req: Request, res: Response) => {
   try {
@@ -514,18 +517,33 @@ app.post('/api/admin/broadcast', async (req: Request, res: Response) => {
       result = await sendGenericBroadcast(title, message) as any;
     }
 
-    // Log the announcement history to the database
+    // Log the announcement history to session and DB
     const status = result.success ? (isTest ? 'Test' : 'Sent') : 'Failed';
-    const { error: dbErr } = await supabase.from('announcement_history').insert({
-      template_id: 'CUSTOM', // using a generic marker
+    const localEntry = {
+      id: `session-${Date.now()}`,
+      created_at: new Date().toISOString(),
+      template_id: 'CUSTOM',
       title: title,
       target: target,
       admin: 'System Admin',
       status: status
-    });
+    };
+    sessionAnnouncements.unshift(localEntry);
 
-    if (dbErr) {
-      console.error('Failed to log announcement history:', dbErr.message);
+    try {
+      const { error: dbErr } = await supabase.from('announcement_history').insert({
+        template_id: 'CUSTOM',
+        title: title,
+        target: target,
+        admin: 'System Admin',
+        status: status
+      });
+
+      if (dbErr) {
+        console.warn('[Announcements] Note: announcement_history table not found in Supabase (saved in session):', dbErr.message);
+      }
+    } catch (e: any) {
+      console.warn('[Announcements] DB logging skipped:', e.message);
     }
 
     if (!result.success) {
@@ -546,20 +564,23 @@ app.get('/api/admin/announcements', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { data, error } = await supabase
-      .from('announcement_history')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(100);
+    try {
+      const { data, error } = await supabase
+        .from('announcement_history')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
 
-    // If the table doesn't exist yet, we will gracefully return an empty array
-    // so the UI doesn't break while waiting for the user to run the SQL command.
-    if (error) {
-      console.warn('Could not fetch announcement history (table might be missing):', error.message);
-      return res.json([]);
+      if (error) {
+        return res.json(sessionAnnouncements);
+      }
+
+      const combined = [...sessionAnnouncements, ...(data || [])];
+      const unique = Array.from(new Map(combined.map(item => [item.id || item.created_at, item])).values());
+      return res.json(unique);
+    } catch {
+      return res.json(sessionAnnouncements);
     }
-
-    res.json(data || []);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

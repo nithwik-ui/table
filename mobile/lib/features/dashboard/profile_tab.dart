@@ -16,6 +16,9 @@ import '../../core/auth/auth_repository.dart';
 import '../../core/timetable/timetable_repository.dart';
 import '../onboarding/sru_login_screen.dart';
 import '../../core/auth/secure_session_store.dart';
+import '../../core/update/update_service.dart';
+import '../../core/update/app_update_policy.dart';
+import '../../core/update/play_update_service.dart';
 import 'dashboard_screen.dart';
 
 class ProfileTab extends StatefulWidget {
@@ -37,6 +40,7 @@ class _ProfileTabState extends State<ProfileTab> {
   bool _notificationsEnabled = true;
   bool _remindersEnabled = true;
   bool _isRefreshing = false;
+  bool _isCheckingUpdate = false;
   String _currentVersion = AppConstants.currentVersion;
 
   bool _timetableChangesEnabled = true;
@@ -50,6 +54,26 @@ class _ProfileTabState extends State<ProfileTab> {
     super.initState();
     _loadProfileData();
     SyncService.instance.addListener(_onSyncUpdate);
+    UpdateService.instance.playStateNotifier.addListener(_onPlayUpdateStateChanged);
+  }
+
+  void _onPlayUpdateStateChanged() {
+    if (!mounted) return;
+    if (UpdateService.instance.playStateNotifier.value == InAppUpdateState.downloaded) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Update ready. Restart to finish installing.'),
+          duration: const Duration(seconds: 15),
+          action: SnackBarAction(
+            label: 'Restart',
+            textColor: Colors.amber,
+            onPressed: () {
+              UpdateService.instance.completeFlexibleUpdate();
+            },
+          ),
+        ),
+      );
+    }
   }
 
   void _onSyncUpdate() {
@@ -70,6 +94,7 @@ class _ProfileTabState extends State<ProfileTab> {
   @override
   void dispose() {
     SyncService.instance.removeListener(_onSyncUpdate);
+    UpdateService.instance.playStateNotifier.removeListener(_onPlayUpdateStateChanged);
     super.dispose();
   }
 
@@ -182,14 +207,13 @@ class _ProfileTabState extends State<ProfileTab> {
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
                 
-                final hasTargetCache = targetRole == 'faculty'
-                    ? StorageService.getFacultyTimetableCache().isNotEmpty
-                    : (StorageService.getTimetableCache().isNotEmpty || StorageService.getStudentRollNumber() != null);
-                
                 final targetSession = await SecureSessionStore.getSession(role: targetRole);
+                final hasValidTargetSession = targetSession != null &&
+                    targetSession['cookie'] != null &&
+                    (targetSession['cookie'] as String).trim().isNotEmpty;
                 
-                if (hasTargetCache || targetSession != null) {
-                  // Instant switch without relogin!
+                if (hasValidTargetSession) {
+                  // Valid authenticated session exists for target role
                   await StorageService.setUserMode(targetRole);
                   await AuthRepository.instance.restoreSession(targetRole: targetRole);
                   TimetableRepository.instance.loadFromCache();
@@ -201,8 +225,7 @@ class _ProfileTabState extends State<ProfileTab> {
                     );
                   }
                 } else {
-                  // No credentials or cache for target role yet: prompt login for that role ONLY
-                  // Existing session is preserved untouched if user backs out
+                  // No authenticated session for target role yet: prompt explicit login for that role
                   if (mounted) {
                     Navigator.of(context).push(
                       MaterialPageRoute(builder: (context) => SruLoginScreen(role: targetRole)),
@@ -545,11 +568,17 @@ class _ProfileTabState extends State<ProfileTab> {
                         ),
                         const Divider(height: 1, color: AppConstants.outline),
                         ListTile(
-                          leading: const Icon(Icons.shop, color: AppConstants.primary),
-                          title: Text('Check for app update', style: AppConstants.getBodyLarge()),
-                          subtitle: Text('Get the latest version from Google Play', style: AppConstants.getBodyMedium(color: AppConstants.textSecondary)),
-                          trailing: const Icon(Icons.open_in_new, color: AppConstants.textSecondary, size: 20),
-                          onTap: _onCheckAppUpdate,
+                          leading: const Icon(Icons.system_update_alt, color: AppConstants.primary),
+                          title: Text('Check for updates', style: AppConstants.getBodyLarge()),
+                          subtitle: Text('Version $_currentVersion', style: AppConstants.getBodyMedium(color: AppConstants.textSecondary)),
+                          trailing: _isCheckingUpdate
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.chevron_right, color: AppConstants.textSecondary),
+                          onTap: _isCheckingUpdate ? null : _onCheckAppUpdate,
                         ),
 
                         const Divider(height: 1, color: AppConstants.outline),
@@ -641,20 +670,114 @@ class _ProfileTabState extends State<ProfileTab> {
   }
 
   Future<void> _onCheckAppUpdate() async {
-    const url = 'https://play.google.com/store/apps/details?id=com.srutimetable.mobile';
-    final uri = Uri.parse(url);
+    if (_isCheckingUpdate) return;
+    setState(() => _isCheckingUpdate = true);
+
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('Checking for updates...'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+
     try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+      final result = await UpdateService.instance.checkUnifiedUpdate(isManual: true);
+      if (!mounted) return;
+      messenger.hideCurrentSnackBar();
+
+      if (!result.updateAvailable) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text("You're up to date")),
+        );
+        return;
       }
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open Google Play Store.')),
+
+      if (result.source == DistributionSource.googlePlay) {
+        if (result.isCriticalImmediate) {
+          await UpdateService.instance.performImmediateUpdate();
+        } else {
+          final shouldUpdate = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Update Available'),
+              content: const Text(
+                'A new version of SRU Timetable is available on Google Play. '
+                'Download in background while using the app?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('Later'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('Update',
+                      style: TextStyle(color: AppConstants.primary, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          );
+
+          if (shouldUpdate == true) {
+            await UpdateService.instance.startFlexibleUpdate();
+          }
+        }
+      } else if (result.source == DistributionSource.directApk) {
+        _showDirectApkUpdateDialog(result.versionTag ?? '', result.downloadUrl ?? '');
+      } else {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Update available. Please refresh the web app.')),
         );
       }
+    } catch (e) {
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text('Failed to check for updates: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isCheckingUpdate = false);
+      }
     }
+  }
+
+  void _showDirectApkUpdateDialog(String latestTag, String downloadUrl) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Update Available'),
+          content: Text(
+            'A new version of SRU Timetable ($latestTag) is available on GitHub. Would you like to download it now?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Later', style: TextStyle(color: AppConstants.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                try {
+                  final uri = Uri.parse(downloadUrl);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
+                } catch (_) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Could not open download link.')),
+                    );
+                  }
+                }
+              },
+              child: const Text('Download', style: TextStyle(color: AppConstants.primary, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

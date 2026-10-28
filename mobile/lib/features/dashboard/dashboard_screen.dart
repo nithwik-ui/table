@@ -35,6 +35,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    UpdateService.instance.playStateNotifier.addListener(_onPlayUpdateStateChanged);
     _currentIndex = widget.initialTab;
     
     // Explicitly restore/schedule exact alarms on startup for existing timetable
@@ -93,16 +94,37 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
     });
   }
 
+  void _onPlayUpdateStateChanged() {
+    if (!mounted) return;
+    if (UpdateService.instance.playStateNotifier.value == InAppUpdateState.downloaded) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Update ready. Restart to finish installing.'),
+          duration: const Duration(seconds: 15),
+          action: SnackBarAction(
+            label: 'Restart',
+            textColor: Colors.amber,
+            onPressed: () {
+              UpdateService.instance.completeFlexibleUpdate();
+            },
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       SraapAcademicService.instance.pingKeepAlive();
+      UpdateService.instance.resumeIfImmediateInProgress();
     }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    UpdateService.instance.playStateNotifier.removeListener(_onPlayUpdateStateChanged);
     super.dispose();
   }
 
@@ -162,8 +184,10 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
           backgroundColor: AppConstants.surface,
           selectedItemColor: AppConstants.primary,
           unselectedItemColor: AppConstants.textSecondary,
-          selectedLabelStyle: AppConstants.getLabelSmall(color: AppConstants.primary).copyWith(fontWeight: FontWeight.bold),
-          unselectedLabelStyle: AppConstants.getLabelSmall(color: AppConstants.textSecondary),
+          selectedLabelStyle: AppConstants.getLabelSmall(color: AppConstants.primary).copyWith(fontWeight: FontWeight.w700, fontSize: 11),
+          unselectedLabelStyle: AppConstants.getLabelSmall(color: AppConstants.textSecondary).copyWith(fontWeight: FontWeight.w600, fontSize: 11),
+          selectedFontSize: 11,
+          unselectedFontSize: 11,
           elevation: 0,
           items: [
             const BottomNavigationBarItem(
@@ -217,11 +241,20 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
   }
 
   void _checkForUpdatesSilently() async {
-    final result = await UpdateService.checkForUpdates();
-    if (result['status'] == 'update_available') {
-      if (mounted) {
-        _showUpdateDialog(result['latestTag'], result['downloadUrl']);
+    final result = await UpdateService.instance.checkUnifiedUpdate();
+    if (!mounted) return;
+
+    if (result.source == DistributionSource.googlePlay) {
+      if (result.isCriticalImmediate) {
+        // Immediate update required by Google Play policy (priority >= 4)
+        await UpdateService.instance.performImmediateUpdate();
+      } else if (result.decision == UpdateDecision.recommendedFlexible ||
+          result.decision == UpdateDecision.optionalFlexible) {
+        // Flexible update (download in background without blocking user)
+        await UpdateService.instance.startFlexibleUpdate();
       }
+    } else if (result.source == DistributionSource.directApk && result.updateAvailable) {
+      _showUpdateDialog(result.versionTag ?? '', result.downloadUrl ?? '');
     }
   }
 

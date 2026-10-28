@@ -78,9 +78,6 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
             _isLoading = false;
             _isSessionExpired = true;
           });
-          if (forceRefresh) {
-            _showQuickReconnectSheet();
-          }
           return;
         }
       } catch (e) {
@@ -555,7 +552,7 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
         password: pass,
         onSuccess: () {
           Navigator.of(ctx).pop();
-          _loadData(forceRefresh: true);
+          _loadData();
         },
       ),
     );
@@ -603,7 +600,7 @@ class _QuickReconnectModalState extends State<_QuickReconnectModal> {
       _errorMsg = null;
     });
 
-    final bytes = await SraapSessionManager.instance.fetchCaptcha();
+    final bytes = await SraapSessionManager.instance.fetchCaptcha(forceFreshSession: true);
 
     if (mounted) {
       setState(() {
@@ -636,18 +633,35 @@ class _QuickReconnectModalState extends State<_QuickReconnectModal> {
       );
 
       final body = res.body.toLowerCase();
-      if (res.statusCode == 302 || res.statusCode == 301 || body.contains('logout') || res.bodyBytes.length > 10000) {
+      final bool isSuccess = res.statusCode == 302 ||
+          res.statusCode == 301 ||
+          (res.statusCode == 200 &&
+              (body.contains('logout') ||
+               body.contains('attendancetable') ||
+               body.contains('welcome to')) &&
+              !body.contains('student_login'));
+
+      if (isSuccess) {
         // Success
         await StorageService.setSraapConnected(true);
         SraapSessionManager.instance.isSessionExpired = false;
         SraapAcademicService.instance.startKeepAlive();
         widget.onSuccess();
-      } else if (body.contains('captcha')) {
-        setState(() => _errorMsg = 'Incorrect CAPTCHA code. Tap to refresh.');
+      } else if (body.contains('access restricted') || body.contains('shared public ip')) {
+        setState(() => _errorMsg = 'SRAAP access is temporarily restricted on this network. Please switch to Mobile Data (4G/5G).');
+      } else if (body.contains('enter captcha code') || body.contains('invalid captcha')) {
+        setState(() => _errorMsg = 'Incorrect CAPTCHA. Please try again.');
         _captchaCtrl.clear();
         _fetchCaptcha();
+      } else if (body.contains("sorry, i don't recognize you") ||
+          body.contains('recheck') ||
+          body.contains('wrong password') ||
+          body.contains('forgot / reset password')) {
+        setState(() => _errorMsg = 'Stored password could not be verified. Please reconnect your account below.');
       } else {
-        setState(() => _errorMsg = 'Authentication failed. Please check credentials.');
+        setState(() => _errorMsg = 'Verification failed. Tap CAPTCHA to refresh and retry.');
+        _captchaCtrl.clear();
+        _fetchCaptcha();
       }
     } catch (e) {
       setState(() => _errorMsg = 'Connection error: $e');
@@ -742,9 +756,11 @@ class _QuickReconnectModalState extends State<_QuickReconnectModal> {
                   child: TextField(
                     controller: _captchaCtrl,
                     autofocus: true,
-                    textCapitalization: TextCapitalization.characters,
+                    textCapitalization: TextCapitalization.none,
+                    autocorrect: false,
+                    enableSuggestions: false,
                     decoration: const InputDecoration(
-                       hintText: 'Enter code',
+                      hintText: 'Enter code',
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     ),
@@ -759,6 +775,20 @@ class _QuickReconnectModalState extends State<_QuickReconnectModal> {
                 _errorMsg!,
                 style: AppConstants.getBodyMedium(color: AppConstants.error).copyWith(fontSize: 12, fontWeight: FontWeight.w600),
               ),
+              if (_errorMsg!.contains('reconnect')) ...[
+                const SizedBox(height: 6),
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const AcademicLoginScreen()),
+                      ).then((_) => widget.onSuccess());
+                    },
+                    child: const Text('Sign In to SRAAP Manually'),
+                  ),
+                ),
+              ],
             ],
             const SizedBox(height: 20),
             ElevatedButton(

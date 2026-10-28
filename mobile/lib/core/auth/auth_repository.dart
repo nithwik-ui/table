@@ -3,6 +3,8 @@ import 'auth_state.dart';
 import 'secure_session_store.dart';
 import '../sru/sru_auth_client.dart';
 import '../storage.dart';
+import '../sraap/sraap_session_manager.dart';
+import '../sraap/sraap_academic_service.dart';
 
 class AuthRepository extends ChangeNotifier {
   static final AuthRepository instance = AuthRepository._();
@@ -15,6 +17,7 @@ class AuthRepository extends ChangeNotifier {
   String? get currentRole => _currentRole;
 
   String? _savedIdentifier;
+  String? get savedIdentifier => _savedIdentifier;
   bool _rememberMe = true;
 
   void _setState(AuthState newState) {
@@ -31,17 +34,20 @@ class AuthRepository extends ChangeNotifier {
 
   Future<void> restoreSession({String? targetRole}) async {
     _setState(AuthState.restoringSession);
-    final cachedRole = targetRole ?? StorageService.getUserMode() ?? 'student';
-    final sessionData = await SecureSessionStore.getSession(role: cachedRole);
-    final hasCache = (cachedRole == 'faculty'
-        ? StorageService.getFacultyTimetableCache().isNotEmpty
-        : StorageService.getTimetableCache().isNotEmpty) ||
-        StorageService.getStudentRollNumber() != null;
+    final cachedRole = targetRole ?? StorageService.getUserMode();
+    if (cachedRole == null || cachedRole.isEmpty) {
+      _currentRole = null;
+      _savedIdentifier = null;
+      _setState(AuthState.unauthenticated);
+      return;
+    }
 
-    if (sessionData != null && (sessionData['cookie'] != null || sessionData['identifier'] != null)) {
-      if (sessionData['cookie'] != null) {
-        SruAuthClient.instance.restoreCookies(sessionData['cookie']);
-      }
+    final sessionData = await SecureSessionStore.getSession(role: cachedRole);
+
+    if (sessionData != null && 
+        sessionData['cookie'] != null && 
+        (sessionData['cookie'] as String).trim().isNotEmpty) {
+      SruAuthClient.instance.restoreCookies(sessionData['cookie']);
       _currentRole = sessionData['role'] ?? cachedRole;
       await StorageService.setUserMode(_currentRole!);
 
@@ -49,14 +55,12 @@ class AuthRepository extends ChangeNotifier {
         _savedIdentifier = sessionData['identifier'];
       }
 
-      _setState(AuthState.ready);
-      return;
-    } else if (hasCache) {
-      _currentRole = cachedRole;
-      await StorageService.setUserMode(_currentRole!);
+      _setState(AuthState.authenticated);
       _setState(AuthState.ready);
       return;
     } else {
+      _currentRole = null;
+      _savedIdentifier = null;
       _setState(AuthState.unauthenticated);
     }
   }
@@ -139,6 +143,9 @@ class AuthRepository extends ChangeNotifier {
     _setState(AuthState.loggingOut);
     SruAuthClient.instance.clearSession();
     await SecureSessionStore.clearSession();
+    await SraapSessionManager.instance.clearSession();
+    await SraapAcademicService.instance.disconnect();
+    await StorageService.fullLogout();
     _savedIdentifier = null;
     _currentRole = null;
     _setState(AuthState.unauthenticated);

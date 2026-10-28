@@ -52,12 +52,20 @@ class StorageService {
     return _prefsBox?.get('user_identifier') as String?;
   }
 
+  static Future<void> clearUserIdentifier() async {
+    await _prefsBox?.delete('user_identifier');
+  }
+
   static Future<void> saveStudentRollNumber(String rollNumber) async {
     await _prefsBox?.put('student_roll_number', rollNumber);
   }
 
   static String? getStudentRollNumber() {
     return _prefsBox?.get('student_roll_number') as String?;
+  }
+
+  static Future<void> clearStudentRollNumber() async {
+    await _prefsBox?.delete('student_roll_number');
   }
 
   // FCM Diagnostics Tracking
@@ -114,6 +122,13 @@ class StorageService {
     return _prefsBox?.get('user_name') as String?;
   }
 
+  static Future<void> clearUserName() async {
+    await _prefsBox?.delete('user_name');
+  }
+
+  static Future<void> clearProfile() async {
+    await _prefsBox?.delete('user_profile_json');
+  }
 
   static Future<void> clearSelection() async {
     await _prefsBox?.delete('user_profile_json');
@@ -150,6 +165,11 @@ class StorageService {
   static Future<void> fullLogout() async {
     await setUserMode('');
     await _prefsBox?.delete('user_mode');
+    await clearUserIdentifier();
+    await clearStudentRollNumber();
+    await clearUserName();
+    await clearProfile();
+    await clearFacultyToken();
     await clearSelection();
     await clearFacultySelection();
   }
@@ -311,7 +331,18 @@ class StorageService {
     return Map<String, dynamic>.from(data as Map);
   }
 
-  static Future<void> clearSraapAcademicCache() async => await _cacheBox?.delete('sraap_academic_cache');
+  static Future<void> clearSraapAcademicCache() async {
+    await _cacheBox?.delete('sraap_academic_cache');
+    await clearPlacementAttendance();
+  }
+
+  static Future<void> savePlacementAttendance(double pct) async => await _cacheBox?.put('sraap_placement_attendance', pct);
+  static double? getPlacementAttendance() {
+    final v = _cacheBox?.get('sraap_placement_attendance');
+    if (v is num) return v.toDouble();
+    return null;
+  }
+  static Future<void> clearPlacementAttendance() async => await _cacheBox?.delete('sraap_placement_attendance');
 
   static Future<void> saveSraapLastSyncedAt(DateTime dateTime) async => await _prefsBox?.put('sraap_last_synced_at', dateTime.toIso8601String());
 

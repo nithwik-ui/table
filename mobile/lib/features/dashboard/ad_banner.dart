@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import '../../core/constants.dart';
 import '../../core/ad_service.dart';
 
 class AdBanner extends StatefulWidget {
@@ -108,12 +109,18 @@ class _AdBannerState extends State<AdBanner> {
   Widget build(BuildContext context) {
     if (kIsWeb) return const SizedBox.shrink();
     if (_bannerAd != null && _isLoaded) {
-      return ClipRect(
-        child: Container(
+      return Container(
+        width: double.infinity,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
           color: Colors.transparent,
+          border: Border(
+            top: BorderSide(color: AppConstants.outline, width: 0.5),
+          ),
+        ),
+        child: SizedBox(
           width: _bannerAd!.size.width.toDouble(),
           height: _bannerAd!.size.height.toDouble(),
-          alignment: Alignment.center,
           child: AdWidget(ad: _bannerAd!),
         ),
       );

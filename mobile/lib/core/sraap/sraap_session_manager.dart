@@ -11,6 +11,8 @@ class SraapSessionManager {
   String _cookieHeader = '';
   final Map<String, String> _cookies = {};
   http.Client _client = http.Client();
+  @visibleForTesting
+  set client(http.Client client) => _client = client;
   
   static String get baseUrl => kIsWeb ? '/api/sraap' : 'https://sraap.in';
   
@@ -53,11 +55,15 @@ class SraapSessionManager {
   }
 
   /// Fetches a fresh CAPTCHA image using the existing session.
-  Future<Uint8List?> fetchCaptcha() async {
+  /// If [forceFreshSession] is true, or if [isSessionExpired], or if [_cookieHeader.isEmpty],
+  /// a fresh PHP session is initialized first via /student_login.php.
+  Future<Uint8List?> fetchCaptcha({bool forceFreshSession = false}) async {
     lastDebugLog = '--- CAPTCHA FETCH LOG ---\n';
     try {
-      if (_cookieHeader.isEmpty) {
-        lastDebugLog += '1. No session cookie. Initializing via /student_login.php\n';
+      if (_cookieHeader.isEmpty || isSessionExpired || forceFreshSession) {
+        lastDebugLog += '1. Initializing fresh session via /student_login.php\n';
+        _cookies.clear();
+        _cookieHeader = '';
         final initRes = await _client.get(
           Uri.parse('$baseUrl/student_login.php'),
           headers: _headers(),
@@ -107,9 +113,9 @@ class SraapSessionManager {
       req.followRedirects = false; // CRITICAL: Stop auto-redirect to capture cookies correctly on mobile
     }
     req.bodyFields = {
-      'user_id': enrollment,
+      'user_id': enrollment.trim(),
       'user_password': password,
-      'token': captcha,
+      'token': captcha.trim(),
       'submit': 'Sign in',
     };
 

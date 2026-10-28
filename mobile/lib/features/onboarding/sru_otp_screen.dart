@@ -72,7 +72,14 @@ class _SruOtpScreenState extends State<SruOtpScreen> with CodeAutoFill {
     try {
       await AuthRepository.instance.verifyOtp(otpText);
       final role = AuthRepository.instance.currentRole ?? 'student';
+      final id = AuthRepository.instance.savedIdentifier;
       await StorageService.setUserMode(role);
+      if (id != null && id.isNotEmpty) {
+        await StorageService.saveUserIdentifier(id);
+        if (RegExp(r'\b2[0-9][0-9A-Za-z]{2}[A-Za-z0-9]{6}\b').hasMatch(id)) {
+          await StorageService.saveStudentRollNumber(id);
+        }
+      }
       
       if (mounted) {
         setState(() {

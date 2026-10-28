@@ -140,10 +140,142 @@ class SraapParser {
 
     return SraapAcademicData(
       overallAttendance: overallAttendance,
+      placementAttendance: existingData.placementAttendance,
       cgpa: existingData.cgpa,
       mentor: existingData.mentor,
       subjects: subjects,
       lastSynced: DateTime.now(),
     );
+  }
+
+  /// Parses placement/training attendance from https://sraap.in/student/std_training_atten_view.php
+  /// Supports summary KPI blocks, tables (total rows, sum of present/held, or row averages),
+  /// and contextual regex extraction. Never fabricates values or returns 0 on missing data.
+  static double? parsePlacementAttendance(String html) {
+    if (html.isEmpty) return null;
+    final document = html_parser.parse(html);
+
+    // 1. Look for explicit summary labels (e.g. "Total Attendance", "Overall %", "Training Attendance", "Attendance %")
+    final pElements = document.querySelectorAll('p, span, strong, b, h1, h2, h3, h4, h5, div');
+    for (var el in pElements) {
+      final text = el.text.trim();
+      final lower = text.toLowerCase();
+      if (lower == 'training attendance' ||
+          lower == 'placement attendance' ||
+          lower == 'total attendance' ||
+          lower == 'overall attendance' ||
+          lower == 'attendance %' ||
+          lower == 'overall %') {
+        final parent = el.parent;
+        if (parent != null) {
+          final parentText = parent.text;
+          final match = RegExp(r'(\d+(?:\.\d+)?)\s*%?').firstMatch(
+            parentText.replaceFirst(text, '').trim(),
+          );
+          if (match != null) {
+            final val = double.tryParse(match.group(1) ?? '');
+            if (val != null && val >= 0.0 && val <= 100.0) {
+              return double.parse(val.toStringAsFixed(1));
+            }
+          }
+        }
+      }
+    }
+
+    // 2. Look for table(s)
+    final tables = document.querySelectorAll('table');
+    for (var table in tables) {
+      final rows = table.querySelectorAll('tr');
+      if (rows.isEmpty) continue;
+
+      int pctCol = -1;
+      int presentCol = -1;
+      int totalCol = -1;
+
+      // Identify header columns
+      for (var row in rows) {
+        final headers = row.querySelectorAll('th, td');
+        for (int i = 0; i < headers.length; i++) {
+          final hText = headers[i].text.trim().toLowerCase();
+          if (hText.contains('%') || hText.contains('percentage') || hText.contains('atten %')) {
+            pctCol = i;
+          } else if (hText.contains('present') || hText.contains('attended')) {
+            presentCol = i;
+          } else if (hText.contains('held') || hText.contains('total') || hText.contains('conducted')) {
+            totalCol = i;
+          }
+        }
+        if (pctCol != -1 || (presentCol != -1 && totalCol != -1)) {
+          break;
+        }
+      }
+
+      int sumPresent = 0;
+      int sumTotal = 0;
+      double? totalRowPct;
+      final List<double> rowPcts = [];
+
+      for (var row in rows) {
+        final cells = row.querySelectorAll('td, th');
+        if (cells.length < 2) continue;
+        final rowText = row.text.toLowerCase();
+        final isTotalRow = rowText.contains('total') || rowText.contains('overall') || rowText.contains('average');
+
+        if (pctCol != -1 && pctCol < cells.length) {
+          final cellText = cells[pctCol].text.trim().replaceAll('%', '');
+          final val = double.tryParse(cellText);
+          if (val != null && val >= 0.0 && val <= 100.0) {
+            if (isTotalRow) {
+              totalRowPct = val;
+            } else {
+              rowPcts.add(val);
+            }
+          }
+        }
+
+        if (presentCol != -1 && totalCol != -1 && presentCol < cells.length && totalCol < cells.length) {
+          final pVal = int.tryParse(cells[presentCol].text.trim());
+          final tVal = int.tryParse(cells[totalCol].text.trim());
+          if (pVal != null && tVal != null && tVal > 0) {
+            if (isTotalRow) {
+              totalRowPct ??= (pVal / tVal) * 100.0;
+            } else {
+              sumPresent += pVal;
+              sumTotal += tVal;
+            }
+          }
+        }
+      }
+
+      if (totalRowPct != null) {
+        return double.parse(totalRowPct.toStringAsFixed(1)).clamp(0.0, 100.0);
+      }
+      if (sumTotal > 0) {
+        final calc = (sumPresent / sumTotal) * 100.0;
+        return double.parse(calc.toStringAsFixed(1)).clamp(0.0, 100.0);
+      }
+      if (rowPcts.isNotEmpty) {
+        final avg = rowPcts.reduce((a, b) => a + b) / rowPcts.length;
+        return double.parse(avg.toStringAsFixed(1)).clamp(0.0, 100.0);
+      }
+    }
+
+    // 3. Fallback: Search for percentage patterns in the entire document
+    final regexes = [
+      RegExp(r'(?:total|overall|training|placement)\s*attendance[^\d%]{0,30}(\d+(?:\.\d+)?)\s*%', caseSensitive: false),
+      RegExp(r'attendance\s*%[^\d%]{0,30}(\d+(?:\.\d+)?)\s*%', caseSensitive: false),
+      RegExp(r'(\d+(?:\.\d+)?)\s*%\s*(?:attendance|overall|training)', caseSensitive: false),
+    ];
+    for (final reg in regexes) {
+      final match = reg.firstMatch(html);
+      if (match != null) {
+        final val = double.tryParse(match.group(1) ?? '');
+        if (val != null && val >= 0.0 && val <= 100.0) {
+          return double.parse(val.toStringAsFixed(1));
+        }
+      }
+    }
+
+    return null;
   }
 }

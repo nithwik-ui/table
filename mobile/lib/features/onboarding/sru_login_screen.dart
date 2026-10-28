@@ -28,6 +28,23 @@ class _SruLoginScreenState extends State<SruLoginScreen> {
   String? _errorMessage;
 
   bool _rememberMe = true;
+  bool _isPasswordVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final savedId = StorageService.getUserIdentifier();
+    if (savedId != null && savedId.isNotEmpty) {
+      _identifierController.text = savedId;
+    }
+  }
+
+  @override
+  void dispose() {
+    _identifierController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   String _formatErrorMessage(dynamic error) {
     if (error == null) return '';
@@ -44,40 +61,36 @@ class _SruLoginScreenState extends State<SruLoginScreen> {
     return msg.replaceAll(RegExp(r'^(Exception|Error|SruAuthException):\s*'), '');
   }
 
-  void _navigateToOtpScreen() async {
+  void _navigateToOtpScreen() {
     final id = _identifierController.text.trim();
-    if (id.isNotEmpty) {
-      await StorageService.setUserMode(widget.role);
-      await StorageService.saveUserIdentifier(id);
-      if (RegExp(r'\b2[0-9][0-9A-Za-z]{2}[A-Za-z0-9]{6}\b').hasMatch(id)) {
-        await StorageService.saveStudentRollNumber(id);
-      }
+    if (id.isEmpty) {
+      setState(() => _errorMessage = 'Please enter your ID, mobile number, or email first.');
+      return;
     }
     AuthRepository.instance.setRole(widget.role);
-    if (!mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => const SruOtpScreen()),
     );
   }
 
   void _login() async {
+    final id = _identifierController.text.trim();
+    final password = _passwordController.text;
+    if (id.isEmpty || password.isEmpty) {
+      setState(() => _errorMessage = 'Please enter both your identifier and password.');
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
-    final id = _identifierController.text.trim();
-    await StorageService.setUserMode(widget.role);
-    await StorageService.saveUserIdentifier(id);
-    if (RegExp(r'\b2[0-9][0-9A-Za-z]{2}[A-Za-z0-9]{6}\b').hasMatch(id)) {
-      await StorageService.saveStudentRollNumber(id);
-    }
-
     try {
       AuthRepository.instance.setRole(widget.role);
       await AuthRepository.instance.login(
         id,
-        _passwordController.text,
+        password,
         rememberMe: _rememberMe,
       );
 
@@ -88,6 +101,12 @@ class _SruLoginScreenState extends State<SruLoginScreen> {
             MaterialPageRoute(builder: (context) => const SruOtpScreen()),
           );
         } else if (AuthRepository.instance.state == AuthState.authenticated) {
+          // Authenticated successfully! Only now is it safe to persist the user role and identifier.
+          await StorageService.setUserMode(widget.role);
+          await StorageService.saveUserIdentifier(id);
+          if (RegExp(r'\b2[0-9][0-9A-Za-z]{2}[A-Za-z0-9]{6}\b').hasMatch(id)) {
+            await StorageService.saveStudentRollNumber(id);
+          }
           TextInput.finishAutofillContext(shouldSave: true);
           try {
             await SyncService.instance.syncTimetable(force: true).timeout(const Duration(seconds: 20));
@@ -190,23 +209,41 @@ class _SruLoginScreenState extends State<SruLoginScreen> {
                   children: [
                     TextField(
                       controller: _identifierController,
-                      autofillHints: const [AutofillHints.username, AutofillHints.email],
-                      keyboardType: TextInputType.emailAddress,
+                      autofillHints: const [AutofillHints.username],
+                      keyboardType: TextInputType.text,
                       textInputAction: TextInputAction.next,
+                      enableSuggestions: true,
+                      autocorrect: false,
                       decoration: const InputDecoration(
-                        labelText: 'Mobile / SRU Email',
+                        labelText: 'Student ID / Mobile / SRU Email',
+                        hintText: 'e.g. 2103A51000 or email',
                         border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person_outline),
                       ),
                     ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: _passwordController,
-                      obscureText: true,
+                      obscureText: !_isPasswordVisible,
                       autofillHints: const [AutofillHints.password],
-                      onEditingComplete: () => TextInput.finishAutofillContext(),
-                      decoration: const InputDecoration(
+                      textInputAction: TextInputAction.done,
+                      enableSuggestions: false,
+                      autocorrect: false,
+                      onSubmitted: (_) {
+                        if (!_isLoading) _login();
+                      },
+                      decoration: InputDecoration(
                         labelText: 'Password',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          icon: Icon(_isPasswordVisible ? Icons.visibility_off : Icons.visibility),
+                          onPressed: () {
+                            setState(() {
+                              _isPasswordVisible = !_isPasswordVisible;
+                            });
+                          },
+                        ),
                       ),
                     ),
                   ],

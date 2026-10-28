@@ -166,6 +166,65 @@ class SraapAcademicService {
 
   SraapAcademicData? getCachedAcademicData() => _getCachedData();
 
+  /// Returns locally cached placement/training attendance percentage if present.
+  double? getCachedPlacementAttendance() {
+    return StorageService.getPlacementAttendance() ?? _getCachedData()?.placementAttendance;
+  }
+
+  /// Fetches placement/training attendance from https://sraap.in/student/std_training_atten_view.php
+  /// Uses existing authenticated SRAAP session without prompting or bypassing security.
+  Future<double?> fetchPlacementAttendance() async {
+    try {
+      if (!StorageService.isSraapConnected()) return null;
+
+      if (SraapSessionManager.instance.cookieHeader.isEmpty) {
+        await SraapSessionManager.instance.restoreSession();
+      }
+
+      final res = await SraapSessionManager.instance.get('/student/std_training_atten_view.php');
+      final body = res.body;
+
+      final isLoginPage = body.contains('slogin.php') ||
+          body.contains('student_login') ||
+          body.contains('In Valid Login') ||
+          body.contains('Enter Enrolment No') ||
+          body.contains('user_password') ||
+          res.statusCode == 302 ||
+          res.statusCode == 301;
+
+      if (isLoginPage) {
+        SraapSessionManager.instance.isSessionExpired = true;
+        throw const SraapSessionExpiredException();
+      }
+
+      final pct = SraapParser.parsePlacementAttendance(body);
+      if (pct != null) {
+        await StorageService.savePlacementAttendance(pct);
+
+        // Also atomically merge into cached SraapAcademicData if cached
+        final cached = _getCachedData();
+        if (cached != null) {
+          final merged = SraapAcademicData(
+            overallAttendance: cached.overallAttendance,
+            placementAttendance: pct,
+            subjects: cached.subjects,
+            cgpa: cached.cgpa,
+            mentor: cached.mentor,
+            lastSynced: cached.lastSynced,
+          );
+          await StorageService.saveSraapAcademicCache(merged.toJson());
+        }
+      }
+      return pct;
+    } catch (e) {
+      debugPrint('[SRAAP] Placement attendance fetch error: $e');
+      if (e is SraapSessionExpiredException) {
+        rethrow;
+      }
+      return null;
+    }
+  }
+
   SraapAcademicData? _getCachedData() {
     final raw = StorageService.getSraapAcademicCache();
     if (raw != null) {

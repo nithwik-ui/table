@@ -20,13 +20,65 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   String? _errorMessage;
   bool _isOffline = false;
 
+  // Placement Attendance State
+  double? _placementAttendance;
+  bool _isLoadingPlacement = true;
+  bool _placementError = false;
+
   @override
   void initState() {
     super.initState();
+    _placementAttendance = SraapAcademicService.instance.getCachedPlacementAttendance();
+    _isLoadingPlacement = _placementAttendance == null;
     _loadAttendance();
+    _loadPlacementAttendance();
+  }
+
+  Future<void> _loadPlacementAttendance({bool forceRefresh = false}) async {
+    if (!StorageService.isSraapConnected()) {
+      if (mounted) {
+        setState(() {
+          _isLoadingPlacement = false;
+        });
+      }
+      return;
+    }
+
+    if (mounted && _placementAttendance == null) {
+      setState(() {
+        _isLoadingPlacement = true;
+        _placementError = false;
+      });
+    }
+
+    try {
+      final fresh = await SraapAcademicService.instance.fetchPlacementAttendance();
+      if (mounted) {
+        setState(() {
+          if (fresh != null) {
+            _placementAttendance = fresh;
+            _placementError = false;
+          }
+          _isLoadingPlacement = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('[SRAAP] Placement attendance fetch error: $e');
+      if (mounted) {
+        setState(() {
+          if (_placementAttendance == null) {
+            _placementError = true;
+          }
+          _isLoadingPlacement = false;
+        });
+      }
+    }
   }
 
   Future<void> _loadAttendance({bool forceRefresh = false}) async {
+    // Non-blocking trigger of placement attendance refresh
+    _loadPlacementAttendance(forceRefresh: forceRefresh);
+
     // 1. Immediately render cached data
     final cached = SraapAcademicService.instance.getCachedAcademicData();
     if (cached != null && _data == null) {
@@ -371,6 +423,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         _buildSubjectSectionHeader(subjects.length),
         const SizedBox(height: 12),
         ...subjects.map((sub) => _buildSubjectCard(sub)),
+        const SizedBox(height: 20),
+        _buildPlacementSectionHeader(),
+        const SizedBox(height: 12),
+        _buildPlacementAttendanceCard(),
         const SizedBox(height: 16),
         _buildFooterInfoCard(),
         const SizedBox(height: 24),
@@ -481,29 +537,33 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          '${overall.toStringAsFixed(1)}%',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: statusColor,
-                            letterSpacing: -0.5,
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            '${overall.toStringAsFixed(1)}%',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              color: statusColor,
+                              letterSpacing: -0.5,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Text(
-                          '/ 100%',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF64748B),
+                          const SizedBox(width: 4),
+                          const Text(
+                            '/ 100%',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF64748B),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -649,15 +709,22 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildLegendItem(const Color(0xFF16A34A), '75%+ Safe'),
-          Container(width: 1, height: 12, color: const Color(0xFFE2E8F0)),
-          _buildLegendItem(const Color(0xFFD97706), '65–74.99% Condonation'),
-          Container(width: 1, height: 12, color: const Color(0xFFE2E8F0)),
-          _buildLegendItem(const Color(0xFFDC2626), '<65% Warning'),
-        ],
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildLegendItem(const Color(0xFF16A34A), '75%+ Safe'),
+            const SizedBox(width: 12),
+            Container(width: 1, height: 12, color: const Color(0xFFE2E8F0)),
+            const SizedBox(width: 12),
+            _buildLegendItem(const Color(0xFFD97706), '65–74% Condonation'),
+            const SizedBox(width: 12),
+            Container(width: 1, height: 12, color: const Color(0xFFE2E8F0)),
+            const SizedBox(width: 12),
+            _buildLegendItem(const Color(0xFFDC2626), '<65% Warning'),
+          ],
+        ),
       ),
     );
   }
@@ -759,27 +826,34 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFD5E3FF),
-                borderRadius: BorderRadius.circular(8),
+        Flexible(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD5E3FF),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.menu_book_rounded, size: 18, color: Color(0xFF003870)),
               ),
-              child: const Icon(Icons.menu_book_rounded, size: 18, color: Color(0xFF003870)),
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'Subject Attendance',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A),
+              const SizedBox(width: 8),
+              const Flexible(
+                child: Text(
+                  'Subject Attendance',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0F172A),
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
+        const SizedBox(width: 8),
         Text(
           '$count Courses Enrolled',
           style: const TextStyle(
@@ -977,7 +1051,245 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               ),
             ),
           ),
-          Icon(Icons.chevron_right_rounded, size: 18, color: Color(0xFF003870)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlacementSectionHeader() {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(5),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEFF6FF),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(Icons.school_rounded, size: 16, color: Color(0xFF003870)),
+        ),
+        const SizedBox(width: 8),
+        const Text(
+          'Placements Attendance',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF0F172A),
+            letterSpacing: -0.2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlacementAttendanceCard() {
+    if (_isLoadingPlacement && _placementAttendance == null) {
+      return Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x060F172A),
+              blurRadius: 10,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF003870)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Placements Attendance',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Loading attendance...',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_placementError && _placementAttendance == null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x060F172A),
+              blurRadius: 10,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.error_outline_rounded, size: 22, color: Color(0xFFDC2626)),
+            ),
+            const SizedBox(width: 14),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Placements Attendance',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Unable to update',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded, size: 20, color: Color(0xFF003870)),
+              tooltip: 'Retry',
+              onPressed: () => _loadPlacementAttendance(forceRefresh: true),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final pct = _placementAttendance ?? 0.0;
+    final isSafe = pct >= 75.0;
+    final isCondonation = pct >= 65.0 && pct < 75.0;
+
+    final Color statusColor = isSafe
+        ? const Color(0xFF16A34A)
+        : isCondonation
+            ? const Color(0xFFD97706)
+            : const Color(0xFFDC2626);
+
+    final Color iconBg = isSafe
+        ? const Color(0xFFDCFCE7)
+        : isCondonation
+            ? const Color(0xFFFEF3C7)
+            : const Color(0xFFFEE2E2);
+
+    final formattedPct = pct.truncateToDouble() == pct ? '${pct.toInt()}%' : '${pct.toStringAsFixed(1)}%';
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x060F172A),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.school_rounded, size: 22, color: statusColor),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Placements Attendance',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Campus Recruitment & Training',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                formattedPct,
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  color: statusColor,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: LinearProgressIndicator(
+              value: (pct / 100.0).clamp(0.0, 1.0),
+              minHeight: 7,
+              backgroundColor: const Color(0xFFE2E8F0),
+              valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+            ),
+          ),
         ],
       ),
     );

@@ -111,28 +111,46 @@ class SraapAuthManager extends ChangeNotifier {
 
       final body = response.body.toLowerCase();
 
-      if (response.statusCode == 302 || (response.statusCode == 200 && body.contains('logout'))) {
+      final bool isSuccess = response.statusCode == 302 ||
+          response.statusCode == 301 ||
+          (response.statusCode == 200 &&
+              (body.contains('logout') ||
+               body.contains('attendancetable') ||
+               body.contains('welcome to')) &&
+              !body.contains('student_login'));
+
+      if (isSuccess) {
         return SraapLoginResult(
           success: true,
           cookieHeader: SraapSessionManager.instance.cookieHeader,
         );
       }
-      if (body.contains('invalid captcha') || body.contains('captcha')) {
-        return SraapLoginResult(success: false, error: SraapLoginError.invalidCaptcha);
+
+      if (body.contains('access restricted') || body.contains('shared public ip')) {
+        return const SraapLoginResult(success: false, error: SraapLoginError.portalUnavailable);
       }
-      if (body.contains('invalid') || body.contains('incorrect') || body.contains('wrong')) {
-        return SraapLoginResult(success: false, error: SraapLoginError.invalidCredentials);
+
+      if (body.contains('enter captcha code') || body.contains('invalid captcha')) {
+        return const SraapLoginResult(success: false, error: SraapLoginError.invalidCaptcha);
       }
-      return SraapLoginResult(success: false, error: SraapLoginError.unknown);
+
+      if (body.contains("sorry, i don't recognize you") ||
+          body.contains('recheck') ||
+          body.contains('wrong password') ||
+          body.contains('forgot / reset password')) {
+        return const SraapLoginResult(success: false, error: SraapLoginError.invalidCredentials);
+      }
+
+      return const SraapLoginResult(success: false, error: SraapLoginError.unknown);
     } catch (e) {
       if (e is TimeoutException) {
-        return SraapLoginResult(success: false, error: SraapLoginError.timeout);
+        return const SraapLoginResult(success: false, error: SraapLoginError.timeout);
       }
       final eStr = e.toString().toLowerCase();
       if (eStr.contains('socketexception') || eStr.contains('clientexception') || eStr.contains('xmlhttprequest')) {
-        return SraapLoginResult(success: false, error: SraapLoginError.networkUnavailable);
+        return const SraapLoginResult(success: false, error: SraapLoginError.networkUnavailable);
       }
-      return SraapLoginResult(success: false, error: SraapLoginError.portalUnavailable);
+      return const SraapLoginResult(success: false, error: SraapLoginError.portalUnavailable);
     }
   }
 

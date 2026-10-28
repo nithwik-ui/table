@@ -55,7 +55,7 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
       _errorMessage = null;
     });
     
-    final bytes = await SraapSessionManager.instance.fetchCaptcha();
+    final bytes = await SraapSessionManager.instance.fetchCaptcha(forceFreshSession: true);
     
     if (mounted) {
       setState(() {
@@ -88,10 +88,20 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
 
       if (!mounted) return;
 
-      if (res.statusCode == 302 || res.statusCode == 301 || res.body.toLowerCase().contains('logout') || res.bodyBytes.length > 10000) {
+      final body = res.body.toLowerCase();
+      final bool isSuccess = res.statusCode == 302 ||
+          res.statusCode == 301 ||
+          (res.statusCode == 200 &&
+              (body.contains('logout') ||
+               body.contains('attendancetable') ||
+               body.contains('welcome to')) &&
+              !body.contains('student_login'));
+
+      if (isSuccess) {
         // Success - prompt OS / Google Password Manager to save credentials
         TextInput.finishAutofillContext(shouldSave: true);
         await StorageService.setSraapConnected(true);
+        SraapSessionManager.instance.isSessionExpired = false;
         await StorageService.saveStudentRollNumber(_enrollmentCtrl.text.trim());
         await SecureSessionStore.saveSession({
           'sraap_roll': _enrollmentCtrl.text.trim(),
@@ -105,12 +115,17 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
           Navigator.of(context).pop(true);
         }
       } else {
-        if (res.body.toLowerCase().contains('access restricted') || res.body.toLowerCase().contains('shared public ip')) {
+        if (body.contains('access restricted') || body.contains('shared public ip')) {
           setState(() => _errorMessage = "SRAAP has blocked your current WiFi network due to too many requests. Please switch to Mobile Data (4G/5G) and try again.");
-        } else if (res.body.toLowerCase().contains('captcha')) {
+        } else if (body.contains('enter captcha code') || body.contains('invalid captcha')) {
           setState(() => _errorMessage = "Incorrect CAPTCHA. Please try again.");
-        } else {
+        } else if (body.contains("sorry, i don't recognize you") ||
+            body.contains('recheck') ||
+            body.contains('wrong password') ||
+            body.contains('forgot / reset password')) {
           setState(() => _errorMessage = "Incorrect enrollment number or password.");
+        } else {
+          setState(() => _errorMessage = "Login failed. Please check your details and try again.");
         }
         _captchaCtrl.clear();
         _fetchCaptcha(); // Refresh captcha on failure
@@ -289,6 +304,9 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
               // CAPTCHA Input
               TextField(
                 controller: _captchaCtrl,
+                textCapitalization: TextCapitalization.none,
+                autocorrect: false,
+                enableSuggestions: false,
                 decoration: InputDecoration(
                   hintText: 'Enter CAPTCHA',
                   filled: true,
