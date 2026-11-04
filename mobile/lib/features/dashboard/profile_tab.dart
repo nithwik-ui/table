@@ -41,7 +41,7 @@ class _ProfileTabState extends State<ProfileTab> {
   String _lastSyncedText = 'Never';
   
   bool _notificationsEnabled = true;
-  int _reminderMinutes = 15;
+  int _reminderMinutes = 9;
   bool _isRefreshing = false;
   bool _isCheckingUpdate = false;
   String _currentVersion = AppConstants.currentVersion;
@@ -637,8 +637,7 @@ class _ProfileTabState extends State<ProfileTab> {
                           ),
                         ),
                         _buildReminderRadioTile('OFF', 0),
-                        _buildReminderRadioTile('15 minutes before', 15),
-                        _buildReminderRadioTile('30 minutes before', 30),
+                        _buildReminderRadioTile('9 minutes before', 9),
                         const SizedBox(height: 6),
                       ],
                     ),

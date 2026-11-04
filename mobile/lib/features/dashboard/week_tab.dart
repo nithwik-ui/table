@@ -446,11 +446,11 @@ class _WeekTabState extends State<WeekTab> {
                               (SyncService.instance.syncState == SyncState.sessionExpired ||
                                       AuthRepository.instance.state == AuthState.sessionExpired)
                                   ? 'Session expired'
-                                  : 'Offline · Showing saved timetable',
+                                  : 'Offline · No timetable available',
                               style: AppConstants.getHeadline().copyWith(fontSize: 14, color: AppConstants.error),
                             ),
                             Text(
-                              'Showing last synchronized timetable.',
+                              'Please check your internet connection or log in.',
                               style: AppConstants.getBodyMedium(color: AppConstants.error.withValues(alpha: 0.8)),
                             ),
                           ],

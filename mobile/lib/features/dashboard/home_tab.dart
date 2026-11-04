@@ -33,6 +33,7 @@ class _HomeTabState extends State<HomeTab> {
   String? _userName;
   String _contextLine = '';
   String _freshnessText = 'Syncing...';
+  bool _isFresh = true;
   
   Map<String, dynamic>? _upNextClass;
   String _upNextStatus = '';
@@ -158,17 +159,26 @@ class _HomeTabState extends State<HomeTab> {
     final lastSynced = repo.metadata.lastUpdated ?? StorageService.getLastSyncedAt();
     
     String computedFreshness;
+    bool isFresh = false;
     if (lastSynced == null) {
       computedFreshness = 'Never updated';
+      isFresh = false;
     } else {
       final diff = DateTime.now().difference(lastSynced);
       if (diff.inMinutes < 1) {
         computedFreshness = 'Updated just now';
+        isFresh = true;
       } else if (diff.inMinutes < 60) {
         computedFreshness = 'Updated ${diff.inMinutes} min ago';
-      } else {
+        isFresh = true;
+      } else if (diff.inHours < 24) {
         final hours = diff.inHours;
         computedFreshness = 'Updated $hours hr ago';
+        isFresh = true;
+      } else {
+        final days = diff.inDays;
+        computedFreshness = days == 1 ? 'Updated yesterday' : 'Updated $days days ago';
+        isFresh = false;
       }
     }
 
@@ -179,6 +189,7 @@ class _HomeTabState extends State<HomeTab> {
 
     setState(() {
       _freshnessText = computedFreshness;
+      _isFresh = isFresh;
       _todayClasses = repo.todayClasses;
       _upNextClass = repo.upNextClass;
       _upNextStatus = repo.upNextStatus;
@@ -190,6 +201,33 @@ class _HomeTabState extends State<HomeTab> {
       _isSyncUnavailable = SyncService.instance.syncState != SyncState.online;
       _isOffline = repo.classes.isEmpty && _isSyncUnavailable;
     });
+  }
+
+  String get _syncStatusText {
+    if (_isRefreshing || SyncService.instance.isSyncing) {
+      return 'Syncing timetable...';
+    }
+    final repo = TimetableRepository.instance;
+    if (repo.classes.isEmpty) {
+      if (SyncService.instance.syncState == SyncState.sessionExpired) {
+        return 'Session expired · Please log in';
+      }
+      return 'Offline · No saved timetable';
+    }
+    if (_isFresh) {
+      return _freshnessText;
+    }
+    if (_isSyncUnavailable) {
+      return 'Showing saved timetable · $_freshnessText';
+    }
+    return _freshnessText;
+  }
+
+  bool get _shouldShowSyncWarning {
+    if (_isRefreshing || SyncService.instance.isSyncing) return false;
+    final repo = TimetableRepository.instance;
+    if (repo.classes.isEmpty) return true;
+    return !_isFresh && _isSyncUnavailable;
   }
 
   Future<void> _enableWebNotifications() async {
@@ -416,11 +454,11 @@ class _HomeTabState extends State<HomeTab> {
                               (SyncService.instance.syncState == SyncState.sessionExpired ||
                                       AuthRepository.instance.state == AuthState.sessionExpired)
                                   ? 'Session expired'
-                                  : 'Offline · Showing saved timetable',
+                                  : 'Offline · No timetable available',
                               style: AppConstants.getHeadline().copyWith(fontSize: 14, color: AppConstants.error),
                             ),
                             Text(
-                              'Last ${_freshnessText.toLowerCase()}',
+                              'Please check your internet connection or log in.',
                               style: AppConstants.getBodyMedium(color: AppConstants.error.withValues(alpha: 0.8)),
                             ),
                           ],
@@ -568,31 +606,30 @@ class _HomeTabState extends State<HomeTab> {
                     // Sync status row
                     Row(
                       children: [
-                        Icon(
-                          _isSyncUnavailable ? Icons.cloud_off_outlined : Icons.sync,
-                          color: _isSyncUnavailable ? AppConstants.warningText : AppConstants.textSecondary,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 6),
+                        if (_isRefreshing || SyncService.instance.isSyncing) ...[
+                          SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 1.5, color: AppConstants.textSecondary),
+                          ),
+                          const SizedBox(width: 8),
+                        ] else ...[
+                          Icon(
+                            _shouldShowSyncWarning ? Icons.cloud_off_outlined : Icons.schedule_outlined,
+                            color: _shouldShowSyncWarning ? AppConstants.warningText : AppConstants.textSecondary,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 6),
+                        ],
                         Expanded(
                           child: Text(
-                            _isSyncUnavailable && TimetableRepository.instance.classes.isNotEmpty
-                                ? 'Offline · Showing saved timetable · Last ${_freshnessText.toLowerCase()}'
-                                : _freshnessText,
+                            _syncStatusText,
                             style: AppConstants.getLabelSmall(
-                              color: _isSyncUnavailable ? AppConstants.warningText : AppConstants.textSecondary,
+                              color: _shouldShowSyncWarning ? AppConstants.warningText : AppConstants.textSecondary,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (_isRefreshing) ...[
-                          const SizedBox(width: 8),
-                          SizedBox(
-                            width: 12,
-                            height: 12,
-                            child: CircularProgressIndicator(strokeWidth: 1.5, color: AppConstants.textSecondary),
-                          )
-                        ],
                       ],
                     ),
                     const SizedBox(height: 18),

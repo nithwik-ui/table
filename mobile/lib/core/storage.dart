@@ -212,7 +212,7 @@ class StorageService {
     if (!enabled) {
       await _prefsBox?.put('class_reminder_minutes', 0);
     } else if (getClassReminderMinutes() == 0) {
-      await _prefsBox?.put('class_reminder_minutes', 15);
+      await _prefsBox?.put('class_reminder_minutes', 9);
     }
   }
 
@@ -223,7 +223,7 @@ class StorageService {
     return enabled;
   }
 
-  /// Class reminder lead time in minutes: 0 (OFF), 15, or 30. Default is 15 when enabled.
+  /// Class reminder lead time in minutes: 0 (OFF) or 9 (9 minutes before). Default is 9 when enabled.
   static Future<void> setClassReminderMinutes(int minutes) async {
     await _prefsBox?.put('class_reminder_minutes', minutes);
     await _prefsBox?.put('class_reminders_enabled', minutes > 0);
@@ -233,8 +233,11 @@ class StorageService {
     final enabled = _prefsBox?.get('class_reminders_enabled', defaultValue: true) as bool? ?? true;
     if (!enabled) return 0;
     final mins = _prefsBox?.get('class_reminder_minutes') as int?;
-    if (mins != null) return mins;
-    return 15;
+    if (mins != null) {
+      if (mins == 15 || mins == 30) return 9;
+      return mins;
+    }
+    return 9;
   }
 
   // DATA FRESHNESS

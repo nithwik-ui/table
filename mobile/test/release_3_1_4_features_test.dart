@@ -208,19 +208,22 @@ void main() {
     });
   });
 
-  group('5. Notification Reminder Preferences (OFF, 15m, 30m)', () {
-    test('Persists 0 (OFF), 15 min, and 30 min reminder preferences cleanly', () async {
+  group('5. Notification Reminder Preferences (OFF, 9m)', () {
+    test('Persists 0 (OFF) and 9 min reminder preferences cleanly', () async {
       await StorageService.setClassReminderMinutes(0);
       expect(StorageService.getClassReminderMinutes(), equals(0));
       expect(StorageService.isClassRemindersEnabled(), isFalse);
 
-      await StorageService.setClassReminderMinutes(15);
-      expect(StorageService.getClassReminderMinutes(), equals(15));
+      await StorageService.setClassReminderMinutes(9);
+      expect(StorageService.getClassReminderMinutes(), equals(9));
       expect(StorageService.isClassRemindersEnabled(), isTrue);
 
+      // Legacy 15 and 30 min migration cleanly migrates to 9
+      await StorageService.setClassReminderMinutes(15);
+      expect(StorageService.getClassReminderMinutes(), equals(9));
+
       await StorageService.setClassReminderMinutes(30);
-      expect(StorageService.getClassReminderMinutes(), equals(30));
-      expect(StorageService.isClassRemindersEnabled(), isTrue);
+      expect(StorageService.getClassReminderMinutes(), equals(9));
     });
   });
 
