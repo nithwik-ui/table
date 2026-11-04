@@ -73,7 +73,10 @@ class SraapAcademicService {
   /// Sends a background heartbeat to keep the session alive and refresh attendance.
   Future<SraapAcademicData?> pingKeepAlive() async {
     try {
-      if (!StorageService.isSraapConnected()) return null;
+      if (!StorageService.isSraapConnected() ||
+          SraapSessionManager.instance.isLoginFlowActive) {
+        return null;
+      }
       return await fetchFreshDataSilently();
     } catch (_) {
       return null;
@@ -85,7 +88,10 @@ class SraapAcademicService {
   /// Never throws exceptions, never wipes cached data, and preserves session keep-alive.
   Future<SraapAcademicData?> fetchFreshDataSilently() async {
     try {
-      if (!StorageService.isSraapConnected()) return null;
+      if (!StorageService.isSraapConnected() ||
+          SraapSessionManager.instance.isLoginFlowActive) {
+        return null;
+      }
       return await _fetchFreshData();
     } catch (e) {
       debugPrint('[SRAAP] Silent live sync: $e');
@@ -103,7 +109,9 @@ class SraapAcademicService {
     final dashboardRes = await SraapSessionManager.instance.get('/student/dash_board.php');
     final body = dashboardRes.body;
 
-    final isLoginPage = body.contains('student_login') ||
+    final isLoginPage = body.contains('slogin.php') ||
+        body.contains('In Valid Login') ||
+        body.contains('student_login') ||
         body.contains('Enter Enrolment No') ||
         body.contains('user_password') ||
         dashboardRes.statusCode == 302 ||
@@ -175,7 +183,10 @@ class SraapAcademicService {
   /// Uses existing authenticated SRAAP session without prompting or bypassing security.
   Future<double?> fetchPlacementAttendance() async {
     try {
-      if (!StorageService.isSraapConnected()) return null;
+      if (!StorageService.isSraapConnected() ||
+          SraapSessionManager.instance.isLoginFlowActive) {
+        return null;
+      }
 
       if (SraapSessionManager.instance.cookieHeader.isEmpty) {
         await SraapSessionManager.instance.restoreSession();

@@ -55,9 +55,9 @@ class _NotificationDiagnosticsScreenState extends State<NotificationDiagnosticsS
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: AppConstants.background,
-        body: Center(child: CircularProgressIndicator()),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 

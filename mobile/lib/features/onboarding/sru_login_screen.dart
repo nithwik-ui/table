@@ -195,7 +195,7 @@ class _SruLoginScreenState extends State<SruLoginScreen> {
                                 ),
                               ),
                               const SizedBox(width: 4),
-                              const Icon(Icons.arrow_forward, size: 16, color: AppConstants.primary),
+                              Icon(Icons.arrow_forward, size: 16, color: AppConstants.primary),
                             ],
                           ),
                         ),
@@ -328,7 +328,7 @@ class _SruLoginScreenState extends State<SruLoginScreen> {
                         style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
                       ),
                     ),
-                    const Text(' • ', style: TextStyle(color: AppConstants.textSecondary)),
+                    Text(' • ', style: TextStyle(color: AppConstants.textSecondary)),
                     TextButton(
                       onPressed: () async {
                         final url = Uri.parse(widget.role == 'student'

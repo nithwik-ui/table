@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:hive_flutter/hive_flutter.dart';
+
 class StorageService {
   static Box? _prefsBox;
   static Box? _cacheBox;
@@ -22,14 +23,20 @@ class StorageService {
         }
         return true;
       }).toList();
-      
+
       if (validChanges.length != cachedChanges.length) {
         await saveChangesCache(validChanges);
       }
     }
+  }
 
-    // Migration removed - app now requires SRU authentication
+  // THEME PERSISTENCE ('system', 'light', 'dark')
+  static Future<void> setThemeMode(String mode) async {
+    await _prefsBox?.put('theme_mode', mode);
+  }
 
+  static String getThemeMode() {
+    return _prefsBox?.get('theme_mode', defaultValue: 'system') as String? ?? 'system';
   }
 
   static Future<void> setUserMode(String mode) async {
@@ -69,25 +76,29 @@ class StorageService {
   }
 
   // FCM Diagnostics Tracking
-  static Future<void> saveFcmLastRegistration(DateTime dt) async => await _prefsBox?.put('fcm_last_registration', dt.toIso8601String());
+  static Future<void> saveFcmLastRegistration(DateTime dt) async =>
+      await _prefsBox?.put('fcm_last_registration', dt.toIso8601String());
   static DateTime? getFcmLastRegistration() {
     final s = _prefsBox?.get('fcm_last_registration') as String?;
     return s != null ? DateTime.tryParse(s) : null;
   }
 
-  static Future<void> saveFcmLastTokenRefresh(DateTime dt) async => await _prefsBox?.put('fcm_last_token_refresh', dt.toIso8601String());
+  static Future<void> saveFcmLastTokenRefresh(DateTime dt) async =>
+      await _prefsBox?.put('fcm_last_token_refresh', dt.toIso8601String());
   static DateTime? getFcmLastTokenRefresh() {
     final s = _prefsBox?.get('fcm_last_token_refresh') as String?;
     return s != null ? DateTime.tryParse(s) : null;
   }
 
-  static Future<void> saveFcmLastBackendSync(DateTime dt) async => await _prefsBox?.put('fcm_last_backend_sync', dt.toIso8601String());
+  static Future<void> saveFcmLastBackendSync(DateTime dt) async =>
+      await _prefsBox?.put('fcm_last_backend_sync', dt.toIso8601String());
   static DateTime? getFcmLastBackendSync() {
     final s = _prefsBox?.get('fcm_last_backend_sync') as String?;
     return s != null ? DateTime.tryParse(s) : null;
   }
 
-  static Future<void> saveFcmLastTest(DateTime dt) async => await _prefsBox?.put('fcm_last_test', dt.toIso8601String());
+  static Future<void> saveFcmLastTest(DateTime dt) async =>
+      await _prefsBox?.put('fcm_last_test', dt.toIso8601String());
   static DateTime? getFcmLastTest() {
     final s = _prefsBox?.get('fcm_last_test') as String?;
     return s != null ? DateTime.tryParse(s) : null;
@@ -133,7 +144,7 @@ class StorageService {
   static Future<void> clearSelection() async {
     await _prefsBox?.delete('user_profile_json');
     await _prefsBox?.delete('last_synced_at');
-    
+
     // Clear caches
     await _cacheBox?.delete('timetable');
     await _cacheBox?.delete('changes');
@@ -144,7 +155,7 @@ class StorageService {
   static Future<void> clearFacultySelection() async {
     await _prefsBox?.delete('user_profile_json');
     await _prefsBox?.delete('faculty_last_synced_at');
-    
+
     // Clear caches
     await _cacheBox?.delete('faculty_timetable');
     await _cacheBox?.delete('faculty_calendar_overrides');
@@ -174,7 +185,6 @@ class StorageService {
     await clearFacultySelection();
   }
 
-
   static List<int> getScheduledReminderIds(String mode) {
     final ids = _prefsBox?.get('${mode}_scheduled_reminders') as List<dynamic>?;
     return ids?.cast<int>() ?? [];
@@ -199,10 +209,32 @@ class StorageService {
 
   static Future<void> setClassRemindersEnabled(bool enabled) async {
     await _prefsBox?.put('class_reminders_enabled', enabled);
+    if (!enabled) {
+      await _prefsBox?.put('class_reminder_minutes', 0);
+    } else if (getClassReminderMinutes() == 0) {
+      await _prefsBox?.put('class_reminder_minutes', 15);
+    }
   }
 
   static bool isClassRemindersEnabled() {
-    return _prefsBox?.get('class_reminders_enabled', defaultValue: true) as bool? ?? true;
+    final enabled = _prefsBox?.get('class_reminders_enabled', defaultValue: true) as bool? ?? true;
+    final mins = _prefsBox?.get('class_reminder_minutes') as int?;
+    if (mins != null) return mins > 0 && enabled;
+    return enabled;
+  }
+
+  /// Class reminder lead time in minutes: 0 (OFF), 15, or 30. Default is 15 when enabled.
+  static Future<void> setClassReminderMinutes(int minutes) async {
+    await _prefsBox?.put('class_reminder_minutes', minutes);
+    await _prefsBox?.put('class_reminders_enabled', minutes > 0);
+  }
+
+  static int getClassReminderMinutes() {
+    final enabled = _prefsBox?.get('class_reminders_enabled', defaultValue: true) as bool? ?? true;
+    if (!enabled) return 0;
+    final mins = _prefsBox?.get('class_reminder_minutes') as int?;
+    if (mins != null) return mins;
+    return 15;
   }
 
   // DATA FRESHNESS
@@ -213,7 +245,7 @@ class StorageService {
   static DateTime? getLastSyncedAt() {
     final str = _prefsBox?.get('last_synced_at') as String?;
     if (str == null) return null;
-    return DateTime.parse(str);
+    return DateTime.tryParse(str);
   }
 
   static Future<void> saveFacultyLastSyncedAt(DateTime dateTime) async {
@@ -223,7 +255,7 @@ class StorageService {
   static DateTime? getFacultyLastSyncedAt() {
     final str = _prefsBox?.get('faculty_last_synced_at') as String?;
     if (str == null) return null;
-    return DateTime.parse(str);
+    return DateTime.tryParse(str);
   }
 
   // TIMETABLE CACHE
@@ -305,26 +337,39 @@ class StorageService {
   }
 
   // FEATURE TOGGLES
-  static Future<void> setTimetableChangesEnabled(bool enabled) async => await _prefsBox?.put('timetable_changes_enabled', enabled);
-  static bool isTimetableChangesEnabled() => _prefsBox?.get('timetable_changes_enabled', defaultValue: true) as bool? ?? true;
+  static Future<void> setTimetableChangesEnabled(bool enabled) async =>
+      await _prefsBox?.put('timetable_changes_enabled', enabled);
+  static bool isTimetableChangesEnabled() =>
+      _prefsBox?.get('timetable_changes_enabled', defaultValue: true) as bool? ?? true;
 
-  static Future<void> setRoomChangesEnabled(bool enabled) async => await _prefsBox?.put('room_changes_enabled', enabled);
-  static bool isRoomChangesEnabled() => _prefsBox?.get('room_changes_enabled', defaultValue: true) as bool? ?? true;
+  static Future<void> setRoomChangesEnabled(bool enabled) async =>
+      await _prefsBox?.put('room_changes_enabled', enabled);
+  static bool isRoomChangesEnabled() =>
+      _prefsBox?.get('room_changes_enabled', defaultValue: true) as bool? ?? true;
 
-  static Future<void> setFacultyChangesEnabled(bool enabled) async => await _prefsBox?.put('faculty_changes_enabled', enabled);
-  static bool isFacultyChangesEnabled() => _prefsBox?.get('faculty_changes_enabled', defaultValue: true) as bool? ?? true;
+  static Future<void> setFacultyChangesEnabled(bool enabled) async =>
+      await _prefsBox?.put('faculty_changes_enabled', enabled);
+  static bool isFacultyChangesEnabled() =>
+      _prefsBox?.get('faculty_changes_enabled', defaultValue: true) as bool? ?? true;
 
-  static Future<void> setCancelledClassesEnabled(bool enabled) async => await _prefsBox?.put('cancelled_classes_enabled', enabled);
-  static bool isCancelledClassesEnabled() => _prefsBox?.get('cancelled_classes_enabled', defaultValue: true) as bool? ?? true;
+  static Future<void> setCancelledClassesEnabled(bool enabled) async =>
+      await _prefsBox?.put('cancelled_classes_enabled', enabled);
+  static bool isCancelledClassesEnabled() =>
+      _prefsBox?.get('cancelled_classes_enabled', defaultValue: true) as bool? ?? true;
 
-  static Future<void> setGeneralAnnouncementsEnabled(bool enabled) async => await _prefsBox?.put('general_announcements_enabled', enabled);
-  static bool isGeneralAnnouncementsEnabled() => _prefsBox?.get('general_announcements_enabled', defaultValue: true) as bool? ?? true;
+  static Future<void> setGeneralAnnouncementsEnabled(bool enabled) async =>
+      await _prefsBox?.put('general_announcements_enabled', enabled);
+  static bool isGeneralAnnouncementsEnabled() =>
+      _prefsBox?.get('general_announcements_enabled', defaultValue: true) as bool? ?? true;
 
   // SRAAP AND SESSION
-  static Future<void> setSraapConnected(bool connected) async => await _prefsBox?.put('sraap_connected', connected);
-  static bool isSraapConnected() => _prefsBox?.get('sraap_connected', defaultValue: false) as bool? ?? false;
+  static Future<void> setSraapConnected(bool connected) async =>
+      await _prefsBox?.put('sraap_connected', connected);
+  static bool isSraapConnected() =>
+      _prefsBox?.get('sraap_connected', defaultValue: false) as bool? ?? false;
 
-  static Future<void> saveSraapAcademicCache(Map<String, dynamic> data) async => await _cacheBox?.put('sraap_academic_cache', data);
+  static Future<void> saveSraapAcademicCache(Map<String, dynamic> data) async =>
+      await _cacheBox?.put('sraap_academic_cache', data);
   static Map<String, dynamic>? getSraapAcademicCache() {
     final data = _cacheBox?.get('sraap_academic_cache');
     if (data == null) return null;
@@ -336,26 +381,40 @@ class StorageService {
     await clearPlacementAttendance();
   }
 
-  static Future<void> savePlacementAttendance(double pct) async => await _cacheBox?.put('sraap_placement_attendance', pct);
+  static Future<void> savePlacementAttendance(double pct) async =>
+      await _cacheBox?.put('sraap_placement_attendance', pct);
   static double? getPlacementAttendance() {
     final v = _cacheBox?.get('sraap_placement_attendance');
     if (v is num) return v.toDouble();
     return null;
   }
-  static Future<void> clearPlacementAttendance() async => await _cacheBox?.delete('sraap_placement_attendance');
 
-  static Future<void> saveSraapLastSyncedAt(DateTime dateTime) async => await _prefsBox?.put('sraap_last_synced_at', dateTime.toIso8601String());
+  static Future<void> clearPlacementAttendance() async =>
+      await _cacheBox?.delete('sraap_placement_attendance');
+
+  static Future<void> saveSraapLastSyncedAt(DateTime dateTime) async =>
+      await _prefsBox?.put('sraap_last_synced_at', dateTime.toIso8601String());
+
+  static DateTime? getSraapLastSyncedAt() {
+    final s = _prefsBox?.get('sraap_last_synced_at') as String?;
+    return s != null ? DateTime.tryParse(s) : null;
+  }
 
   static Future<Map<String, dynamic>?> loadSessionState() async {
     final data = _cacheBox?.get('sraap_session_state');
     if (data == null) return null;
     return Map<String, dynamic>.from(data as Map);
   }
-  static Future<void> saveSessionState(Map<String, dynamic> state) async => await _cacheBox?.put('sraap_session_state', state);
-  static Future<void> clearSessionState() async => await _cacheBox?.delete('sraap_session_state');
 
-  static Future<void> setWebNotificationPromptDismissed(bool dismissed) async => await _prefsBox?.put('web_notification_prompt_dismissed', dismissed);
-  static bool isWebNotificationPromptDismissed() => _prefsBox?.get('web_notification_prompt_dismissed', defaultValue: false) as bool? ?? false;
+  static Future<void> saveSessionState(Map<String, dynamic> state) async =>
+      await _cacheBox?.put('sraap_session_state', state);
+  static Future<void> clearSessionState() async =>
+      await _cacheBox?.delete('sraap_session_state');
+
+  static Future<void> setWebNotificationPromptDismissed(bool dismissed) async =>
+      await _prefsBox?.put('web_notification_prompt_dismissed', dismissed);
+  static bool isWebNotificationPromptDismissed() =>
+      _prefsBox?.get('web_notification_prompt_dismissed', defaultValue: false) as bool? ?? false;
 
   static int? getInt(String key) => _prefsBox?.get(key) as int?;
   static Future<void> setInt(String key, int value) async => await _prefsBox?.put(key, value);

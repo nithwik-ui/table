@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
 import '../../core/auth/secure_session_store.dart';
+import '../../core/sraap/sraap_auth_manager.dart';
 import '../../core/sraap/sraap_session_manager.dart';
 import '../../core/sraap/sraap_academic_service.dart';
 
@@ -18,7 +19,7 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
   final TextEditingController _passwordCtrl = TextEditingController();
   final TextEditingController _captchaCtrl = TextEditingController();
   bool _obscurePassword = true;
-  
+
   bool _isLoading = false;
   bool _isRefreshingCaptcha = true;
   Uint8List? _captchaBytes;
@@ -27,17 +28,19 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
   @override
   void initState() {
     super.initState();
+    SraapSessionManager.instance.isLoginFlowActive = true;
     final savedRoll = StorageService.getStudentRollNumber();
     if (savedRoll != null && savedRoll.isNotEmpty) {
       _enrollmentCtrl.text = savedRoll;
     }
     _restoreSavedCredentials();
-    _fetchCaptcha();
+    _fetchCaptcha(forceFreshSession: true);
   }
 
   Future<void> _restoreSavedCredentials() async {
     try {
-      final creds = await SecureSessionStore.getSession(role: 'sraap_credentials');
+      final creds =
+          await SecureSessionStore.getSession(role: 'sraap_credentials');
       if (creds != null) {
         if (_enrollmentCtrl.text.isEmpty && creds['sraap_roll'] != null) {
           _enrollmentCtrl.text = creds['sraap_roll'].toString();
@@ -49,28 +52,43 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
     } catch (_) {}
   }
 
-  Future<void> _fetchCaptcha() async {
+  Future<void> _fetchCaptcha({bool forceFreshSession = false}) async {
+    if (!mounted) return;
     setState(() {
       _isRefreshingCaptcha = true;
-      _errorMessage = null;
     });
-    
-    final bytes = await SraapSessionManager.instance.fetchCaptcha(forceFreshSession: true);
-    
+
+    final bytes = await SraapSessionManager.instance.fetchCaptcha(
+      forceFreshSession: forceFreshSession,
+    );
+
     if (mounted) {
       setState(() {
         _captchaBytes = bytes;
         _isRefreshingCaptcha = false;
         if (bytes == null) {
-          _errorMessage = "Unable to load CAPTCHA. Tap the refresh icon or check connection.";
+          _errorMessage ??=
+              "Unable to load CAPTCHA. Tap Refresh CAPTCHA or check your connection.";
         }
       });
     }
   }
 
   Future<void> _login() async {
-    if (_enrollmentCtrl.text.isEmpty || _passwordCtrl.text.isEmpty || _captchaCtrl.text.isEmpty) {
+    if (_isLoading || _isRefreshingCaptcha) return;
+
+    if (_enrollmentCtrl.text.trim().isEmpty ||
+        _passwordCtrl.text.isEmpty ||
+        _captchaCtrl.text.trim().isEmpty) {
       setState(() => _errorMessage = "Please fill in all fields.");
+      return;
+    }
+
+    if (_captchaBytes == null) {
+      setState(
+        () => _errorMessage =
+            "CAPTCHA is not loaded yet. Tap Refresh CAPTCHA and try again.",
+      );
       return;
     }
 
@@ -80,7 +98,7 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
     });
 
     try {
-      final res = await SraapSessionManager.instance.login(
+      final result = await SraapAuthManager.submitLogin(
         enrollment: _enrollmentCtrl.text,
         password: _passwordCtrl.text,
         captcha: _captchaCtrl.text,
@@ -88,20 +106,11 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
 
       if (!mounted) return;
 
-      final body = res.body.toLowerCase();
-      final bool isSuccess = res.statusCode == 302 ||
-          res.statusCode == 301 ||
-          (res.statusCode == 200 &&
-              (body.contains('logout') ||
-               body.contains('attendancetable') ||
-               body.contains('welcome to')) &&
-              !body.contains('student_login'));
-
-      if (isSuccess) {
+      if (result.success) {
         // Success - prompt OS / Google Password Manager to save credentials
         TextInput.finishAutofillContext(shouldSave: true);
         await StorageService.setSraapConnected(true);
-        SraapSessionManager.instance.isSessionExpired = false;
+        await SraapSessionManager.instance.markAuthenticated();
         await StorageService.saveStudentRollNumber(_enrollmentCtrl.text.trim());
         await SecureSessionStore.saveSession({
           'sraap_roll': _enrollmentCtrl.text.trim(),
@@ -109,31 +118,60 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
         }, role: 'sraap_credentials');
         SraapAcademicService.instance.startKeepAlive();
         try {
-          await SraapAcademicService.instance.getAcademicData(forceRefresh: true);
+          await SraapAcademicService.instance.getAcademicData(
+            forceRefresh: true,
+          );
         } catch (_) {}
         if (mounted) {
           Navigator.of(context).pop(true);
         }
       } else {
-        if (body.contains('access restricted') || body.contains('shared public ip')) {
-          setState(() => _errorMessage = "SRAAP has blocked your current WiFi network due to too many requests. Please switch to Mobile Data (4G/5G) and try again.");
-        } else if (body.contains('enter captcha code') || body.contains('invalid captcha')) {
-          setState(() => _errorMessage = "Incorrect CAPTCHA. Please try again.");
-        } else if (body.contains("sorry, i don't recognize you") ||
-            body.contains('recheck') ||
-            body.contains('wrong password') ||
-            body.contains('forgot / reset password')) {
-          setState(() => _errorMessage = "Incorrect enrollment number or password.");
-        } else {
-          setState(() => _errorMessage = "Login failed. Please check your details and try again.");
+        switch (result.error) {
+          case SraapLoginError.portalUnavailable:
+            setState(
+              () => _errorMessage =
+                  "SRAAP has blocked your current WiFi network due to too many requests. Please switch to Mobile Data (4G/5G) and try again.",
+            );
+            break;
+          case SraapLoginError.invalidCaptcha:
+            setState(
+              () => _errorMessage = "Incorrect CAPTCHA. Please try again.",
+            );
+            _captchaCtrl.clear();
+            await _fetchCaptcha(forceFreshSession: false);
+            break;
+          case SraapLoginError.invalidCredentials:
+            setState(
+              () => _errorMessage =
+                  "Incorrect enrollment number or password.",
+            );
+            break;
+          case SraapLoginError.timeout:
+          case SraapLoginError.networkUnavailable:
+            setState(
+              () => _errorMessage =
+                  "Unable to reach SRAAP. Please check your connection and try again.",
+            );
+            break;
+          case SraapLoginError.sessionExpired:
+          case SraapLoginError.unknown:
+          case null:
+            setState(
+              () => _errorMessage =
+                  "Login session expired or could not be verified. Please enter the new CAPTCHA and try again.",
+            );
+            _captchaCtrl.clear();
+            await _fetchCaptcha(forceFreshSession: true);
+            break;
         }
-        _captchaCtrl.clear();
-        _fetchCaptcha(); // Refresh captcha on failure
       }
     } catch (e) {
       if (mounted) {
         if (e.toString().contains('TimeoutException')) {
-          setState(() => _errorMessage = "Unable to reach SRAAP. Please check your connection and try again.");
+          setState(
+            () => _errorMessage =
+                "Unable to reach SRAAP. Please check your connection and try again.",
+          );
         } else {
           setState(() => _errorMessage = "Couldn't connect to SRAAP.");
         }
@@ -147,6 +185,7 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
 
   @override
   void dispose() {
+    SraapSessionManager.instance.isLoginFlowActive = false;
     _enrollmentCtrl.dispose();
     _passwordCtrl.dispose();
     _captchaCtrl.dispose();
@@ -161,7 +200,7 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
         title: Text('Connect to SRAAP', style: AppConstants.getHeadline()),
         backgroundColor: AppConstants.surface,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppConstants.primary),
+        iconTheme: IconThemeData(color: AppConstants.primary),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -176,10 +215,12 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
               const SizedBox(height: 8),
               Text(
                 'ⓘ Please use your roll number and password to log in.\n\n🔒 Your password will not be saved.',
-                style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
+                style: AppConstants.getBodyMedium(
+                  color: AppConstants.textSecondary,
+                ),
               ),
               const SizedBox(height: 24),
-              
+
               if (_errorMessage != null) ...[
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -189,12 +230,18 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline, color: AppConstants.error, size: 20),
+                      Icon(
+                        Icons.error_outline,
+                        color: AppConstants.error,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _errorMessage!,
-                          style: AppConstants.getBodyMedium(color: AppConstants.error),
+                          style: AppConstants.getBodyMedium(
+                            color: AppConstants.error,
+                          ),
                         ),
                       ),
                     ],
@@ -219,12 +266,20 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
                         filled: true,
                         fillColor: AppConstants.surface,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppConstants.radiusButton),
-                          borderSide: const BorderSide(color: AppConstants.outline),
+                          borderRadius: BorderRadius.circular(
+                            AppConstants.radiusButton,
+                          ),
+                          borderSide: BorderSide(
+                            color: AppConstants.outline,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppConstants.radiusButton),
-                          borderSide: const BorderSide(color: AppConstants.outline),
+                          borderRadius: BorderRadius.circular(
+                            AppConstants.radiusButton,
+                          ),
+                          borderSide: BorderSide(
+                            color: AppConstants.outline,
+                          ),
                         ),
                       ),
                     ),
@@ -242,16 +297,26 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
                         filled: true,
                         fillColor: AppConstants.surface,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppConstants.radiusButton),
-                          borderSide: const BorderSide(color: AppConstants.outline),
+                          borderRadius: BorderRadius.circular(
+                            AppConstants.radiusButton,
+                          ),
+                          borderSide: BorderSide(
+                            color: AppConstants.outline,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppConstants.radiusButton),
-                          borderSide: const BorderSide(color: AppConstants.outline),
+                          borderRadius: BorderRadius.circular(
+                            AppConstants.radiusButton,
+                          ),
+                          borderSide: BorderSide(
+                            color: AppConstants.outline,
+                          ),
                         ),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                            _obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
                             color: AppConstants.textSecondary,
                           ),
                           onPressed: () {
@@ -272,7 +337,9 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
               Container(
                 decoration: BoxDecoration(
                   color: AppConstants.surface,
-                  borderRadius: BorderRadius.circular(AppConstants.radiusButton),
+                  borderRadius: BorderRadius.circular(
+                    AppConstants.radiusButton,
+                  ),
                   border: Border.all(color: AppConstants.outline),
                 ),
                 child: Column(
@@ -283,12 +350,28 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
                       child: _isRefreshingCaptcha
                           ? const CircularProgressIndicator()
                           : _captchaBytes != null
-                              ? Image.memory(_captchaBytes!, fit: BoxFit.contain)
-                              : Text('Failed to load image', style: AppConstants.getBodyMedium()),
+                          ? Image.memory(
+                              _captchaBytes!,
+                              fit: BoxFit.contain,
+                              gaplessPlayback: true,
+                              errorBuilder: (_, _, _) => Text(
+                                'Failed to render CAPTCHA image',
+                                style: AppConstants.getBodyMedium(),
+                              ),
+                            )
+                          : Text(
+                              'Failed to load image',
+                              style: AppConstants.getBodyMedium(),
+                            ),
                     ),
                     Divider(height: 1, color: AppConstants.outline),
                     TextButton.icon(
-                      onPressed: _isRefreshingCaptcha ? null : _fetchCaptcha,
+                      onPressed: (_isRefreshingCaptcha || _isLoading)
+                          ? null
+                          : () {
+                              setState(() => _errorMessage = null);
+                              _fetchCaptcha(forceFreshSession: false);
+                            },
                       icon: const Icon(Icons.refresh, size: 18),
                       label: const Text('Refresh CAPTCHA'),
                       style: TextButton.styleFrom(
@@ -307,17 +390,22 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
                 textCapitalization: TextCapitalization.none,
                 autocorrect: false,
                 enableSuggestions: false,
+                onSubmitted: (_) => _login(),
                 decoration: InputDecoration(
                   hintText: 'Enter CAPTCHA',
                   filled: true,
                   fillColor: AppConstants.surface,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppConstants.radiusButton),
-                    borderSide: const BorderSide(color: AppConstants.outline),
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.radiusButton,
+                    ),
+                    borderSide: BorderSide(color: AppConstants.outline),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppConstants.radiusButton),
-                    borderSide: const BorderSide(color: AppConstants.outline),
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.radiusButton,
+                    ),
+                    borderSide: BorderSide(color: AppConstants.outline),
                   ),
                 ),
               ),
@@ -332,7 +420,9 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppConstants.radiusButton),
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.radiusButton,
+                      ),
                     ),
                     elevation: 0,
                   ),
@@ -341,13 +431,16 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
                       ? const SizedBox(
                           width: 24,
                           height: 24,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
                         )
                       : Text(
                           'Connect SRAAP',
-                          style: AppConstants.getBodyLarge(color: Colors.white).copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: AppConstants.getBodyLarge(
+                            color: Colors.white,
+                          ).copyWith(fontWeight: FontWeight.bold),
                         ),
                 ),
               ),
@@ -363,7 +456,9 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
       padding: const EdgeInsets.only(bottom: 6),
       child: Text(
         text,
-        style: AppConstants.getBodyMedium().copyWith(fontWeight: FontWeight.w600),
+        style: AppConstants.getBodyMedium().copyWith(
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

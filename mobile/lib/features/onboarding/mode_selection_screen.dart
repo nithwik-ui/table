@@ -64,7 +64,7 @@ class ModeSelectionScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: AppConstants.textSecondary),
+            Icon(Icons.arrow_forward_ios, size: 16, color: AppConstants.textSecondary),
           ],
         ),
       ),

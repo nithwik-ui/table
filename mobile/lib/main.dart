@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'core/constants.dart';
+import 'core/theme_controller.dart';
 import 'core/ad_service.dart';
 import 'core/storage.dart';
 import 'core/api.dart';
@@ -112,7 +113,7 @@ Future<void> _initFirebaseSafely() async {
       // Web FCM setup
       try {
         final webToken = await messaging.getToken(
-          vapidKey: "BLfXNackp6Rs_phEfbaIPWdKm7HADbl3RYGEhjU2qocshKk7CbeIX0Gb5zLQ9EH84nkSaZSiJCcENw4wWf7e12M",
+          vapidKey: AppConstants.fcmVapidKey,
         );
         if (webToken != null && webToken.isNotEmpty) {
           debugPrint('Web FCM token obtained: $webToken');
@@ -122,10 +123,10 @@ Future<void> _initFirebaseSafely() async {
               profile?['roll_no']?.toString() ?? 
               StorageService.getStudentRollNumber() ?? 
               StorageService.getUserIdentifier() ?? '';
-          final batchId = profile?['batch_id']?.toString() ?? '63a84ab2-8ee2-4ea7-b473-38858889428a';
+          final batchId = profile?['batch_id']?.toString() ?? '';
           await ApiService.registerDevice(
             webToken,
-            userMode == 'student' ? batchId : '',
+            userMode == 'student' ? (batchId.isNotEmpty ? batchId : id) : '',
             userMode: userMode,
             facultyId: userMode == 'faculty' ? id : id,
           );
@@ -173,12 +174,12 @@ Future<void> _initFirebaseSafely() async {
           StorageService.getStudentRollNumber() ?? 
           StorageService.getUserIdentifier() ?? '';
 
-      final batchId = profile?['batch_id']?.toString() ?? '63a84ab2-8ee2-4ea7-b473-38858889428a';
+      final batchId = profile?['batch_id']?.toString() ?? '';
 
       try {
         await ApiService.registerDevice(
           fcmToken,
-          userMode == 'student' ? batchId : '',
+          userMode == 'student' ? (batchId.isNotEmpty ? batchId : id) : '',
           userMode: userMode,
           facultyId: userMode == 'faculty' ? id : id,
         );
@@ -215,9 +216,9 @@ void main() {
 
     if (!kIsWeb) {
       try {
-        await AdService.instance.init();
+        await AdService.instance.initialize();
       } catch (e) {
-        debugPrint('AdMob initialization failed (non-fatal): $e');
+        debugPrint('AdService initialization failed (non-fatal): $e');
       }
     }
   });
@@ -244,6 +245,11 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   @override
+  void didChangePlatformBrightness() {
+    ThemeController.instance.onPlatformBrightnessChanged();
+  }
+
+  @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       // Reconcile reminders and sync when app comes to foreground
@@ -254,31 +260,63 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'SRU Timetable',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        scaffoldBackgroundColor: AppConstants.background,
-        colorScheme: ColorScheme.light(
-          primary: AppConstants.primary,
-          secondary: AppConstants.primaryContainer,
-          tertiary: AppConstants.primaryContainer,
-          surface: AppConstants.surface,
-          error: AppConstants.error,
-          onPrimary: Colors.white,
-          onSecondary: Colors.white,
-          onSurface: AppConstants.textPrimary,
-          outline: AppConstants.outline,
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          iconTheme: IconThemeData(color: AppConstants.textPrimary),
-        ),
-      ),
-      navigatorKey: navigatorKey,
-      home: const SplashController(),
+    return AnimatedBuilder(
+      animation: ThemeController.instance,
+      builder: (context, _) {
+        final lightTheme = ThemeData(
+          useMaterial3: true,
+          brightness: Brightness.light,
+          scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+          colorScheme: const ColorScheme.light(
+            primary: Color(0xFF003870),
+            secondary: Color(0xFF0284C7),
+            tertiary: Color(0xFF0284C7),
+            surface: Color(0xFFFFFFFF),
+            error: Color(0xFFDC2626),
+            onPrimary: Colors.white,
+            onSecondary: Colors.white,
+            onSurface: Color(0xFF0F172A),
+            outline: Color(0xFFE2E8F0),
+          ),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            iconTheme: IconThemeData(color: Color(0xFF0F172A)),
+          ),
+        );
+
+        final darkTheme = ThemeData(
+          useMaterial3: true,
+          brightness: Brightness.dark,
+          scaffoldBackgroundColor: const Color(0xFF0B1120),
+          colorScheme: const ColorScheme.dark(
+            primary: Color(0xFF38BDF8),
+            secondary: Color(0xFF0284C7),
+            tertiary: Color(0xFF0284C7),
+            surface: Color(0xFF131C31),
+            error: Color(0xFFF87171),
+            onPrimary: Color(0xFF0B1120),
+            onSecondary: Colors.white,
+            onSurface: Color(0xFFF8FAFC),
+            outline: Color(0xFF334155),
+          ),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            iconTheme: IconThemeData(color: Color(0xFFF8FAFC)),
+          ),
+        );
+
+        return MaterialApp(
+          title: 'SRU Timetable',
+          debugShowCheckedModeBanner: false,
+          theme: lightTheme,
+          darkTheme: darkTheme,
+          themeMode: ThemeController.instance.themeMode,
+          navigatorKey: navigatorKey,
+          home: const SplashController(),
+        );
+      },
     );
   }
 }
@@ -301,6 +339,7 @@ class _SplashControllerState extends State<SplashController> {
     bool isFreshUpdate = false;
     try {
       await StorageService.init();
+      ThemeController.instance.init();
       await AppDataMigrationManager.runMigrationIfNeeded();
 
       const int currentBuild = 31;
@@ -316,6 +355,12 @@ class _SplashControllerState extends State<SplashController> {
         await StorageService.clearAll();
         await StorageService.setInt('last_opened_build_number', currentBuild);
         await StorageService.setInt('v31_fresh_start_done', 1);
+      }
+
+      // Non-destructive notification prompt reset for 3.1.4 (build 35)
+      if ((StorageService.getInt('v35_notif_reset_done') ?? 0) != 1) {
+        await StorageService.setWebNotificationPromptDismissed(false);
+        await StorageService.setInt('v35_notif_reset_done', 1);
       }
 
       TimetableRepository.instance.init();
@@ -388,7 +433,7 @@ class _SplashControllerState extends State<SplashController> {
               height: 64,
             ),
             const SizedBox(height: 24),
-            const CircularProgressIndicator(color: AppConstants.primary),
+            CircularProgressIndicator(color: AppConstants.primary),
           ],
         ),
       ),

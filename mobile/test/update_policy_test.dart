@@ -1,7 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/core/update/app_update_policy.dart';
 import 'package:mobile/core/update/direct_apk_update_service.dart';
 import 'package:mobile/core/update/update_service.dart';
+import 'package:mobile/widgets/update_dialog.dart';
 
 void main() {
   group('AppUpdatePolicy Decision Engine Tests', () {
@@ -128,7 +130,7 @@ void main() {
       expect(decision, UpdateDecision.noUpdate);
     });
 
-    test('Direct APK installation returns optionalFlexible when update is available', () {
+    test('Direct APK installation returns optionalFlexible or recommendedFlexible when update is available', () {
       final decision = AppUpdatePolicy.evaluate(
         updateAvailable: true,
         priority: 0,
@@ -165,14 +167,118 @@ void main() {
     });
   });
 
-  group('DirectApkUpdateService Version Semantics Tests', () {
-    test('isNewerVersion correctly evaluates semantic version tags', () {
-      expect(DirectApkUpdateService.isNewerVersion('3.0.0', 'v3.0.1'), isTrue);
-      expect(DirectApkUpdateService.isNewerVersion('3.0.1', 'v3.0.1'), isFalse);
-      expect(DirectApkUpdateService.isNewerVersion('3.0.2', 'v3.0.1'), isFalse);
-      expect(DirectApkUpdateService.isNewerVersion('3.0.0', '3.1.0'), isTrue);
-      expect(DirectApkUpdateService.isNewerVersion('2.9.9', '3.0.0'), isTrue);
-      expect(DirectApkUpdateService.isNewerVersion('3.0.0+30', '3.0.1+31'), isTrue);
+  group('Semantic Version Comparison & 3.1.4 Update Evaluation Tests', () {
+    test('3.1.2 -> 3.1.4 triggers update (recommended)', () {
+      expect(DirectApkUpdateService.compareSemanticVersions('3.1.2', '3.1.4'), lessThan(0));
+      expect(DirectApkUpdateService.isNewerVersion('3.1.2', '3.1.4'), isTrue);
+      expect(DirectApkUpdateService.isNewerVersion('3.1.2', 'v3.1.4'), isTrue);
+    });
+
+    test('3.1.4 -> 3.1.4 triggers NO update', () {
+      expect(DirectApkUpdateService.compareSemanticVersions('3.1.4', '3.1.4'), equals(0));
+      expect(DirectApkUpdateService.isNewerVersion('3.1.4', '3.1.4'), isFalse);
+      expect(DirectApkUpdateService.isNewerVersion('3.1.4', 'v3.1.4'), isFalse);
+    });
+
+    test('3.1.5 -> 3.1.4 triggers NO update', () {
+      expect(DirectApkUpdateService.compareSemanticVersions('3.1.5', '3.1.4'), greaterThan(0));
+      expect(DirectApkUpdateService.isNewerVersion('3.1.5', '3.1.4'), isFalse);
+      expect(DirectApkUpdateService.isNewerVersion('3.1.5', 'v3.1.4'), isFalse);
+    });
+
+    test('Handles build codes and v prefixes properly', () {
+      expect(DirectApkUpdateService.isNewerVersion('3.1.2+33', '3.1.4+35'), isTrue);
+      expect(DirectApkUpdateService.isNewerVersion('3.1.4+35', '3.1.4+35'), isFalse);
+      expect(DirectApkUpdateService.isNewerVersion('3.1.4+35', 'v3.1.4'), isFalse);
+      expect(DirectApkUpdateService.isNewerVersion('v3.1.2', '3.1.4'), isTrue);
+    });
+  });
+
+  group('Session Dismissal & Non-Intrusive State Tests', () {
+    setUp(() {
+      UpdateService.resetDismissedState();
+    });
+
+    test('dismissedThisSession is false initially', () {
+      expect(UpdateService.dismissedThisSession, isFalse);
+    });
+
+    test('Setting dismissedThisSession persists across checks until reset', () {
+      UpdateService.dismissedThisSession = true;
+      expect(UpdateService.dismissedThisSession, isTrue);
+
+      UpdateService.resetDismissedState();
+      expect(UpdateService.dismissedThisSession, isFalse);
+    });
+  });
+
+  group('UpdateDialog UX Widget Tests', () {
+    testWidgets('Renders recommended update dialog with required 3.1.4 text and actions', (tester) async {
+      bool updateClicked = false;
+      bool laterClicked = false;
+
+      UpdateService.resetDismissedState();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => UpdateDialog(
+                      latestTag: '3.1.4',
+                      downloadUrl: 'https://example.com/app.apk',
+                      onUpdateNow: () {
+                        updateClicked = true;
+                        Navigator.of(ctx).pop();
+                      },
+                      onLater: () {
+                        laterClicked = true;
+                        Navigator.of(ctx).pop();
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Show Dialog'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Show Dialog'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('New update available'), findsOneWidget);
+      expect(find.text('SRU Timetable 3.1.4'), findsOneWidget);
+      expect(
+        find.text(
+          'SRU Timetable 3.1.4 includes important stability, timetable, dark mode, notification, performance and user experience improvements.',
+        ),
+        findsOneWidget,
+      );
+
+      expect(find.text('Later'), findsOneWidget);
+      expect(find.text('Update Now'), findsOneWidget);
+
+      await tester.tap(find.text('Later'));
+      await tester.pumpAndSettle();
+
+      expect(laterClicked, isTrue);
+      expect(UpdateService.dismissedThisSession, isTrue);
+      expect(find.text('New update available'), findsNothing);
+
+      UpdateService.resetDismissedState();
+      await tester.tap(find.text('Show Dialog'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Update Now'));
+      await tester.pumpAndSettle();
+
+      expect(updateClicked, isTrue);
+      expect(find.text('New update available'), findsNothing);
     });
   });
 

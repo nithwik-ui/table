@@ -144,7 +144,7 @@ class _SyncingScreenState extends State<SyncingScreen> {
                   ),
                   const SizedBox(height: 32),
                   if (_isSyncing) ...[
-                    const CircularProgressIndicator(color: AppConstants.primary),
+                    CircularProgressIndicator(color: AppConstants.primary),
                     const SizedBox(height: 24),
                     Text(
                       _statusText,
@@ -152,7 +152,7 @@ class _SyncingScreenState extends State<SyncingScreen> {
                       textAlign: TextAlign.center,
                     ),
                   ] else ...[
-                    const Icon(
+                    Icon(
                       Icons.cloud_off_outlined,
                       color: AppConstants.error,
                       size: 48,

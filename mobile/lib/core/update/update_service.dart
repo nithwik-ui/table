@@ -43,6 +43,14 @@ class UpdateService {
   UpdateService._();
   static final UpdateService instance = UpdateService._();
 
+  /// Session-level flag preventing repeated update dialog popups in the same app session.
+  static bool dismissedThisSession = false;
+
+  /// Resets the session dismissal flag (used for testing or explicit resets).
+  static void resetDismissedState() {
+    dismissedThisSession = false;
+  }
+
   DistributionSource? _detectedSource;
   bool _isChecking = false;
 
@@ -131,7 +139,7 @@ class UpdateService {
           source: DistributionSource.directApk,
           updateAvailable: available,
           classification: available ? AppUpdateClassification.normal : AppUpdateClassification.none,
-          decision: available ? UpdateDecision.optionalFlexible : UpdateDecision.noUpdate,
+          decision: available ? UpdateDecision.recommendedFlexible : UpdateDecision.noUpdate,
           versionTag: directResult['latestTag'] as String?,
           downloadUrl: directResult['downloadUrl'] as String?,
           message: directResult['message'] as String?,

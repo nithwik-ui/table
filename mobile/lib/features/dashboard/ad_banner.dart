@@ -1,21 +1,24 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/constants.dart';
 import '../../core/ad_service.dart';
 
+/// Non-blocking Banner Ad widget managed exclusively through [AdService] (InMobi Banner).
+///
+/// Collapses silently to 0px (`SizedBox.shrink()`) when ads are disabled,
+/// unavailable, or fail to load. Never blocks UI or mimics timetable cards.
 class AdBanner extends StatefulWidget {
-  final String? adUnitId;
-  const AdBanner({super.key, this.adUnitId});
+  final String? placementId;
+  const AdBanner({super.key, this.placementId});
 
   @override
   State<AdBanner> createState() => _AdBannerState();
 }
 
 class _AdBannerState extends State<AdBanner> {
-  BannerAd? _bannerAd;
-  bool _isLoaded = false;
+  InMobiBannerResult? _bannerResult;
   bool _isLoading = false;
   int _retryCount = 0;
   Timer? _retryTimer;
@@ -23,109 +26,95 @@ class _AdBannerState extends State<AdBanner> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (kIsWeb) return;
-    if (_bannerAd == null && !_isLoading && !_isLoaded) {
+    if (kIsWeb || !AdService.instance.enabled) return;
+    if (_bannerResult == null && !_isLoading) {
       _loadAd();
     }
   }
 
   Future<void> _loadAd() async {
-    if (_isLoading || _bannerAd != null) return;
+    if (_isLoading || !AdService.instance.enabled) return;
     _isLoading = true;
 
     try {
-      await AdService.instance.init();
+      final width = MediaQuery.of(context).size.width.truncate().clamp(300, 728);
+      final result = await AdService.instance.loadBanner(
+        placementId: widget.placementId,
+        width: width,
+        height: 50,
+      );
+
       if (!mounted) return;
 
-      final unitId = widget.adUnitId ?? AdService.instance.bannerAdUnitId;
-      if (unitId.isEmpty) {
-        _isLoading = false;
-        return;
-      }
-
-      final AnchoredAdaptiveBannerAdSize? size =
-          await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(
-              MediaQuery.of(context).size.width.truncate());
-
-      if (size == null) {
-        _isLoading = false;
-        return;
-      }
-
-      _bannerAd = BannerAd(
-        adUnitId: unitId,
-        size: size,
-        request: const AdRequest(),
-        listener: BannerAdListener(
-          onAdLoaded: (Ad ad) {
-            if (mounted) {
-              setState(() {
-                _bannerAd = ad as BannerAd;
-                _isLoaded = true;
-                _isLoading = false;
-                _retryCount = 0;
-              });
-              debugPrint('[ADMOB] Banner ad loaded successfully');
+      if (result.loaded) {
+        setState(() {
+          _bannerResult = result;
+          _isLoading = false;
+          _retryCount = 0;
+        });
+      } else {
+        setState(() {
+          _bannerResult = null;
+          _isLoading = false;
+        });
+        if (_retryCount < 2 &&
+            AdService.instance.sdkStatus == AdSdkStatus.ready) {
+          _retryCount++;
+          _retryTimer?.cancel();
+          _retryTimer = Timer(Duration(seconds: 20 * _retryCount), () {
+            if (mounted && _bannerResult == null && !_isLoading) {
+              _loadAd();
             }
-          },
-          onAdFailedToLoad: (Ad ad, LoadAdError error) {
-            debugPrint('[ADMOB] Banner ad load failed: code=${error.code}, message=${error.message}');
-            ad.dispose();
-            _bannerAd = null;
-            if (mounted) {
-              setState(() {
-                _isLoaded = false;
-                _isLoading = false;
-              });
-              if (_retryCount < 3) {
-                _retryCount++;
-                _retryTimer?.cancel();
-                _retryTimer = Timer(Duration(seconds: 15 * _retryCount), () {
-                  if (mounted && !_isLoaded && !_isLoading) {
-                    _loadAd();
-                  }
-                });
-              }
-            }
-          },
-        ),
-      );
-      await _bannerAd!.load();
+          });
+        }
+      }
     } catch (e) {
       _isLoading = false;
-      debugPrint('[ADMOB] Banner ad load failed (non-fatal): $e');
+      debugPrint('[INMOBI] Banner widget load caught (non-fatal): $e');
     }
   }
 
   @override
   void dispose() {
     _retryTimer?.cancel();
-    _bannerAd?.dispose();
-    _bannerAd = null;
+    if (_bannerResult != null) {
+      AdService.instance.disposeBanner(_bannerResult!.instanceId);
+      _bannerResult = null;
+    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (kIsWeb) return const SizedBox.shrink();
-    if (_bannerAd != null && _isLoaded) {
+    if (kIsWeb || !AdService.instance.enabled) {
+      return const SizedBox.shrink();
+    }
+    if (_bannerResult != null && _bannerResult!.loaded) {
       return Container(
         width: double.infinity,
         alignment: Alignment.center,
-        decoration: const BoxDecoration(
-          color: Colors.transparent,
+        decoration: BoxDecoration(
+          color: AppConstants.surface,
           border: Border(
             top: BorderSide(color: AppConstants.outline, width: 0.5),
           ),
         ),
         child: SizedBox(
-          width: _bannerAd!.size.width.toDouble(),
-          height: _bannerAd!.size.height.toDouble(),
-          child: AdWidget(ad: _bannerAd!),
+          width: _bannerResult!.width.toDouble(),
+          height: _bannerResult!.height.toDouble(),
+          child: defaultTargetPlatform == TargetPlatform.android
+              ? AndroidView(
+                  viewType: 'com.srutimetable.mobile/inmobi_banner_view',
+                  creationParams: {
+                    'instanceId': _bannerResult!.instanceId,
+                    'placementId': _bannerResult!.placementId,
+                  },
+                  creationParamsCodec: const StandardMessageCodec(),
+                )
+              : const SizedBox.shrink(),
         ),
       );
     }
-    return const SizedBox.shrink(); // Silent collapse — never blocks or displays empty space
+    return const SizedBox.shrink();
   }
 }
-

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import '../storage.dart';
 import 'sraap_session_state.dart';
 import 'sraap_session_manager.dart';
@@ -29,13 +30,14 @@ class SraapAuthManager extends ChangeNotifier {
       _setState(SraapSessionState.notConnected);
       return false;
     }
-    
-    final cookieHeader = stored['cookieHeader'] as String?;
+
+    final cookieHeader =
+        (stored['cookieHeader'] ?? stored['cookie']) as String?;
     if (cookieHeader == null || cookieHeader.isEmpty) {
       _setState(SraapSessionState.notConnected);
       return false;
     }
-    
+
     await SraapSessionManager.instance.restoreSession();
     _setState(SraapSessionState.connected);
     return true;
@@ -45,9 +47,9 @@ class SraapAuthManager extends ChangeNotifier {
   Future<bool> checkSession() async {
     if (_state == SraapSessionState.notConnected) return false;
     _setState(SraapSessionState.checkingSession);
-    
+
     final valid = await SraapSessionManager.instance.checkSession();
-    
+
     if (valid) {
       _lastSuccessfulRequest = DateTime.now();
       _setState(SraapSessionState.connected);
@@ -61,8 +63,12 @@ class SraapAuthManager extends ChangeNotifier {
   /// Called after the user completes the login form in the UI.
   /// NEVER log cookieHeader or its contents.
   Future<void> onLoginSuccess() async {
+    await SraapSessionManager.instance.markAuthenticated();
     final cookieHeader = SraapSessionManager.instance.cookieHeader;
-    await StorageService.saveSessionState({'cookieHeader': cookieHeader});
+    await StorageService.saveSessionState({
+      'cookie': cookieHeader,
+      'cookieHeader': cookieHeader,
+    });
     await StorageService.setSraapConnected(true);
     _lastSuccessfulRequest = DateTime.now();
     _setState(SraapSessionState.connected);
@@ -90,8 +96,114 @@ class SraapAuthManager extends ChangeNotifier {
 
   /// Fetches the raw bytes of the SRAAP CAPTCHA image.
   /// The student must solve this manually.
-  static Future<Uint8List?> fetchCaptchaBytes() async {
-    return await SraapSessionManager.instance.fetchCaptcha();
+  static Future<Uint8List?> fetchCaptchaBytes({
+    bool forceFreshSession = false,
+  }) async {
+    return await SraapSessionManager.instance.fetchCaptcha(
+      forceFreshSession: forceFreshSession,
+    );
+  }
+
+  /// Deterministically evaluates a SRAAP login HTTP response without side effects.
+  static SraapLoginResult evaluateLoginResponse(http.Response response) {
+    final body = response.body.toLowerCase();
+    final proxyRedirect =
+        SraapSessionManager.headerValue(response.headers, 'x-proxy-redirect');
+    final locationHeader =
+        SraapSessionManager.headerValue(response.headers, 'location');
+    final redirectTarget =
+        (proxyRedirect ?? locationHeader ?? '').trim().toLowerCase();
+
+    final bool hasHttpRedirect = response.statusCode == 302 ||
+        response.statusCode == 301 ||
+        response.isRedirect ||
+        redirectTarget.isNotEmpty;
+
+    if (hasHttpRedirect) {
+      final bool redirectsToLogin =
+          redirectTarget.contains('student_login') ||
+          redirectTarget.contains('slogin.php');
+      if (!redirectsToLogin) {
+        return SraapLoginResult(
+          success: true,
+          cookieHeader: SraapSessionManager.instance.cookieHeader,
+        );
+      }
+    }
+
+    // Check explicit portal/network restrictions first
+    if (body.contains('access restricted') ||
+        body.contains('shared public ip') ||
+        body.contains('server busy') ||
+        body.contains('server under maintenance')) {
+      return const SraapLoginResult(
+        success: false,
+        error: SraapLoginError.portalUnavailable,
+      );
+    }
+
+    // Check explicit CAPTCHA rejection markers from sraap.in
+    if (body.contains('enter captcha code') ||
+        body.contains('invalid captcha') ||
+        body.contains('wrong captcha') ||
+        body.contains('captcha code is invalid') ||
+        body.contains('captcha mismatch')) {
+      return const SraapLoginResult(
+        success: false,
+        error: SraapLoginError.invalidCaptcha,
+      );
+    }
+
+    // Check explicit invalid credential markers from sraap.in
+    if (body.contains("sorry, i don't recognize you") ||
+        body.contains('kindly recheck') ||
+        body.contains('recheck') ||
+        body.contains('wrong password') ||
+        body.contains('invalid password') ||
+        body.contains('invalid user') ||
+        body.contains('forgot_passwords.php') ||
+        body.contains('forgot / reset password')) {
+      return const SraapLoginResult(
+        success: false,
+        error: SraapLoginError.invalidCredentials,
+      );
+    }
+
+    // Check explicit session expiration markers
+    if (body.contains('slogin.php') || body.contains('in valid login')) {
+      return const SraapLoginResult(
+        success: false,
+        error: SraapLoginError.sessionExpired,
+      );
+    }
+
+    // Check HTTP 200 dashboard or JS redirect success markers
+    if (response.statusCode == 200) {
+      final bool hasJsDashboardRedirect =
+          body.contains('dash_board.php') ||
+          body.contains("location.href='student/") ||
+          body.contains('location.href="student/') ||
+          body.contains("location.href = 'student/") ||
+          body.contains('location.href = "student/');
+
+      final bool hasDashboardContent =
+          (body.contains('logout') ||
+              body.contains('attendancetable') ||
+              body.contains('welcome to')) &&
+          !body.contains('student_login');
+
+      if (hasJsDashboardRedirect || hasDashboardContent) {
+        return SraapLoginResult(
+          success: true,
+          cookieHeader: SraapSessionManager.instance.cookieHeader,
+        );
+      }
+    }
+
+    return const SraapLoginResult(
+      success: false,
+      error: SraapLoginError.unknown,
+    );
   }
 
   /// Submit login credentials + CAPTCHA to SRAAP.
@@ -109,48 +221,93 @@ class SraapAuthManager extends ChangeNotifier {
         captcha: captcha,
       );
 
-      final body = response.body.toLowerCase();
+      var result = evaluateLoginResponse(response);
 
-      final bool isSuccess = response.statusCode == 302 ||
-          response.statusCode == 301 ||
-          (response.statusCode == 200 &&
-              (body.contains('logout') ||
-               body.contains('attendancetable') ||
-               body.contains('welcome to')) &&
-              !body.contains('student_login'));
+      // Compatibility fallback: if POST /student_login.php returned 200 OK without
+      // any error banner (e.g. PHP headers already flushed after modal include on sraap.in,
+      // or proxy 200 with empty body), verify once against /student/dash_board.php
+      // before declaring failure or touching the CAPTCHA.
+      if (!result.success &&
+          result.error == SraapLoginError.unknown &&
+          response.statusCode == 200) {
+        final verified =
+            await SraapSessionManager.instance.verifyAuthenticatedSession();
+        if (verified) {
+          result = SraapLoginResult(
+            success: true,
+            cookieHeader: SraapSessionManager.instance.cookieHeader,
+          );
+        }
+      }
 
-      if (isSuccess) {
-        return SraapLoginResult(
-          success: true,
-          cookieHeader: SraapSessionManager.instance.cookieHeader,
+      if (result.success) {
+        await SraapSessionManager.instance.markAuthenticated();
+        instance._lastSuccessfulRequest = DateTime.now();
+        instance._setState(SraapSessionState.connected);
+        return result;
+      }
+
+      switch (result.error) {
+        case SraapLoginError.invalidCaptcha:
+          SraapSessionManager.instance.flowState =
+              SraapLoginFlowState.captchaError;
+          instance._setState(SraapSessionState.captchaError);
+          break;
+        case SraapLoginError.invalidCredentials:
+          SraapSessionManager.instance.flowState =
+              SraapLoginFlowState.invalidCredentials;
+          instance._setState(SraapSessionState.authError);
+          break;
+        case SraapLoginError.sessionExpired:
+          SraapSessionManager.instance.flowState =
+              SraapLoginFlowState.sessionExpired;
+          instance._setState(SraapSessionState.sessionExpired);
+          break;
+        case SraapLoginError.portalUnavailable:
+          SraapSessionManager.instance.flowState =
+              SraapLoginFlowState.networkError;
+          instance._setState(SraapSessionState.portalUnavailable);
+          break;
+        case SraapLoginError.networkUnavailable:
+        case SraapLoginError.timeout:
+          SraapSessionManager.instance.flowState =
+              SraapLoginFlowState.networkError;
+          instance._setState(SraapSessionState.networkError);
+          break;
+        case SraapLoginError.unknown:
+        case null:
+          SraapSessionManager.instance.flowState =
+              SraapLoginFlowState.sessionExpired;
+          break;
+      }
+
+      return result;
+    } catch (e) {
+      SraapSessionManager.instance.flowState = SraapLoginFlowState.networkError;
+      if (e is TimeoutException) {
+        instance._setState(SraapSessionState.networkError);
+        return const SraapLoginResult(
+          success: false,
+          error: SraapLoginError.timeout,
         );
       }
-
-      if (body.contains('access restricted') || body.contains('shared public ip')) {
-        return const SraapLoginResult(success: false, error: SraapLoginError.portalUnavailable);
-      }
-
-      if (body.contains('enter captcha code') || body.contains('invalid captcha')) {
-        return const SraapLoginResult(success: false, error: SraapLoginError.invalidCaptcha);
-      }
-
-      if (body.contains("sorry, i don't recognize you") ||
-          body.contains('recheck') ||
-          body.contains('wrong password') ||
-          body.contains('forgot / reset password')) {
-        return const SraapLoginResult(success: false, error: SraapLoginError.invalidCredentials);
-      }
-
-      return const SraapLoginResult(success: false, error: SraapLoginError.unknown);
-    } catch (e) {
-      if (e is TimeoutException) {
-        return const SraapLoginResult(success: false, error: SraapLoginError.timeout);
-      }
       final eStr = e.toString().toLowerCase();
-      if (eStr.contains('socketexception') || eStr.contains('clientexception') || eStr.contains('xmlhttprequest')) {
-        return const SraapLoginResult(success: false, error: SraapLoginError.networkUnavailable);
+      if (eStr.contains('socketexception') ||
+          eStr.contains('clientexception') ||
+          eStr.contains('xmlhttprequest') ||
+          eStr.contains('handshakeexception') ||
+          eStr.contains('connection')) {
+        instance._setState(SraapSessionState.networkError);
+        return const SraapLoginResult(
+          success: false,
+          error: SraapLoginError.networkUnavailable,
+        );
       }
-      return const SraapLoginResult(success: false, error: SraapLoginError.portalUnavailable);
+      instance._setState(SraapSessionState.portalUnavailable);
+      return const SraapLoginResult(
+        success: false,
+        error: SraapLoginError.portalUnavailable,
+      );
     }
   }
 
@@ -177,6 +334,7 @@ class SraapLoginResult {
 enum SraapLoginError {
   invalidCredentials,
   invalidCaptcha,
+  sessionExpired,
   networkUnavailable,
   timeout,
   portalUnavailable,

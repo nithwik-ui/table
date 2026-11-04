@@ -16,12 +16,22 @@ const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Background push received:', payload);
-  const notificationTitle = payload.notification?.title || payload.data?.title || 'SRU Timetable Update';
+
+  const isClassReminder = payload.data?.type === 'class_reminder';
+  const notificationTitle = payload.notification?.title ||
+    payload.data?.title ||
+    (isClassReminder ? 'Class in 9 minutes' : 'SRU Timetable Update');
+
   const notificationOptions = {
-    body: payload.notification?.body || payload.data?.body || 'Your timetable or classroom has been updated.',
+    body: payload.notification?.body ||
+      payload.data?.body ||
+      (isClassReminder ? 'Upcoming class session starting soon.' : 'Your timetable or classroom has been updated.'),
     icon: '/icons/Icon-192.png',
     badge: '/favicon.png',
-    data: payload.data
+    tag: payload.data?.type || 'sru_notification',
+    renotify: true,
+    vibrate: [200, 100, 200],
+    data: payload.data || {}
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);

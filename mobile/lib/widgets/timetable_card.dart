@@ -8,7 +8,7 @@ import 'class_details_bottom_sheet.dart';
 
 /// A robust, responsive timetable class card widget that guarantees
 /// no visual collisions or overlaps between subjects, time/room metadata,
-/// faculty, and status/type badges across all device widths and text scales.
+/// faculty, and status/type badges across all device widths, text scales, and themes.
 class TimetableCard extends StatelessWidget {
   final Map<String, dynamic> classEvent;
   final String? status;
@@ -17,6 +17,7 @@ class TimetableCard extends StatelessWidget {
   final DateTime? referenceDate;
   final DateTime? nowLocal;
   final bool isFeatured;
+  final String? countdownText;
   final VoidCallback? onTap;
 
   const TimetableCard({
@@ -28,6 +29,7 @@ class TimetableCard extends StatelessWidget {
     this.referenceDate,
     this.nowLocal,
     this.isFeatured = false,
+    this.countdownText,
     this.onTap,
   });
 
@@ -57,6 +59,7 @@ class TimetableCard extends StatelessWidget {
         ltp.toLowerCase().contains('tutorial') || ltp.toUpperCase() == 'T';
 
     final isCancelled = c['isCancelled'] == true ||
+        c['is_cancelled'] == true ||
         (status != null && status!.toLowerCase() == 'cancelled');
     final isChanged = c['isChanged'] == true ||
         c['is_changed'] == true ||
@@ -86,7 +89,7 @@ class TimetableCard extends StatelessWidget {
       statusIcon = Icons.cancel_outlined;
     } else if (status != null && status!.isNotEmpty) {
       statusText = status!;
-      if (statusText == 'Ongoing') {
+      if (statusText == 'Ongoing' || statusText.startsWith('Ongoing')) {
         statusColor = AppConstants.ongoingText;
         statusBg = AppConstants.ongoingBg;
         statusIcon = Icons.fiber_manual_record;
@@ -103,16 +106,10 @@ class TimetableCard extends StatelessWidget {
         statusColor = AppConstants.warningText;
         statusBg = AppConstants.warningContainer;
         statusIcon = Icons.edit_calendar_outlined;
-      } else if (statusText.startsWith('Starts in') ||
-          statusText == 'Starting now' ||
-          statusText == 'Up Next') {
-        statusColor = AppConstants.upcomingText;
-        statusBg = AppConstants.upcomingBg;
-        statusIcon = null;
       } else {
         statusColor = AppConstants.upcomingText;
         statusBg = AppConstants.upcomingBg;
-        statusIcon = null;
+        statusIcon = Icons.schedule_rounded;
       }
     } else if (isOngoing) {
       statusText = 'Ongoing';
@@ -133,7 +130,28 @@ class TimetableCard extends StatelessWidget {
       statusText = 'Upcoming';
       statusColor = AppConstants.upcomingText;
       statusBg = AppConstants.upcomingBg;
-      statusIcon = null;
+      statusIcon = Icons.schedule_rounded;
+    }
+
+    // Countdown badge for featured/ongoing/up-next cards on today
+    String? countdownLabel = countdownText;
+    if (countdownLabel == null && !isCancelled && isToday) {
+      if (isOngoing) {
+        countdownLabel = TimetableStatusEngine.getCountdownText(
+          classData: c,
+          referenceDate: effectiveClassDate,
+          nowLocal: sruNow,
+        );
+      } else if (isFeatured && classStatus == ClassStatus.upcoming) {
+        final cd = TimetableStatusEngine.getCountdownText(
+          classData: c,
+          referenceDate: effectiveClassDate,
+          nowLocal: sruNow,
+        );
+        if (cd != statusText) {
+          countdownLabel = cd;
+        }
+      }
     }
 
     // Left accent indicator based on class type and status
@@ -148,10 +166,11 @@ class TimetableCard extends StatelessWidget {
       accentColor = AppConstants.tutorialAccent;
     } else if (ltp.toLowerCase().contains('practical')) {
       accentColor = AppConstants.practicalAccent;
-    } else if (ltp.toLowerCase().contains('exam') || ltp.toLowerCase().contains('test')) {
+    } else if (ltp.toLowerCase().contains('exam') ||
+        ltp.toLowerCase().contains('test')) {
       accentColor = AppConstants.examAccent;
     } else if (statusText == 'Completed' || isCompleted) {
-      accentColor = AppConstants.completedAccent.withValues(alpha: 0.6);
+      accentColor = AppConstants.completedAccent.withValues(alpha: 0.7);
     } else {
       accentColor = AppConstants.lectureAccent;
     }
@@ -184,9 +203,11 @@ class TimetableCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: isCancelled
-            ? AppConstants.surface.withValues(alpha: 0.6)
+            ? AppConstants.surface.withValues(alpha: 0.65)
             : (isHighlighted
-                ? const Color(0xFFFBFDFF)
+                ? (AppConstants.isDark
+                    ? AppConstants.surfaceElevated
+                    : const Color(0xFFFBFDFF))
                 : AppConstants.surface),
         borderRadius: BorderRadius.circular(AppConstants.radiusCard),
         boxShadow: isCancelled
@@ -195,11 +216,20 @@ class TimetableCard extends StatelessWidget {
                 ? AppConstants.shadowLevel2
                 : AppConstants.shadowLevel1),
         border: isCancelled
-            ? Border.all(color: AppConstants.outline.withValues(alpha: 0.7), width: 1.0)
+            ? Border.all(
+                color: AppConstants.outline.withValues(alpha: 0.7),
+                width: 1.0,
+              )
             : (isHighlighted
-                ? Border.all(color: AppConstants.primary.withValues(alpha: 0.35), width: 1.5)
+                ? Border.all(
+                    color: AppConstants.primary.withValues(alpha: 0.45),
+                    width: 1.5,
+                  )
                 : (isFeatured
-                    ? Border.all(color: AppConstants.primary.withValues(alpha: 0.25), width: 1.2)
+                    ? Border.all(
+                        color: AppConstants.primary.withValues(alpha: 0.35),
+                        width: 1.2,
+                      )
                     : Border.all(color: AppConstants.outline, width: 1.0))),
       ),
       child: Material(
@@ -249,7 +279,7 @@ class TimetableCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // 1. Subject Section (Bold, high-contrast, strong dark text, never washed out)
+                    // 1. Subject Section
                     Text(
                       subject,
                       style: AppConstants.getHeadline().copyWith(
@@ -266,7 +296,7 @@ class TimetableCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
 
-                    // 2. Time & Location Metadata (LayoutBuilder + Wrap prevents ANY overlap)
+                    // 2. Time & Location Metadata
                     LayoutBuilder(
                       builder: (context, constraints) {
                         final maxItemWidth = constraints.maxWidth;
@@ -275,7 +305,7 @@ class TimetableCard extends StatelessWidget {
                           runSpacing: 6,
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            // Time item (Strong dark text with semantic clock icon)
+                            // Time item
                             ConstrainedBox(
                               constraints:
                                   BoxConstraints(maxWidth: maxItemWidth),
@@ -287,7 +317,7 @@ class TimetableCard extends StatelessWidget {
                                     size: 15,
                                     color: isCancelled
                                         ? AppConstants.error
-                                        : AppConstants.primaryContainer,
+                                        : AppConstants.primary,
                                   ),
                                   const SizedBox(width: 5),
                                   Flexible(
@@ -321,7 +351,7 @@ class TimetableCard extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            // Room item (Muted secondary metadata)
+                            // Room item
                             ConstrainedBox(
                               constraints:
                                   BoxConstraints(maxWidth: maxItemWidth),
@@ -361,12 +391,12 @@ class TimetableCard extends StatelessWidget {
                       },
                     ),
 
-                    // 3. Faculty Metadata (Strong dark text with neutral person icon)
+                    // 3. Faculty Metadata
                     if (faculty.isNotEmpty) ...[
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.person_outline_rounded,
                             size: 15,
                             color: AppConstants.textMuted,
@@ -376,9 +406,10 @@ class TimetableCard extends StatelessWidget {
                             child: Text(
                               faculty,
                               style: AppConstants.getBodyMedium(
-                                  color: isCancelled
-                                      ? AppConstants.textMuted
-                                      : AppConstants.textPrimary).copyWith(
+                                color: isCancelled
+                                    ? AppConstants.textMuted
+                                    : AppConstants.textPrimary,
+                              ).copyWith(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -389,15 +420,16 @@ class TimetableCard extends StatelessWidget {
                       ),
                     ],
 
-                    // 4. Dedicated Bottom / Status Row (Wrapped in its own layout space)
+                    // 4. Dedicated Bottom / Status Row
                     const SizedBox(height: 10),
                     Wrap(
                       spacing: 8,
                       runSpacing: 6,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        // Status Badge
+                        // Status Badge (with accessible icon + text)
                         Container(
+                          constraints: const BoxConstraints(maxWidth: 260),
                           padding: const EdgeInsets.symmetric(
                               horizontal: 9, vertical: 4),
                           decoration: BoxDecoration(
@@ -405,39 +437,77 @@ class TimetableCard extends StatelessWidget {
                             borderRadius:
                                 BorderRadius.circular(AppConstants.radiusTag),
                             border: Border.all(
-                              color: statusColor.withValues(alpha: 0.18),
+                              color: statusColor.withValues(alpha: 0.22),
                               width: 0.8,
                             ),
                           ),
-                          child: statusIcon != null
-                              ? Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      statusIcon,
-                                      size: statusIcon == Icons.fiber_manual_record ? 8 : 12,
-                                      color: statusColor,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      statusText,
-                                      style: AppConstants.getLabelSmall(
-                                        color: statusColor,
-                                      ).copyWith(fontWeight: FontWeight.w700),
-                                    ),
-                                  ],
-                                )
-                              : Text(
-                                  statusText,
-                                  style: AppConstants.getLabelSmall(
-                                    color: statusColor,
-                                  ).copyWith(fontWeight: FontWeight.w700),
-                                ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                statusIcon,
+                                size: statusIcon == Icons.fiber_manual_record
+                                    ? 8
+                                    : 12,
+                                color: statusColor,
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                statusText,
+                                style: AppConstants.getLabelSmall(
+                                  color: statusColor,
+                                ).copyWith(fontWeight: FontWeight.w700),
+                                softWrap: true,
+                              ),
+                            ),
+                            ],
+                          ),
                         ),
 
-                        // Type Badge (Lab / Lecture / LTP)
+                        // Countdown Badge (e.g., "Ends in 32 min" or "Starts in 18 min")
+                        if (countdownLabel != null &&
+                            countdownLabel.isNotEmpty)
+                          Container(
+                          constraints: const BoxConstraints(maxWidth: 260),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 9, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppConstants.infoContainer,
+                              borderRadius:
+                                  BorderRadius.circular(AppConstants.radiusTag),
+                              border: Border.all(
+                                color: AppConstants.infoText
+                                    .withValues(alpha: 0.22),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.timer_outlined,
+                                  size: 12,
+                                  color: AppConstants.infoText,
+                                ),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                child: Text(
+                                  countdownLabel,
+                                  style: AppConstants.getLabelSmall(
+                                    color: AppConstants.infoText,
+                                  ).copyWith(fontWeight: FontWeight.w700),
+                                  softWrap: true,
+                                ),
+                              ),
+                              ],
+                            ),
+                          ),
+
+                        // Type Badge (Lab / Lecture / Tutorial)
                         if (typeBadge != null && !isCancelled)
                           Container(
+                          constraints: const BoxConstraints(maxWidth: 260),
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 9, vertical: 4),
                             decoration: BoxDecoration(
@@ -445,7 +515,7 @@ class TimetableCard extends StatelessWidget {
                               borderRadius:
                                   BorderRadius.circular(AppConstants.radiusTag),
                               border: Border.all(
-                                color: typeColor.withValues(alpha: 0.2),
+                                color: typeColor.withValues(alpha: 0.22),
                                 width: 0.8,
                               ),
                             ),
@@ -457,11 +527,12 @@ class TimetableCard extends StatelessWidget {
                             ),
                           ),
 
-                        // Changed Badge (if class was rescheduled or changed)
+                        // Changed Badge
                         if (isChanged &&
                             statusText != 'Changed' &&
                             !isCancelled)
                           Container(
+                          constraints: const BoxConstraints(maxWidth: 260),
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
@@ -469,22 +540,26 @@ class TimetableCard extends StatelessWidget {
                               borderRadius:
                                   BorderRadius.circular(AppConstants.radiusTag),
                               border: Border.all(
-                                color: AppConstants.warningText.withValues(alpha: 0.2),
+                                color: AppConstants.warningText
+                                    .withValues(alpha: 0.22),
                                 width: 0.8,
                               ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.edit_calendar_outlined,
+                                Icon(Icons.edit_calendar_outlined,
                                     size: 12, color: AppConstants.warningText),
                                 const SizedBox(width: 4),
-                                Text(
+                                Flexible(
+                                child: Text(
                                   'Changed',
                                   style: AppConstants.getLabelSmall(
                                     color: AppConstants.warningText,
                                   ).copyWith(fontWeight: FontWeight.w700),
+                                  softWrap: true,
                                 ),
+                              ),
                               ],
                             ),
                           ),

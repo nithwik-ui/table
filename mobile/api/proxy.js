@@ -63,7 +63,18 @@ export default async function handler(req, res) {
     return res.status(400).send('Invalid target');
   }
 
-  const urlPath = '/' + (path || '');
+  const extraParams = new URLSearchParams();
+  for (const [k, v] of Object.entries(req.query || {})) {
+    if (k !== 'target' && k !== 'path') {
+      if (Array.isArray(v)) {
+        v.forEach((item) => extraParams.append(k, item));
+      } else if (v !== undefined) {
+        extraParams.append(k, String(v));
+      }
+    }
+  }
+  const querySuffix = extraParams.toString();
+  const urlPath = '/' + (path || '') + (querySuffix ? `?${querySuffix}` : '');
 
   // Read body first before doing anything else
   let bodyBuffer = Buffer.alloc(0);
@@ -91,7 +102,11 @@ export default async function handler(req, res) {
   }
   
   // Browsers block JS from setting "Cookie" headers. Dart sends it as "x-proxy-cookie".
-  if (req.headers['x-proxy-cookie']) {
+  if (req.headers['x-proxy-clear-cookie'] === '1') {
+    delete forwardHeaders['cookie'];
+    delete forwardHeaders['x-proxy-cookie'];
+    delete forwardHeaders['x-proxy-clear-cookie'];
+  } else if (req.headers['x-proxy-cookie']) {
     forwardHeaders['cookie'] = req.headers['x-proxy-cookie'];
     delete forwardHeaders['x-proxy-cookie'];
   }

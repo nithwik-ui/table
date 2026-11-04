@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../core/constants.dart';
+import '../../core/theme_controller.dart';
 import '../../core/utils.dart';
 import '../../core/storage.dart';
 import '../../core/sraap/sraap_academic_service.dart';
+import '../../core/sraap/sraap_session_manager.dart';
 import '../../core/sraap/models/sraap_academic_data.dart';
 import 'academic_login_screen.dart';
 
@@ -16,6 +18,7 @@ class AttendanceScreen extends StatefulWidget {
 class _AttendanceScreenState extends State<AttendanceScreen> {
   bool _isLoading = true;
   bool _isRefreshing = false;
+  bool _isShowingFresh = false;
   SraapAcademicData? _data;
   String? _errorMessage;
   bool _isOffline = false;
@@ -28,10 +31,21 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   @override
   void initState() {
     super.initState();
+    ThemeController.instance.addListener(_onThemeChanged);
     _placementAttendance = SraapAcademicService.instance.getCachedPlacementAttendance();
     _isLoadingPlacement = _placementAttendance == null;
     _loadAttendance();
     _loadPlacementAttendance();
+  }
+
+  void _onThemeChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    ThemeController.instance.removeListener(_onThemeChanged);
+    super.dispose();
   }
 
   Future<void> _loadPlacementAttendance({bool forceRefresh = false}) async {
@@ -76,7 +90,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   Future<void> _loadAttendance({bool forceRefresh = false}) async {
-    // Non-blocking trigger of placement attendance refresh
     _loadPlacementAttendance(forceRefresh: forceRefresh);
 
     // 1. Immediately render cached data
@@ -84,6 +97,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     if (cached != null && _data == null) {
       _data = cached;
       _isLoading = false;
+      _isShowingFresh = false;
     }
 
     if (!mounted) return;
@@ -93,7 +107,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       _errorMessage = null;
     });
 
-    // 2. Immediately fetch live data from the main SRAAP page!
+    // 2. Immediately fetch live data from the main SRAAP page
     if (StorageService.isSraapConnected()) {
       try {
         final fresh = await SraapAcademicService.instance.fetchFreshDataSilently();
@@ -103,6 +117,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             _isLoading = false;
             _isRefreshing = false;
             _isOffline = false;
+            _isShowingFresh = true;
           });
           return;
         }
@@ -117,13 +132,15 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         final c = SraapAcademicService.instance.getCachedAcademicData();
         if (c != null) {
           _data = c;
+          _isOffline = true;
         } else {
           _errorMessage = "Couldn't load attendance. Check your connection and try again.";
         }
+      } else {
+        _isOffline = true;
       }
       _isLoading = false;
       _isRefreshing = false;
-      _isOffline = false;
     });
   }
 
@@ -172,7 +189,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppConstants.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -189,7 +206,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
+                      color: AppConstants.outline,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -200,23 +217,23 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFD5E3FF),
+                        color: AppConstants.secondaryContainer,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.badge_outlined, color: Color(0xFF003870), size: 24),
+                      child: Icon(Icons.badge_outlined, color: AppConstants.primary, size: 24),
                     ),
                     const SizedBox(width: 14),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'SRAAP Portal Status',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                          style: AppConstants.getHeadline().copyWith(fontSize: 16),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           roll != null && roll.isNotEmpty ? 'Roll No: $roll' : 'Student Academic Account',
-                          style: TextStyle(fontSize: 13, color: Colors.blueGrey.shade600, fontWeight: FontWeight.w500),
+                          style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
                         ),
                       ],
                     ),
@@ -226,32 +243,35 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: AppConstants.background,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: AppConstants.outline),
                   ),
                   child: Column(
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Portal Connection', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                          Text('Portal Connection', style: AppConstants.getBodyMedium(color: AppConstants.textSecondary)),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFDCFCE7),
+                              color: AppConstants.successContainer,
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Text('Connected', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF16A34A))),
+                            child: Text(
+                              'Connected',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppConstants.successText),
+                            ),
                           ),
                         ],
                       ),
-                      const Divider(height: 20),
+                      Divider(height: 20, color: AppConstants.outline),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Mentor', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                          Text(mentorName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
+                          Text('Mentor', style: AppConstants.getBodyMedium(color: AppConstants.textSecondary)),
+                          Text(mentorName, style: AppConstants.getBodyMedium().copyWith(fontWeight: FontWeight.w600)),
                         ],
                       ),
                       if (mentorDept != null && mentorDept.isNotEmpty) ...[
@@ -259,8 +279,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Contact Info', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                            Text(mentorDept, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF0F172A))),
+                            Text('Contact Info', style: AppConstants.getBodyMedium(color: AppConstants.textSecondary)),
+                            Text(mentorDept, style: AppConstants.getBodyMedium().copyWith(fontSize: 12)),
                           ],
                         ),
                       ],
@@ -273,8 +293,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   child: ElevatedButton(
                     onPressed: () => Navigator.of(ctx).pop(),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF003870),
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppConstants.primary,
+                      foregroundColor: AppConstants.onPrimary,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
@@ -291,7 +311,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Only students should see this screen. Safety check.
     if (!StorageService.isStudentMode()) {
       return Scaffold(
         backgroundColor: AppConstants.background,
@@ -301,24 +320,24 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppConstants.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: AppConstants.background,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Color(0xFF0F172A)),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: AppConstants.textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'sru',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF003870),
+                color: AppConstants.primary,
                 letterSpacing: -0.5,
               ),
             ),
@@ -327,25 +346,25 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: Colors.blueGrey.shade600,
+                color: AppConstants.textSecondary,
               ),
             ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.badge_outlined, color: Color(0xFF0F172A)),
+            icon: Icon(Icons.badge_outlined, color: AppConstants.textPrimary),
             tooltip: 'Student Info',
             onPressed: _showStudentPortalInfo,
           ),
           IconButton(
             icon: _isRefreshing
-                ? const SizedBox(
+                ? SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF003870)),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppConstants.primary),
                   )
-                : const Icon(Icons.history_rounded, color: Color(0xFF0F172A)),
+                : Icon(Icons.history_rounded, color: AppConstants.textPrimary),
             tooltip: 'Refresh attendance',
             onPressed: _isRefreshing ? null : () => _loadAttendance(forceRefresh: true),
           ),
@@ -354,7 +373,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       ),
       body: SafeArea(
         child: RefreshIndicator(
-          color: const Color(0xFF003870),
+          color: AppConstants.primary,
           onRefresh: () => _loadAttendance(forceRefresh: true),
           child: _buildBody(),
         ),
@@ -387,18 +406,17 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       children: [
-        // Screen Header: Attendance / "Your subject-wise attendance"
         Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Attendance',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
+                  color: AppConstants.textPrimary,
                   letterSpacing: -0.5,
                 ),
               ),
@@ -408,7 +426,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: Colors.blueGrey.shade600,
+                  color: AppConstants.textSecondary,
                 ),
               ),
             ],
@@ -439,18 +457,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF7ED),
+        color: AppConstants.warningContainer,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFFDBA74)),
+        border: Border.all(color: AppConstants.warning.withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.cloud_off_rounded, size: 18, color: Color(0xFFEA580C)),
+          Icon(Icons.cloud_off_rounded, size: 18, color: AppConstants.warningText),
           const SizedBox(width: 10),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Offline • Showing saved attendance',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF9A3412)),
+              'Cached • Showing saved attendance',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppConstants.warningText),
             ),
           ),
           TextButton(
@@ -460,7 +478,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: const Text('Retry', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFEA580C))),
+            child: Text('Retry', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppConstants.warningText)),
           ),
         ],
       ),
@@ -472,16 +490,16 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     final isCondonation = overall >= 65.0 && overall < 75.0;
 
     final Color statusColor = isSafe
-        ? const Color(0xFF16A34A)
+        ? AppConstants.successText
         : isCondonation
-            ? const Color(0xFFD97706)
-            : const Color(0xFFDC2626);
+            ? AppConstants.warningText
+            : AppConstants.errorText;
 
     final Color badgeBg = isSafe
-        ? const Color(0xFFDCFCE7)
+        ? AppConstants.successContainer
         : isCondonation
-            ? const Color(0xFFFEF3C7)
-            : const Color(0xFFFEE2E2);
+            ? AppConstants.warningContainer
+            : AppConstants.errorContainer;
 
     final String statusText = isSafe
         ? 'Safe • Eligible'
@@ -493,24 +511,22 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         ? Icons.check_circle_rounded
         : Icons.warning_rounded;
 
+    final isStale = _isOffline ||
+        SraapSessionManager.instance.isSessionExpired ||
+        !_isShowingFresh ||
+        DateTime.now().difference(lastSynced).inMinutes > 30;
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppConstants.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x080F172A),
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: AppConstants.outline),
+        boxShadow: AppConstants.shadowLevel1,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top Row: Icon + Title + Status Badge
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -528,13 +544,35 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Overall Attendance',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
-                      ),
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 6,
+                      runSpacing: 2,
+                      children: [
+                        Text(
+                          'Overall Attendance',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: AppConstants.textPrimary,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: isStale ? AppConstants.warningContainer : AppConstants.successContainer,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            isStale ? 'Cached' : 'Fresh',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              color: isStale ? AppConstants.warningText : AppConstants.successText,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     FittedBox(
@@ -554,12 +592,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                             ),
                           ),
                           const SizedBox(width: 4),
-                          const Text(
+                          Text(
                             '/ 100%',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: Color(0xFF64748B),
+                              color: AppConstants.textSecondary,
                             ),
                           ),
                         ],
@@ -568,7 +606,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   ],
                 ),
               ),
-              // Status Badge Column
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -603,11 +640,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: Colors.blueGrey.shade700,
+                          color: AppConstants.textSecondary,
                         ),
                       ),
                       const SizedBox(width: 3),
-                      Icon(Icons.info_outline_rounded, size: 13, color: Colors.blueGrey.shade400),
+                      Icon(Icons.info_outline_rounded, size: 13, color: AppConstants.textMuted),
                     ],
                   ),
                 ],
@@ -615,38 +652,35 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             ],
           ),
           const SizedBox(height: 14),
-          // Subtext Row: Min 75% required
-          const Text(
+          Text(
             'Across all subjects',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: Color(0xFF64748B),
+              color: AppConstants.textSecondary,
             ),
           ),
           const SizedBox(height: 8),
-          // Horizontal Progress Bar
           ClipRRect(
             borderRadius: BorderRadius.circular(99),
             child: LinearProgressIndicator(
               value: (overall / 100.0).clamp(0.0, 1.0),
               minHeight: 8,
-              backgroundColor: const Color(0xFFE2E8F0),
+              backgroundColor: AppConstants.outline,
               valueColor: AlwaysStoppedAnimation<Color>(statusColor),
             ),
           ),
           const SizedBox(height: 12),
-          // Timestamp
           Row(
             children: [
-              Icon(Icons.access_time_rounded, size: 14, color: Colors.blueGrey.shade400),
+              Icon(Icons.access_time_rounded, size: 14, color: AppConstants.textMuted),
               const SizedBox(width: 5),
               Text(
                 _formatLastUpdated(lastSynced),
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: Colors.blueGrey.shade500,
+                  color: AppConstants.textSecondary,
                 ),
               ),
             ],
@@ -663,8 +697,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           children: [
             Expanded(
               child: _buildGuidanceCard(
-                circleColor: const Color(0xFFFEE2E2),
-                iconColor: const Color(0xFFDC2626),
+                circleColor: AppConstants.errorContainer,
+                iconColor: AppConstants.errorText,
                 icon: Icons.error_outline_rounded,
                 rangeText: 'Below 65%',
                 titleText: 'Detention Risk',
@@ -674,8 +708,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: _buildGuidanceCard(
-                circleColor: const Color(0xFFFEF3C7),
-                iconColor: const Color(0xFFD97706),
+                circleColor: AppConstants.warningContainer,
+                iconColor: AppConstants.warningText,
                 icon: Icons.warning_amber_rounded,
                 rangeText: '65% – 74.99%',
                 titleText: 'Condonation Zone',
@@ -685,8 +719,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: _buildGuidanceCard(
-                circleColor: const Color(0xFFDCFCE7),
-                iconColor: const Color(0xFF16A34A),
+                circleColor: AppConstants.successContainer,
+                iconColor: AppConstants.successText,
                 icon: Icons.check_circle_outline_rounded,
                 rangeText: '75% and above',
                 titleText: 'Safe / Eligible',
@@ -705,24 +739,24 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppConstants.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppConstants.outline),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildLegendItem(const Color(0xFF16A34A), '75%+ Safe'),
+            _buildLegendItem(AppConstants.successText, '75%+ Safe'),
             const SizedBox(width: 12),
-            Container(width: 1, height: 12, color: const Color(0xFFE2E8F0)),
+            Container(width: 1, height: 12, color: AppConstants.outline),
             const SizedBox(width: 12),
-            _buildLegendItem(const Color(0xFFD97706), '65–74% Condonation'),
+            _buildLegendItem(AppConstants.warningText, '65–74% Condonation'),
             const SizedBox(width: 12),
-            Container(width: 1, height: 12, color: const Color(0xFFE2E8F0)),
+            Container(width: 1, height: 12, color: AppConstants.outline),
             const SizedBox(width: 12),
-            _buildLegendItem(const Color(0xFFDC2626), '<65% Warning'),
+            _buildLegendItem(AppConstants.errorText, '<65% Warning'),
           ],
         ),
       ),
@@ -744,7 +778,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: Colors.blueGrey.shade800,
+            color: AppConstants.textSecondary,
           ),
         ),
       ],
@@ -762,16 +796,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppConstants.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x050F172A),
-            blurRadius: 6,
-            offset: Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: AppConstants.outline),
+        boxShadow: AppConstants.shadowLevel1,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -788,10 +816,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           const SizedBox(height: 8),
           Text(
             rangeText,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w500,
-              color: Color(0xFF64748B),
+              color: AppConstants.textSecondary,
             ),
           ),
           const SizedBox(height: 2),
@@ -810,11 +838,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             subtitleText,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 9,
               height: 1.2,
               fontWeight: FontWeight.w400,
-              color: Color(0xFF64748B),
+              color: AppConstants.textSecondary,
             ),
           ),
         ],
@@ -833,19 +861,19 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFD5E3FF),
+                  color: AppConstants.secondaryContainer,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.menu_book_rounded, size: 18, color: Color(0xFF003870)),
+                child: Icon(Icons.menu_book_rounded, size: 18, color: AppConstants.primary),
               ),
               const SizedBox(width: 8),
-              const Flexible(
+              Flexible(
                 child: Text(
                   'Subject Attendance',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF0F172A),
+                    color: AppConstants.textPrimary,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -856,10 +884,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         const SizedBox(width: 8),
         Text(
           '$count Courses Enrolled',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF64748B),
+            color: AppConstants.textSecondary,
           ),
         ),
       ],
@@ -873,16 +901,16 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     final isWarning = pct < 65.0;
 
     final Color statusColor = isSafe
-        ? const Color(0xFF16A34A)
+        ? AppConstants.successText
         : isCondonation
-            ? const Color(0xFFD97706)
-            : const Color(0xFFDC2626);
+            ? AppConstants.warningText
+            : AppConstants.errorText;
 
     final Color badgeBg = isSafe
-        ? const Color(0xFFDCFCE7)
+        ? AppConstants.successContainer
         : isCondonation
-            ? const Color(0xFFFEF3C7)
-            : const Color(0xFFFEE2E2);
+            ? AppConstants.warningContainer
+            : AppConstants.errorContainer;
 
     final String statusText = isSafe
         ? 'Safe'
@@ -895,19 +923,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: isWarning ? const Color(0xFFFFFBFB) : Colors.white,
+        color: AppConstants.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isWarning ? const Color(0xFFFECACA) : const Color(0xFFE2E8F0),
-          width: isWarning ? 1.2 : 1.0,
+          color: isWarning ? AppConstants.error.withValues(alpha: 0.5) : AppConstants.outline,
+          width: isWarning ? 1.3 : 1.0,
         ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x060F172A),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
+        boxShadow: AppConstants.shadowLevel1,
       ),
       child: Material(
         color: Colors.transparent,
@@ -922,7 +944,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Course Category Icon
                     Container(
                       width: 40,
                       height: 40,
@@ -933,7 +954,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       child: Icon(iconData, size: 20, color: statusColor),
                     ),
                     const SizedBox(width: 12),
-                    // Course Name and classes count
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -942,10 +962,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                             sub.subjectName,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF0F172A),
+                              color: AppConstants.textPrimary,
                               height: 1.25,
                             ),
                           ),
@@ -953,17 +973,16 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                           if (sub.totalCount != null && sub.presentCount != null)
                             Text(
                               '${sub.presentCount} attended · ${sub.totalCount} conducted',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
-                                color: Color(0xFF64748B),
+                                color: AppConstants.textSecondary,
                               ),
                             ),
                         ],
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Percentage & Status Badge
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -1005,17 +1024,16 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       ],
                     ),
                     const SizedBox(width: 4),
-                    const Icon(Icons.chevron_right_rounded, size: 20, color: Color(0xFF94A3B8)),
+                    Icon(Icons.chevron_right_rounded, size: 20, color: AppConstants.textMuted),
                   ],
                 ),
                 const SizedBox(height: 10),
-                // Progress Bar (Clamped safely between 0.0 and 1.0)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(99),
                   child: LinearProgressIndicator(
                     value: (pct / 100.0).clamp(0.0, 1.0),
                     minHeight: 6,
-                    backgroundColor: const Color(0xFFE2E8F0),
+                    backgroundColor: AppConstants.outline,
                     valueColor: AlwaysStoppedAnimation<Color>(statusColor),
                   ),
                 ),
@@ -1031,22 +1049,22 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F4FF),
+        color: AppConstants.infoContainer,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFD0DCFE)),
+        border: Border.all(color: AppConstants.info.withValues(alpha: 0.3)),
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(Icons.info_rounded, size: 20, color: Color(0xFF003870)),
-          SizedBox(width: 12),
+          Icon(Icons.info_rounded, size: 20, color: AppConstants.infoText),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               'Maintain at least 75% attendance in each subject to be eligible to appear for university exams.',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: Color(0xFF003870),
+                color: AppConstants.infoText,
                 height: 1.35,
               ),
             ),
@@ -1062,18 +1080,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         Container(
           padding: const EdgeInsets.all(5),
           decoration: BoxDecoration(
-            color: const Color(0xFFEFF6FF),
+            color: AppConstants.secondaryContainer,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Icon(Icons.school_rounded, size: 16, color: Color(0xFF003870)),
+          child: Icon(Icons.school_rounded, size: 16, color: AppConstants.primary),
         ),
         const SizedBox(width: 8),
-        const Text(
+        Text(
           'Placements Attendance',
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF0F172A),
+            color: AppConstants.textPrimary,
             letterSpacing: -0.2,
           ),
         ),
@@ -1086,16 +1104,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       return Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppConstants.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x060F172A),
-              blurRadius: 10,
-              offset: Offset(0, 3),
-            ),
-          ],
+          border: Border.all(color: AppConstants.outline),
+          boxShadow: AppConstants.shadowLevel1,
         ),
         child: Row(
           children: [
@@ -1103,19 +1115,19 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
+                color: AppConstants.background,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Center(
+              child: Center(
                 child: SizedBox(
                   width: 18,
                   height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF003870)),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: AppConstants.primary),
                 ),
               ),
             ),
             const SizedBox(width: 14),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1124,13 +1136,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF0F172A),
+                      color: AppConstants.textPrimary,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
                     'Loading attendance...',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    style: TextStyle(fontSize: 12, color: AppConstants.textSecondary),
                   ),
                 ],
               ),
@@ -1144,16 +1156,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppConstants.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x060F172A),
-              blurRadius: 10,
-              offset: Offset(0, 3),
-            ),
-          ],
+          border: Border.all(color: AppConstants.outline),
+          boxShadow: AppConstants.shadowLevel1,
         ),
         child: Row(
           children: [
@@ -1161,13 +1167,13 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFFFEF2F2),
+                color: AppConstants.errorContainer,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.error_outline_rounded, size: 22, color: Color(0xFFDC2626)),
+              child: Icon(Icons.error_outline_rounded, size: 22, color: AppConstants.errorText),
             ),
             const SizedBox(width: 14),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1176,19 +1182,19 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF0F172A),
+                      color: AppConstants.textPrimary,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
                     'Unable to update',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    style: TextStyle(fontSize: 12, color: AppConstants.textSecondary),
                   ),
                 ],
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.refresh_rounded, size: 20, color: Color(0xFF003870)),
+              icon: Icon(Icons.refresh_rounded, size: 20, color: AppConstants.primary),
               tooltip: 'Retry',
               onPressed: () => _loadPlacementAttendance(forceRefresh: true),
             ),
@@ -1202,32 +1208,26 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     final isCondonation = pct >= 65.0 && pct < 75.0;
 
     final Color statusColor = isSafe
-        ? const Color(0xFF16A34A)
+        ? AppConstants.successText
         : isCondonation
-            ? const Color(0xFFD97706)
-            : const Color(0xFFDC2626);
+            ? AppConstants.warningText
+            : AppConstants.errorText;
 
     final Color iconBg = isSafe
-        ? const Color(0xFFDCFCE7)
+        ? AppConstants.successContainer
         : isCondonation
-            ? const Color(0xFFFEF3C7)
-            : const Color(0xFFFEE2E2);
+            ? AppConstants.warningContainer
+            : AppConstants.errorContainer;
 
     final formattedPct = pct.truncateToDouble() == pct ? '${pct.toInt()}%' : '${pct.toStringAsFixed(1)}%';
 
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppConstants.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x060F172A),
-            blurRadius: 10,
-            offset: Offset(0, 3),
-          ),
-        ],
+        border: Border.all(color: AppConstants.outline),
+        boxShadow: AppConstants.shadowLevel1,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1244,7 +1244,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 child: Icon(Icons.school_rounded, size: 22, color: statusColor),
               ),
               const SizedBox(width: 14),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1253,17 +1253,17 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
+                        color: AppConstants.textPrimary,
                         letterSpacing: -0.2,
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
                       'Campus Recruitment & Training',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF64748B),
+                        color: AppConstants.textSecondary,
                       ),
                     ),
                   ],
@@ -1286,7 +1286,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             child: LinearProgressIndicator(
               value: (pct / 100.0).clamp(0.0, 1.0),
               minHeight: 7,
-              backgroundColor: const Color(0xFFE2E8F0),
+              backgroundColor: AppConstants.outline,
               valueColor: AlwaysStoppedAnimation<Color>(statusColor),
             ),
           ),
@@ -1302,21 +1302,21 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         Container(
           height: 140,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppConstants.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: AppConstants.outline),
           ),
-          child: const Center(
-            child: CircularProgressIndicator(color: Color(0xFF003870)),
+          child: Center(
+            child: CircularProgressIndicator(color: AppConstants.primary),
           ),
         ),
         const SizedBox(height: 16),
         Container(
           height: 90,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppConstants.surface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: AppConstants.outline),
           ),
         ),
         const SizedBox(height: 16),
@@ -1326,9 +1326,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             height: 80,
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppConstants.surface,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: AppConstants.outline),
             ),
           ),
         ),
@@ -1347,21 +1347,21 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: const Color(0xFFD5E3FF),
+                color: AppConstants.secondaryContainer,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(Icons.school_rounded, color: Color(0xFF003870), size: 32),
+              child: Icon(Icons.school_rounded, color: AppConstants.primary, size: 32),
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'Connect SRAAP for Attendance',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppConstants.textPrimary),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Sign in with your SR University Academic Portal to view your real attendance and classes.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+              style: TextStyle(fontSize: 13, color: AppConstants.textSecondary),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
@@ -1371,8 +1371,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 ).then((_) => _loadAttendance(forceRefresh: true));
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF003870),
-                foregroundColor: Colors.white,
+                backgroundColor: AppConstants.primary,
+                foregroundColor: AppConstants.onPrimary,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -1391,17 +1391,17 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.event_busy_rounded, size: 56, color: Color(0xFF94A3B8)),
+            Icon(Icons.event_busy_rounded, size: 56, color: AppConstants.textMuted),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'No attendance data available',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppConstants.textPrimary),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Your academic portal has not published attendance records for this term yet.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+              style: TextStyle(fontSize: 13, color: AppConstants.textSecondary),
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
@@ -1409,8 +1409,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               icon: const Icon(Icons.refresh_rounded, size: 18),
               label: const Text('Refresh'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF003870),
-                foregroundColor: Colors.white,
+                backgroundColor: AppConstants.primary,
+                foregroundColor: AppConstants.onPrimary,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
@@ -1427,17 +1427,17 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.cloud_off_rounded, size: 56, color: Color(0xFFDC2626)),
+            Icon(Icons.cloud_off_rounded, size: 56, color: AppConstants.errorText),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               "Couldn't load attendance",
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppConstants.textPrimary),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Check your connection and try again.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+              style: TextStyle(fontSize: 13, color: AppConstants.textSecondary),
             ),
             const SizedBox(height: 20),
             Row(
@@ -1455,8 +1455,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 ElevatedButton(
                   onPressed: () => _loadAttendance(forceRefresh: true),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF003870),
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppConstants.primary,
+                    foregroundColor: AppConstants.onPrimary,
                   ),
                   child: const Text('Retry'),
                 ),
@@ -1474,16 +1474,16 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     final isCondonation = pct >= 65.0 && pct < 75.0;
 
     final Color statusColor = isSafe
-        ? const Color(0xFF16A34A)
+        ? AppConstants.successText
         : isCondonation
-            ? const Color(0xFFD97706)
-            : const Color(0xFFDC2626);
+            ? AppConstants.warningText
+            : AppConstants.errorText;
 
     final Color badgeBg = isSafe
-        ? const Color(0xFFDCFCE7)
+        ? AppConstants.successContainer
         : isCondonation
-            ? const Color(0xFFFEF3C7)
-            : const Color(0xFFFEE2E2);
+            ? AppConstants.warningContainer
+            : AppConstants.errorContainer;
 
     final int? needed = sub.classesNeededFor75;
     final int? canMiss = sub.classesCanMissWhileSafe;
@@ -1491,7 +1491,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppConstants.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -1507,46 +1507,44 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: AppConstants.outline,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              // Subject Code + Name
               if (sub.subjectCode != null && sub.subjectCode!.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   margin: const EdgeInsets.only(bottom: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE2E8F0),
+                    color: AppConstants.secondaryContainer,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     sub.subjectCode!,
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppConstants.primary),
                   ),
                 ),
               Text(
                 sub.subjectName,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppConstants.textPrimary),
               ),
               const SizedBox(height: 16),
-              // Key Metrics Row
               Row(
                 children: [
                   Expanded(
                     child: Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: AppConstants.background,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: AppConstants.outline),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Attendance', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                          Text('Attendance', style: TextStyle(fontSize: 11, color: AppConstants.textSecondary)),
                           const SizedBox(height: 4),
                           Text(
                             '${pct.toStringAsFixed(1)}%',
@@ -1561,18 +1559,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: AppConstants.background,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: AppConstants.outline),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Classes Attended', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                          Text('Classes Attended', style: TextStyle(fontSize: 11, color: AppConstants.textSecondary)),
                           const SizedBox(height: 4),
                           Text(
                             '${sub.presentCount ?? 0} / ${sub.totalCount ?? 0}',
-                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppConstants.textPrimary),
                           ),
                         ],
                       ),
@@ -1581,7 +1579,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              // Status Pill & Advice Card
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
@@ -1609,7 +1606,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                         canMiss > 0
                             ? 'You can miss the next $canMiss class${canMiss > 1 ? 'es' : ''} and still maintain 75% attendance.'
                             : 'Attendance is above 75%. Keep attending classes to remain safe.',
-                        style: TextStyle(fontSize: 13, height: 1.3, color: Colors.green.shade900),
+                        style: TextStyle(fontSize: 13, height: 1.3, color: statusColor),
                       )
                     else if (!isSafe && needed != null)
                       Text(
@@ -1618,7 +1615,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                           fontSize: 13,
                           height: 1.3,
                           fontWeight: FontWeight.w600,
-                          color: isCondonation ? Colors.amber.shade900 : Colors.red.shade900,
+                          color: statusColor,
                         ),
                       ),
                   ],
@@ -1630,8 +1627,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 child: ElevatedButton(
                   onPressed: () => Navigator.of(context).pop(),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF003870),
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppConstants.primary,
+                    foregroundColor: AppConstants.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),

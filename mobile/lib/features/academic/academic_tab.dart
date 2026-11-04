@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants.dart';
+import '../../core/theme_controller.dart';
 import '../../core/storage.dart';
 import 'academic_login_screen.dart';
 import 'academic_dashboard.dart';
@@ -14,6 +15,22 @@ class AcademicTab extends StatefulWidget {
 }
 
 class _AcademicTabState extends State<AcademicTab> {
+  @override
+  void initState() {
+    super.initState();
+    ThemeController.instance.addListener(_onThemeChanged);
+  }
+
+  void _onThemeChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    ThemeController.instance.removeListener(_onThemeChanged);
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasCache = StorageService.getSraapAcademicCache() != null;
@@ -52,7 +69,7 @@ class _AcademicConnectState extends StatelessWidget {
                   color: AppConstants.secondaryContainer,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.school_outlined,
                   color: AppConstants.primary,
                   size: 36,
@@ -82,9 +99,10 @@ class _AcademicConnectState extends StatelessWidget {
             const SizedBox(height: 36),
 
             // Benefits
-            _BenefitRow(icon: Icons.fact_check_outlined, label: 'Attendance'),
-            _BenefitRow(icon: Icons.bar_chart_outlined, label: 'CGPA / SGPA'),
-            _BenefitRow(icon: Icons.person_outlined, label: 'Mentor'),
+            const _BenefitRow(icon: Icons.fact_check_outlined, label: 'Attendance'),
+            const _BenefitRow(icon: Icons.work_outline_rounded, label: 'Placements Attendance'),
+            const _BenefitRow(icon: Icons.bar_chart_outlined, label: 'CGPA / SGPA'),
+            const _BenefitRow(icon: Icons.person_outlined, label: 'Mentor'),
 
             const SizedBox(height: 40),
 
@@ -94,7 +112,7 @@ class _AcademicConnectState extends StatelessWidget {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppConstants.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppConstants.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppConstants.radiusButton),
@@ -112,7 +130,7 @@ class _AcademicConnectState extends StatelessWidget {
                 },
                 child: Text(
                   'Connect SRAAP',
-                  style: AppConstants.getBodyLarge(color: Colors.white).copyWith(
+                  style: AppConstants.getBodyLarge(color: AppConstants.onPrimary).copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),

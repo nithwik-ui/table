@@ -32,6 +32,9 @@ class SyncService extends ChangeNotifier {
   int _syncGeneration = 0;
   int get syncGeneration => _syncGeneration;
 
+  /// Executes the strict data freshness pipeline:
+  /// fetch timetable -> validate response -> parse timetable -> write cache -> update lastSyncedAt.
+  /// Never updates `lastSyncedAt` on start, failure, or empty invalid payloads.
   Future<void> syncTimetable({bool force = false}) async {
     final now = DateTime.now();
     if (_isSyncing) {
@@ -41,7 +44,7 @@ class SyncService extends ChangeNotifier {
       }
       debugPrint('[SYNC] Overriding in-flight sync (force: $force, isStuck: $isStuck)');
     }
-    
+
     var userMode = StorageService.getUserMode();
     if (userMode == null || userMode.isEmpty) {
       userMode = 'student';
@@ -56,16 +59,15 @@ class SyncService extends ChangeNotifier {
 
     try {
       if (userMode == 'faculty') {
-        // Run calendar overrides in background/concurrently without blocking timetable
         final overridesFuture = ApiService.fetchCalendarOverrides('', 'faculty')
             .then((overrides) => StorageService.saveFacultyCalendarOverridesCache(overrides))
             .catchError((e) {
           debugPrint('[SYNC] Faculty overrides fetch non-fatal: $e');
         });
 
-        // Timetable fetch is primary
+        // 1. Fetch & parse timetable
         final list = await SruFacultySource.instance.fetchTimetable();
-        
+
         // Decouple profile fetch so it never blocks timetable render
         unawaited(SruFacultySource.instance.fetchProfile().then((profile) async {
           if (currentGeneration == _syncGeneration) {
@@ -74,14 +76,18 @@ class SyncService extends ChangeNotifier {
         }).catchError((e) {
           debugPrint('[SYNC] Faculty profile sync non-fatal: $e');
         }));
-        
-        // Await overrides if quick, non-fatal
+
         await overridesFuture;
-        
-        // Race check: discard if superseded by a newer sync
+
         if (currentGeneration != _syncGeneration) {
           debugPrint('[SYNC] Discarding stale faculty sync (generation $currentGeneration != $_syncGeneration)');
           return;
+        }
+
+        // 2. Validate response before overwriting cache or updating lastSyncedAt
+        final oldTimetable = StorageService.getFacultyTimetableCache();
+        if (list.isEmpty && oldTimetable.isNotEmpty) {
+          throw Exception('Empty timetable response received; retaining cached schedule');
         }
 
         AnalyticsService.instance.logTimetableLoaded(
@@ -89,14 +95,19 @@ class SyncService extends ChangeNotifier {
           classCount: list.length,
           fromCache: false,
         );
-        
-        final oldTimetable = StorageService.getFacultyTimetableCache();
+
         await _detectAndSaveTimetableChanges(oldTimetable, list, 'faculty');
-        
+
+        // 3. Successfully write cache first, then update authoritative lastSyncedAt
         await StorageService.saveFacultyTimetableCache(list);
-        await StorageService.saveFacultyLastSyncedAt(DateTime.now());
-        TimetableRepository.instance.updateTimetable(list, source: 'sru_authenticated_faculty');
-        
+        final syncedAt = DateTime.now();
+        await StorageService.saveFacultyLastSyncedAt(syncedAt);
+        TimetableRepository.instance.updateTimetable(
+          list,
+          source: 'sru_authenticated_faculty',
+          syncedAt: syncedAt,
+        );
+
         await WidgetUpdater.updateWidgetInfo();
 
         if (StorageService.isClassRemindersEnabled()) {
@@ -104,23 +115,26 @@ class SyncService extends ChangeNotifier {
         }
       } else {
         // Student Mode (default)
-        // Run calendar overrides concurrently without blocking timetable
         final overridesFuture = ApiService.fetchCalendarOverrides('', 'student')
             .then((overrides) => StorageService.saveStudentCalendarOverridesCache(overrides))
             .catchError((e) {
           debugPrint('[SYNC] Student overrides fetch non-fatal: $e');
         });
 
-        // Timetable fetch is primary (SruStudentSource.fetchTimetable auto-extracts & saves profile)
+        // 1. Fetch & parse timetable
         final list = await SruStudentSource.instance.fetchTimetable();
-        
-        // Await overrides if quick, non-fatal
+
         await overridesFuture;
 
-        // Race check: discard if superseded by a newer sync
         if (currentGeneration != _syncGeneration) {
           debugPrint('[SYNC] Discarding stale student sync (generation $currentGeneration != $_syncGeneration)');
           return;
+        }
+
+        // 2. Validate response before overwriting cache or updating lastSyncedAt
+        final oldTimetable = StorageService.getTimetableCache();
+        if (list.isEmpty && oldTimetable.isNotEmpty) {
+          throw Exception('Empty timetable response received; retaining cached schedule');
         }
 
         AnalyticsService.instance.logTimetableLoaded(
@@ -128,13 +142,18 @@ class SyncService extends ChangeNotifier {
           classCount: list.length,
           fromCache: false,
         );
-        
-        final oldTimetable = StorageService.getTimetableCache();
+
         await _detectAndSaveTimetableChanges(oldTimetable, list, 'student');
-        
+
+        // 3. Successfully write cache first, then update authoritative lastSyncedAt
         await StorageService.saveTimetableCache(list);
-        await StorageService.saveLastSyncedAt(DateTime.now());
-        TimetableRepository.instance.updateTimetable(list, source: 'sru_authenticated_student');
+        final syncedAt = DateTime.now();
+        await StorageService.saveLastSyncedAt(syncedAt);
+        TimetableRepository.instance.updateTimetable(
+          list,
+          source: 'sru_authenticated_student',
+          syncedAt: syncedAt,
+        );
 
         await WidgetUpdater.updateWidgetInfo();
 
@@ -142,13 +161,12 @@ class SyncService extends ChangeNotifier {
           await NotificationService.reconcileReminders();
         }
       }
-      
+
       if (currentGeneration != _syncGeneration) return;
 
       _syncState = SyncState.online;
       _lastCheckedAt = DateTime.now();
-      _retryCount = 0; // Reset on success
-
+      _retryCount = 0;
     } catch (e) {
       if (currentGeneration != _syncGeneration) {
         debugPrint('[SYNC] Discarding error from stale sync (generation $currentGeneration != $_syncGeneration)');
@@ -160,7 +178,7 @@ class SyncService extends ChangeNotifier {
         mode: userMode,
         reason: e.toString(),
       );
-      
+
       _lastCheckedAt = DateTime.now();
       final eStr = e.toString().toLowerCase();
       if (eStr.contains('session expired')) {
@@ -173,7 +191,10 @@ class SyncService extends ChangeNotifier {
           _syncState = SyncState.sessionExpired;
           TimetableRepository.instance.markStale('Session expired');
         }
-      } else if (eStr.contains('socketexception') || eStr.contains('clientexception') || eStr.contains('xmlhttprequest')) {
+      } else if (eStr.contains('socketexception') ||
+          eStr.contains('clientexception') ||
+          eStr.contains('xmlhttprequest') ||
+          eStr.contains('failed host lookup')) {
         _syncState = SyncState.offline;
         TimetableRepository.instance.markStale('Network unavailable');
         _scheduleRetry();
@@ -197,19 +218,23 @@ class SyncService extends ChangeNotifier {
 
   void _scheduleRetry() {
     if (_retryCount >= 4) return; // Max retries: 15s, 60s, 5m, 15m
-    
+
     final delays = [15, 60, 300, 900];
     final delaySeconds = delays[_retryCount];
     _retryCount++;
-    
+
     debugPrint('[SYNC] Scheduling retry in $delaySeconds seconds');
-    
+
     _retryTimer = Timer(Duration(seconds: delaySeconds), () {
       syncTimetable();
     });
   }
 
-  Future<void> _detectAndSaveTimetableChanges(List<dynamic> oldData, List<dynamic> newData, String mode) async {
+  Future<void> _detectAndSaveTimetableChanges(
+    List<dynamic> oldData,
+    List<dynamic> newData,
+    String mode,
+  ) async {
     if (oldData.isEmpty) return; // Don't generate changes on first load
 
     List<dynamic> detectedChanges = [];
@@ -230,8 +255,8 @@ class SyncService extends ChangeNotifier {
       final contextLabel = "${newCls['subject']}|${newCls['day']}|${newCls['start_time']}";
 
       if (oldCls == null) {
-        // Class Added
         detectedChanges.add({
+          'id': '${id}_added_$now',
           'change_type': 'CLASS_ADDED',
           'field_name': 'class:$contextLabel',
           'old_value': 'None',
@@ -239,9 +264,9 @@ class SyncService extends ChangeNotifier {
           'detected_at': now,
         });
       } else {
-        // Check fields
         if (oldCls['room'] != newCls['room']) {
           detectedChanges.add({
+            'id': '${id}_room_$now',
             'change_type': 'ROOM_CHANGED',
             'field_name': 'room:$contextLabel',
             'old_value': oldCls['room']?.toString() ?? 'TBA',
@@ -251,6 +276,7 @@ class SyncService extends ChangeNotifier {
         }
         if (oldCls['faculty'] != newCls['faculty']) {
           detectedChanges.add({
+            'id': '${id}_faculty_$now',
             'change_type': 'FACULTY_CHANGED',
             'field_name': 'faculty:$contextLabel',
             'old_value': oldCls['faculty']?.toString() ?? 'TBA',
@@ -260,7 +286,8 @@ class SyncService extends ChangeNotifier {
         }
         if (oldCls['is_cancelled'] != newCls['is_cancelled']) {
           if (newCls['is_cancelled'] == true) {
-             detectedChanges.add({
+            detectedChanges.add({
+              'id': '${id}_cancelled_$now',
               'change_type': 'CLASS_REMOVED',
               'field_name': 'status:$contextLabel',
               'old_value': 'Active',
@@ -278,6 +305,7 @@ class SyncService extends ChangeNotifier {
         final oldCls = entry.value;
         final contextLabel = "${oldCls['subject']}|${oldCls['day']}|${oldCls['start_time']}";
         detectedChanges.add({
+          'id': '${entry.key}_removed_$now',
           'change_type': 'CLASS_REMOVED',
           'field_name': 'class:$contextLabel',
           'old_value': 'Scheduled',

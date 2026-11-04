@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
+import '../../core/theme_controller.dart';
 import '../../core/storage.dart';
 import '../../core/sync.dart';
 import '../../core/timetable/timetable_repository.dart';
@@ -14,13 +15,25 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   List<Map<String, dynamic>> _notifications = [];
+  List<dynamic> _announcements = [];
   bool _isLoading = true;
   String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
+    ThemeController.instance.addListener(_onThemeChanged);
     _loadNotificationHistory();
+  }
+
+  void _onThemeChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    ThemeController.instance.removeListener(_onThemeChanged);
+    super.dispose();
   }
 
   Future<void> _loadNotificationHistory() async {
@@ -37,19 +50,29 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       await SyncService.instance.syncTimetable();
       
       final cached = isFaculty ? StorageService.getFacultyChangesCache() : StorageService.getChangesCache();
+      final overrides = isFaculty
+          ? StorageService.getFacultyCalendarOverridesCache()
+          : StorageService.getStudentCalendarOverridesCache();
       if (mounted) {
         setState(() {
           _notifications = _parseChanges(cached, contextName);
+          _announcements = overrides;
           _isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
         final cached = isFaculty ? StorageService.getFacultyChangesCache() : StorageService.getChangesCache();
+        final overrides = isFaculty
+            ? StorageService.getFacultyCalendarOverridesCache()
+            : StorageService.getStudentCalendarOverridesCache();
         setState(() {
           _notifications = _parseChanges(cached, contextName);
+          _announcements = overrides;
           _isLoading = false;
-          _errorMessage = cached.isEmpty ? 'Could not retrieve notifications. You are offline.' : null;
+          _errorMessage = (cached.isEmpty && overrides.isEmpty)
+              ? 'Could not retrieve notifications. You are offline.'
+              : null;
         });
       }
     }
@@ -58,75 +81,74 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   List<Map<String, dynamic>> _parseChanges(List<dynamic> changes, String identifier) {
     final List<Map<String, dynamic>> parsedList = [];
 
-      for (final change in changes) {
-        final type = change['change_type'] as String;
-        final oldVal = change['old_value'] as String? ?? '';
-        final newVal = change['new_value'] as String? ?? '';
-        final detectedAt = change['detected_at'] as String;
+    for (final change in changes) {
+      final type = change['change_type'] as String;
+      final oldVal = change['old_value'] as String? ?? '';
+      final newVal = change['new_value'] as String? ?? '';
+      final detectedAt = change['detected_at'] as String;
 
-        try {
-          final dt = DateTime.parse(detectedAt).toLocal();
-          if (DateTime.now().difference(dt).inDays > 4) {
-            continue;
-          }
-        } catch (_) {}
-
-        String title = '';
-        String body = '';
-
-        // Decode subject from field_name if present (stored as "fieldName:SubjectName")
-        String subject = 'Class';
-        final fieldParts = (change['field_name'] as String? ?? '').split(':');
-        if (fieldParts.length > 1) {
-          subject = fieldParts.skip(1).join(':');
+      try {
+        final dt = DateTime.parse(detectedAt).toLocal();
+        if (DateTime.now().difference(dt).inDays > 4) {
+          continue;
         }
+      } catch (_) {}
 
-        if (type == 'ROOM_CHANGED') {
-          title = 'Room Changed';
-          body = '$subject ($identifier) moved to $newVal.';
-        } else if (type == 'FACULTY_CHANGED') {
-          title = 'Faculty Changed';
-          final contextData = _getTimetableContext(change);
-          final day = contextData['day'] ?? '';
-          final time = contextData['time'] ?? '';
-          final subj = contextData['subject'] ?? subject;
-          
-          String contextString = '';
-          if (day.isNotEmpty || time.isNotEmpty) {
-            contextString = '${day.isNotEmpty ? day : ''}${day.isNotEmpty && time.isNotEmpty ? ' • ' : ''}${time.isNotEmpty ? time : ''}';
-          }
-          
-          if (contextString.isNotEmpty) {
-            body = '$subj\n$contextString\n\n$oldVal → $newVal';
-          } else {
-            body = '$subj\n\n$oldVal → $newVal';
-          }
-        } else if (type == 'CLASS_REMOVED') {
-          title = 'Class Cancelled';
-          final oldSubject = oldVal.split(' (')[0];
-          body = '$oldSubject ($identifier) has been cancelled for today.';
-        } else if (type == 'CLASS_ADDED') {
-          title = 'Class Added';
-          final newSubject = newVal.split(' (')[0];
-          body = '$newSubject ($identifier) has been added.';
-        } else if (type == 'TIME_CHANGED') {
-          title = 'Class Rescheduled';
-          body = '$subject rescheduled from $oldVal to $newVal.';
-        } else {
-          title = 'Schedule Update';
-          body = '$subject details updated.';
-        }
+      String title = '';
+      String body = '';
 
-        parsedList.add({
-          'id': change['id'] as String,
-          'title': title,
-          'body': body,
-          'type': type,
-          'timestamp': detectedAt,
-          'read': true,
-        });
+      String subject = 'Class';
+      final fieldParts = (change['field_name'] as String? ?? '').split(':');
+      if (fieldParts.length > 1) {
+        subject = fieldParts.skip(1).join(':');
       }
-      return parsedList;
+
+      if (type == 'ROOM_CHANGED') {
+        title = 'Room Changed';
+        body = '$subject ($identifier) moved to $newVal.';
+      } else if (type == 'FACULTY_CHANGED') {
+        title = 'Faculty Changed';
+        final contextData = _getTimetableContext(change);
+        final day = contextData['day'] ?? '';
+        final time = contextData['time'] ?? '';
+        final subj = contextData['subject'] ?? subject;
+        
+        String contextString = '';
+        if (day.isNotEmpty || time.isNotEmpty) {
+          contextString = '${day.isNotEmpty ? day : ''}${day.isNotEmpty && time.isNotEmpty ? ' • ' : ''}${time.isNotEmpty ? time : ''}';
+        }
+        
+        if (contextString.isNotEmpty) {
+          body = '$subj\n$contextString\n\n$oldVal → $newVal';
+        } else {
+          body = '$subj\n\n$oldVal → $newVal';
+        }
+      } else if (type == 'CLASS_REMOVED') {
+        title = 'Class Cancelled';
+        final oldSubject = oldVal.split(' (')[0];
+        body = '$oldSubject ($identifier) has been cancelled for today.';
+      } else if (type == 'CLASS_ADDED') {
+        title = 'Class Added';
+        final newSubject = newVal.split(' (')[0];
+        body = '$newSubject ($identifier) has been added.';
+      } else if (type == 'TIME_CHANGED') {
+        title = 'Class Rescheduled';
+        body = '$subject rescheduled from $oldVal to $newVal.';
+      } else {
+        title = 'Schedule Update';
+        body = '$subject details updated.';
+      }
+
+      parsedList.add({
+        'id': change['id'] as String,
+        'title': title,
+        'body': body,
+        'type': type,
+        'timestamp': detectedAt,
+        'read': true,
+      });
+    }
+    return parsedList;
   }
 
   void _markAllRead() {
@@ -153,7 +175,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     
     for (final item in timetable) {
       if (item is Map) {
-        // Flat class map support (v3 standard)
         if (item.containsKey('start_time') || item.containsKey('subject')) {
           if (entryId != null && item['id'] == entryId) {
             return {
@@ -170,7 +191,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             };
           }
         }
-        // Legacy nested day map support
         final classes = item['classes'] as List<dynamic>? ?? [];
         for (final cls in classes) {
           if (entryId != null && cls['id'] == entryId) {
@@ -274,17 +294,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       }
     }
 
+    final hasContent = _notifications.isNotEmpty || _announcements.isNotEmpty;
+
     return Scaffold(
       backgroundColor: AppConstants.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppConstants.textPrimary, size: 20),
+          icon: Icon(Icons.arrow_back_ios, color: AppConstants.textPrimary, size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Notifications',
+          'Announcements & Alerts',
           style: AppConstants.getHeadline().copyWith(fontSize: 18),
         ),
         actions: [
@@ -300,15 +322,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
       body: SafeArea(
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: AppConstants.primary))
-            : _errorMessage != null && _notifications.isEmpty
+            ? Center(child: CircularProgressIndicator(color: AppConstants.primary))
+            : _errorMessage != null && !hasContent
                 ? Center(
                     child: Padding(
                       padding: const EdgeInsets.all(24.0),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.error_outline, color: AppConstants.error, size: 48),
+                          Icon(Icons.error_outline, color: AppConstants.error, size: 48),
                           const SizedBox(height: 16),
                           Text(
                             _errorMessage!,
@@ -318,18 +340,84 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           const SizedBox(height: 16),
                           ElevatedButton(
                             onPressed: _loadNotificationHistory,
-                            style: ElevatedButton.styleFrom(backgroundColor: AppConstants.primary),
+                            style: ElevatedButton.styleFrom(backgroundColor: AppConstants.primary, foregroundColor: AppConstants.onPrimary),
                             child: const Text('Retry'),
                           ),
                         ],
                       ),
                     ),
                   )
-                : _notifications.isNotEmpty
+                : hasContent
                     ? ListView(
                         padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer),
                         children: [
                           const SizedBox(height: 12),
+                          // ANNOUNCEMENTS Section (Section 17)
+                          if (_announcements.isNotEmpty) ...[
+                            Text(
+                              'ANNOUNCEMENTS',
+                              style: AppConstants.getLabelSmall(color: AppConstants.textSecondary).copyWith(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.6,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            ..._announcements.map((a) {
+                              final title = a['title']?.toString() ?? 'Schedule Announcement';
+                              final msg = a['message']?.toString() ?? '';
+                              final dateStr = a['override_date']?.toString() ?? 'Today';
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: AppConstants.surface,
+                                  borderRadius: BorderRadius.circular(AppConstants.radiusCard),
+                                  border: Border.all(color: AppConstants.outline),
+                                  boxShadow: AppConstants.shadowLevel1,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: AppConstants.warningContainer,
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Text(
+                                            'Important',
+                                            style: AppConstants.getMonoLabel(color: AppConstants.warningText).copyWith(fontSize: 10),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          dateStr,
+                                          style: AppConstants.getLabelSmall(color: AppConstants.textSecondary),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      title,
+                                      style: AppConstants.getHeadline().copyWith(fontSize: 15),
+                                    ),
+                                    if (msg.isNotEmpty) ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        msg,
+                                        style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              );
+                            }),
+                            const SizedBox(height: 16),
+                          ],
+
                           // TODAY section
                           if (todayNotifications.isNotEmpty) ...[
                             Text(
@@ -364,7 +452,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             const SizedBox(height: 24),
                           ],
 
-                          // Footer divider
                           Center(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -380,7 +467,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.notifications_none, color: AppConstants.textSecondary, size: 48),
+                            Icon(Icons.notifications_none, color: AppConstants.textSecondary, size: 48),
                             const SizedBox(height: 16),
                             Text(
                               "You're all caught up",
@@ -420,7 +507,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Icon Badge
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
@@ -430,7 +516,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: Icon(iconData, color: iconColor, size: 20),
             ),
             const SizedBox(width: 12),
-            // Details
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -461,14 +546,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ],
               ),
             ),
-            // Unread Blue Dot
             if (!isRead)
               Padding(
                 padding: const EdgeInsets.only(left: 8, top: 4),
                 child: Container(
                   width: 8,
                   height: 8,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: AppConstants.info,
                     shape: BoxShape.circle,
                   ),

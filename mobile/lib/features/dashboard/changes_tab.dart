@@ -250,7 +250,7 @@ class _ChangesTabState extends State<ChangesTab> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.cloud_off, color: AppConstants.error, size: 20),
+                      Icon(Icons.cloud_off, color: AppConstants.error, size: 20),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -325,7 +325,7 @@ class _ChangesTabState extends State<ChangesTab> {
   Widget _buildContent() {
     switch (_viewState) {
       case ChangesViewState.loading:
-        return const Center(
+        return Center(
           child: CircularProgressIndicator(color: AppConstants.primary),
         );
       case ChangesViewState.timeout:
@@ -376,7 +376,7 @@ class _ChangesTabState extends State<ChangesTab> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.check_circle_outline, color: AppConstants.success, size: 48),
+                    Icon(Icons.check_circle_outline, color: AppConstants.success, size: 48),
                     const SizedBox(height: 16),
                     Text(
                       'You\'re all caught up',
@@ -522,8 +522,8 @@ class _ChangesTabState extends State<ChangesTab> {
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
-                                  const Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 4),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 4),
                                     child: Icon(Icons.arrow_downward, size: 16, color: AppConstants.textSecondary),
                                   ),
                                   Text(
@@ -563,8 +563,8 @@ class _ChangesTabState extends State<ChangesTab> {
                               textAlign: TextAlign.center,
                             ),
                           ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
                             child: Icon(Icons.arrow_forward, size: 16, color: AppConstants.textSecondary),
                           ),
                           Expanded(
@@ -601,7 +601,7 @@ class ChangesScreen extends StatelessWidget {
         backgroundColor: AppConstants.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppConstants.textPrimary, size: 20),
+          icon: Icon(Icons.arrow_back_ios, color: AppConstants.textPrimary, size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text('Changes', style: AppConstants.getHeadline().copyWith(fontSize: 18)),

@@ -27,3 +27,19 @@ enum SraapSessionState {
   /// Device has no internet connectivity.
   networkError,
 }
+
+/// Explicit state machine for the SRAAP CAPTCHA and login submission flow.
+/// Guarantees one login submission = one deliberate authentication attempt
+/// and prevents automatic infinite CAPTCHA refresh loops.
+enum SraapLoginFlowState {
+  initial,
+  loadingSession,
+  loadingCaptcha,
+  captchaReady,
+  submittingLogin,
+  authenticated,
+  captchaError,
+  invalidCredentials,
+  sessionExpired,
+  networkError,
+}

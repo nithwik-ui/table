@@ -93,7 +93,7 @@ class _LiveFreeSlotProgressIndicatorState extends State<LiveFreeSlotProgressIndi
             children: [
               Row(
                 children: [
-                  const Icon(Icons.coffee, size: 18, color: AppConstants.primary),
+                  Icon(Icons.coffee, size: 18, color: AppConstants.primary),
                   const SizedBox(width: 8),
                   Text(
                     title,

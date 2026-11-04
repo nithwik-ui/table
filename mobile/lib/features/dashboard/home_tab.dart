@@ -3,13 +3,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../core/constants.dart';
+import '../../core/theme_controller.dart';
 import '../../core/storage.dart';
 import '../../core/utils.dart';
 import '../../core/api.dart';
 import '../../core/sync.dart';
+import '../../core/timetable_status_engine.dart';
 import '../notifications/notifications_screen.dart';
 import 'dashboard_screen.dart';
 import 'free_rooms_screen.dart';
+import 'timetable_search_screen.dart';
 import 'changes_tab.dart';
 import '../../core/timetable/timetable_repository.dart';
 import '../../core/auth/auth_repository.dart';
@@ -33,11 +36,15 @@ class _HomeTabState extends State<HomeTab> {
   
   Map<String, dynamic>? _upNextClass;
   String _upNextStatus = '';
+  String _upNextCountdown = '';
+  FreePeriodSlot? _nextFreePeriod;
   List<dynamic> _todayClasses = [];
   String? _todayHolidayTitle;
   String? _todayHolidayMessage;
+  List<dynamic> _announcements = [];
   
   bool _isOffline = false;
+  bool _isSyncUnavailable = false;
   bool _isRefreshing = false;
   bool _showWebNotificationPrompt = false;
   Timer? _timer;
@@ -57,6 +64,7 @@ class _HomeTabState extends State<HomeTab> {
     
     TimetableRepository.instance.addListener(_onTimetableRepoUpdate);
     SyncService.instance.addListener(_onSyncUpdate);
+    ThemeController.instance.addListener(_onThemeChanged);
 
     if (kIsWeb) {
       FirebaseMessaging.instance.getNotificationSettings().then((settings) {
@@ -68,6 +76,10 @@ class _HomeTabState extends State<HomeTab> {
         }
       }).catchError((_) {});
     }
+  }
+
+  void _onThemeChanged() {
+    if (mounted) setState(() {});
   }
 
   void _onTimetableRepoUpdate() {
@@ -91,6 +103,7 @@ class _HomeTabState extends State<HomeTab> {
   void dispose() {
     TimetableRepository.instance.removeListener(_onTimetableRepoUpdate);
     SyncService.instance.removeListener(_onSyncUpdate);
+    ThemeController.instance.removeListener(_onThemeChanged);
     _timer?.cancel();
     super.dispose();
   }
@@ -98,9 +111,10 @@ class _HomeTabState extends State<HomeTab> {
   void _loadLocalData() {
     final isStudent = StorageService.isStudentMode();
     final profile = StorageService.getProfile();
-    final name = profile?['name'] ?? StorageService.getUserName();
+    final sraap = StorageService.getSraapAcademicCache();
+    final sraapProfile = sraap?['profile'] as Map?;
+    final name = profile?['name'] ?? sraapProfile?['name'] ?? StorageService.getUserName();
     
-    // Greeting time calculation (Kolkata timezone context)
     final nowLocal = TimeUtils.getKolkataTime();
     final hour = nowLocal.hour;
     String greet;
@@ -114,11 +128,25 @@ class _HomeTabState extends State<HomeTab> {
 
     setState(() {
       _greeting = greet;
-      _userName = name;
+      _userName = name?.toString();
       if (isStudent) {
-        _contextLine = profile?['batch'] ?? profile?['department'] ?? 'Student Mode';
+        final rollNo = profile?['roll_no']?.toString() ??
+            sraapProfile?['roll_no']?.toString() ??
+            StorageService.getStudentRollNumber() ??
+            '';
+        final dept = profile?['batch']?.toString() ??
+            profile?['department']?.toString() ??
+            sraapProfile?['branch']?.toString() ??
+            'Student Mode';
+        final sem = sraapProfile?['semester']?.toString() ?? profile?['semester']?.toString() ?? '';
+        final parts = <String>[
+          if (rollNo.isNotEmpty) rollNo,
+          if (dept.isNotEmpty) dept,
+          if (sem.isNotEmpty) 'Sem $sem',
+        ];
+        _contextLine = parts.isNotEmpty ? parts.join(' · ') : 'Student Mode';
       } else {
-        _contextLine = 'Faculty Schedule';
+        _contextLine = profile?['department']?.toString() ?? 'Faculty Schedule';
       }
     });
     
@@ -127,35 +155,42 @@ class _HomeTabState extends State<HomeTab> {
 
   void _updateFreshnessAndTimetable() {
     final repo = TimetableRepository.instance;
-    final lastSynced = repo.metadata.lastUpdated;
+    final lastSynced = repo.metadata.lastUpdated ?? StorageService.getLastSyncedAt();
     
+    String computedFreshness;
     if (lastSynced == null) {
-      setState(() {
-        _freshnessText = 'Never updated';
-      });
+      computedFreshness = 'Never updated';
     } else {
       final diff = DateTime.now().difference(lastSynced);
       if (diff.inMinutes < 1) {
-        setState(() => _freshnessText = 'Updated just now');
+        computedFreshness = 'Updated just now';
       } else if (diff.inMinutes < 60) {
-        setState(() => _freshnessText = 'Updated ${diff.inMinutes} min ago');
+        computedFreshness = 'Updated ${diff.inMinutes} min ago';
       } else {
         final hours = diff.inHours;
-        setState(() => _freshnessText = 'Updated $hours hr ago');
+        computedFreshness = 'Updated $hours hr ago';
       }
     }
 
+    final userMode = StorageService.getUserMode() ?? 'student';
+    final overrides = userMode == 'faculty'
+        ? StorageService.getFacultyCalendarOverridesCache()
+        : StorageService.getStudentCalendarOverridesCache();
+
     setState(() {
+      _freshnessText = computedFreshness;
       _todayClasses = repo.todayClasses;
       _upNextClass = repo.upNextClass;
       _upNextStatus = repo.upNextStatus;
+      _upNextCountdown = repo.upNextCountdown;
+      _nextFreePeriod = repo.nextFreePeriod;
       _todayHolidayTitle = repo.todayHolidayTitle;
       _todayHolidayMessage = repo.todayHolidayMessage;
-      // Only display offline banner if there is literally NO timetable in storage
-      _isOffline = repo.classes.isEmpty && SyncService.instance.syncState != SyncState.online;
+      _announcements = overrides.take(2).toList();
+      _isSyncUnavailable = SyncService.instance.syncState != SyncState.online;
+      _isOffline = repo.classes.isEmpty && _isSyncUnavailable;
     });
   }
-
 
   Future<void> _enableWebNotifications() async {
     try {
@@ -185,8 +220,8 @@ class _HomeTabState extends State<HomeTab> {
         if (mounted) {
           setState(() => _showWebNotificationPrompt = false);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Notifications enabled successfully!'),
+            SnackBar(
+              content: const Text('Notifications enabled successfully!'),
               backgroundColor: AppConstants.success,
             ),
           );
@@ -200,6 +235,92 @@ class _HomeTabState extends State<HomeTab> {
     } catch (e) {
       debugPrint('[HOME] Web notification enable error: $e');
     }
+  }
+
+  List<Widget> _buildTodayTimelineWidgets() {
+    final List<Widget> widgets = [];
+    final gaps = TimetableStatusEngine.detectDayGaps(_todayClasses);
+
+    for (int i = 0; i < _todayClasses.length; i++) {
+      final c = Map<String, dynamic>.from(_todayClasses[i] as Map);
+      String? itemStatus;
+      String? itemCountdown;
+      if (_upNextClass != null &&
+          ((c['id'] != null && c['id'] == _upNextClass!['id']) ||
+              (c['start_time'] == _upNextClass!['start_time'] &&
+                  c['subject'] == _upNextClass!['subject']))) {
+        itemStatus = _upNextStatus.isNotEmpty ? _upNextStatus : 'Up Next';
+        itemCountdown = _upNextCountdown;
+      }
+
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: TimetableCard(
+            classEvent: c,
+            status: itemStatus,
+            countdownText: itemCountdown,
+            isToday: true,
+            referenceDate: TimeUtils.nowInSruTime(),
+          ),
+        ),
+      );
+
+      final endStr = c['end_time']?.toString() ?? '';
+      for (final gap in gaps) {
+        if (gap.startTime == endStr) {
+          widgets.add(
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: gap.isLunch ? AppConstants.practicalBg : AppConstants.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: gap.isLunch
+                      ? AppConstants.practicalAccent.withValues(alpha: 0.3)
+                      : AppConstants.outline,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        gap.isLunch ? Icons.restaurant_rounded : Icons.schedule_rounded,
+                        size: 15,
+                        color: gap.isLunch ? AppConstants.practicalAccent : AppConstants.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        gap.isLunch ? 'LUNCH BREAK' : 'FREE PERIOD',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.4,
+                          color: gap.isLunch ? AppConstants.practicalText : AppConstants.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    '${TimeUtils.format12Hour(gap.startTime)} – ${TimeUtils.format12Hour(gap.endTime)}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: gap.isLunch ? AppConstants.practicalText : AppConstants.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+          break;
+        }
+      }
+    }
+    return widgets;
   }
 
   @override
@@ -225,20 +346,29 @@ class _HomeTabState extends State<HomeTab> {
                       ),
                     ),
                   ),
-                  // Free Rooms Button (Student Only)
+                  IconButton(
+                    icon: Icon(Icons.search_rounded, color: AppConstants.textPrimary, size: 24),
+                    tooltip: 'Search Timetable',
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => const TimetableSearchScreen()),
+                      );
+                    },
+                  ),
                   if (StorageService.isStudentMode())
                     IconButton(
-                      icon: const Icon(Icons.door_front_door_outlined, color: AppConstants.textPrimary, size: 26),
+                      icon: Icon(Icons.door_front_door_outlined, color: AppConstants.textPrimary, size: 25),
+                      tooltip: 'Free Classrooms',
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(builder: (context) => const FreeRoomsScreen()),
                         );
                       },
                     ),
-                  // Changes Icon (Student Only)
                   if (StorageService.isStudentMode())
                     IconButton(
-                      icon: const Icon(Icons.history_outlined, color: AppConstants.textPrimary, size: 24),
+                      icon: Icon(Icons.history_outlined, color: AppConstants.textPrimary, size: 24),
+                      tooltip: 'Changes',
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
@@ -250,9 +380,9 @@ class _HomeTabState extends State<HomeTab> {
                         );
                       },
                     ),
-                  // Notification Bell
                   IconButton(
-                    icon: const Icon(Icons.notifications_none, color: AppConstants.textPrimary, size: 24),
+                    icon: Icon(Icons.notifications_none, color: AppConstants.textPrimary, size: 24),
+                    tooltip: 'Announcements & Notifications',
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(builder: (context) => const NotificationsScreen()),
@@ -263,7 +393,7 @@ class _HomeTabState extends State<HomeTab> {
               ),
             ),
             
-            // Stale / Sync Unavailable banner (non-blocking)
+            // Stale / Sync Unavailable banner when no cache exists
             if (_isOffline) ...[
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer),
@@ -276,7 +406,7 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.cloud_off, color: AppConstants.error, size: 20),
+                      Icon(Icons.cloud_off, color: AppConstants.error, size: 20),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -286,11 +416,11 @@ class _HomeTabState extends State<HomeTab> {
                               (SyncService.instance.syncState == SyncState.sessionExpired ||
                                       AuthRepository.instance.state == AuthState.sessionExpired)
                                   ? 'Session expired'
-                                  : 'Sync unavailable',
+                                  : 'Offline · Showing saved timetable',
                               style: AppConstants.getHeadline().copyWith(fontSize: 14, color: AppConstants.error),
                             ),
                             Text(
-                              'Showing saved timetable.',
+                              'Last ${_freshnessText.toLowerCase()}',
                               style: AppConstants.getBodyMedium(color: AppConstants.error.withValues(alpha: 0.8)),
                             ),
                           ],
@@ -336,7 +466,7 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.event_busy, color: AppConstants.info, size: 20),
+                      Icon(Icons.event_busy, color: AppConstants.info, size: 20),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -371,9 +501,9 @@ class _HomeTabState extends State<HomeTab> {
                   padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingContainer),
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: [
-                    // Greeting & context
+                    // Greeting & Student info
                     Text(
-                      _userName != null ? '$_greeting, $_userName' : _greeting,
+                      _userName != null && _userName!.isNotEmpty ? '$_greeting, $_userName' : _greeting,
                       style: AppConstants.getDisplay().copyWith(fontSize: 24),
                     ),
                     const SizedBox(height: 4),
@@ -392,7 +522,7 @@ class _HomeTabState extends State<HomeTab> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.notifications_active_outlined, color: AppConstants.primary, size: 22),
+                            Icon(Icons.notifications_active_outlined, color: AppConstants.primary, size: 22),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Column(
@@ -421,7 +551,7 @@ class _HomeTabState extends State<HomeTab> {
                               child: const Text('Enable', style: TextStyle(fontSize: 11)),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.close, size: 14, color: AppConstants.textSecondary),
+                              icon: Icon(Icons.close, size: 14, color: AppConstants.textSecondary),
                               onPressed: () {
                                 setState(() => _showWebNotificationPrompt = false);
                                 StorageService.setWebNotificationPromptDismissed(true);
@@ -433,20 +563,31 @@ class _HomeTabState extends State<HomeTab> {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                     
-                    // Sync Refresh row
+                    // Sync status row
                     Row(
                       children: [
-                        const Icon(Icons.sync, color: AppConstants.textSecondary, size: 16),
+                        Icon(
+                          _isSyncUnavailable ? Icons.cloud_off_outlined : Icons.sync,
+                          color: _isSyncUnavailable ? AppConstants.warningText : AppConstants.textSecondary,
+                          size: 16,
+                        ),
                         const SizedBox(width: 6),
-                        Text(
-                          _freshnessText,
-                          style: AppConstants.getLabelSmall(color: AppConstants.textSecondary),
+                        Expanded(
+                          child: Text(
+                            _isSyncUnavailable && TimetableRepository.instance.classes.isNotEmpty
+                                ? 'Offline · Showing saved timetable · Last ${_freshnessText.toLowerCase()}'
+                                : _freshnessText,
+                            style: AppConstants.getLabelSmall(
+                              color: _isSyncUnavailable ? AppConstants.warningText : AppConstants.textSecondary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                         if (_isRefreshing) ...[
                           const SizedBox(width: 8),
-                          const SizedBox(
+                          SizedBox(
                             width: 12,
                             height: 12,
                             child: CircularProgressIndicator(strokeWidth: 1.5, color: AppConstants.textSecondary),
@@ -454,7 +595,62 @@ class _HomeTabState extends State<HomeTab> {
                         ],
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 18),
+
+                    // Announcements Banner (Section 17)
+                    if (_announcements.isNotEmpty) ...[
+                      InkWell(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(AppConstants.radiusCard),
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: AppConstants.surface,
+                            borderRadius: BorderRadius.circular(AppConstants.radiusCard),
+                            border: Border.all(color: AppConstants.outline),
+                            boxShadow: AppConstants.shadowLevel1,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(Icons.campaign_outlined, size: 18, color: AppConstants.primary),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Announcements',
+                                        style: AppConstants.getHeadline().copyWith(fontSize: 14, fontWeight: FontWeight.w700),
+                                      ),
+                                    ],
+                                  ),
+                                  Icon(Icons.chevron_right_rounded, size: 18, color: AppConstants.textSecondary),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Important · ${_announcements.first['title'] ?? 'Schedule update'}',
+                                style: AppConstants.getBodyMedium().copyWith(fontWeight: FontWeight.w600, fontSize: 13),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _announcements.first['override_date']?.toString() ?? 'Today',
+                                style: AppConstants.getLabelSmall(color: AppConstants.textSecondary),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                    ],
 
                     // "Up Next" Section
                     Text(
@@ -466,22 +662,24 @@ class _HomeTabState extends State<HomeTab> {
                       TimetableCard(
                         classEvent: _upNextClass!,
                         status: _upNextStatus.isNotEmpty ? _upNextStatus : 'Up Next',
+                        countdownText: _upNextCountdown,
                         isFeatured: true,
                         isToday: true,
+                        referenceDate: TimeUtils.nowInSruTime(),
                       ),
                     ] else ...[
-                      // Empty state for Up Next
                       Container(
                         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
                         decoration: BoxDecoration(
                           color: AppConstants.surface,
                           borderRadius: BorderRadius.circular(AppConstants.radiusCard),
+                          border: Border.all(color: AppConstants.outline),
                           boxShadow: AppConstants.shadowLevel1,
                         ),
                         child: _todayClasses.isNotEmpty
                             ? Row(
                                 children: [
-                                  const Icon(Icons.check_circle_outline, color: AppConstants.success, size: 28),
+                                  Icon(Icons.check_circle_outline, color: AppConstants.success, size: 28),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
@@ -507,6 +705,35 @@ class _HomeTabState extends State<HomeTab> {
                                   style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
                                 ),
                               ),
+                      ),
+                    ],
+
+                    // Next Free Period Intelligence Pill (Section 12)
+                    if (_nextFreePeriod != null) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: AppConstants.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppConstants.outline),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.free_breakfast_outlined, size: 16, color: AppConstants.primary),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Next free period · ${TimeUtils.format12Hour(_nextFreePeriod!.startTime)} – ${TimeUtils.format12Hour(_nextFreePeriod!.endTime)} (${_nextFreePeriod!.durationMinutes}m)',
+                                style: AppConstants.getBodyMedium().copyWith(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppConstants.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                     const SizedBox(height: 24),
@@ -539,35 +766,14 @@ class _HomeTabState extends State<HomeTab> {
                     ),
                     const SizedBox(height: 4),
                     if (_todayClasses.isNotEmpty) ...[
-                      ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _todayClasses.length,
-                        separatorBuilder: (context, index) => const SizedBox(height: 10),
-                        itemBuilder: (context, index) {
-                          final c = Map<String, dynamic>.from(_todayClasses[index] as Map);
-                          String? itemStatus;
-                          if (_upNextClass != null &&
-                              ((c['id'] != null && c['id'] == _upNextClass!['id']) ||
-                               (c['start_time'] == _upNextClass!['start_time'] &&
-                                   c['subject'] == _upNextClass!['subject']))) {
-                            itemStatus = _upNextStatus.isNotEmpty ? _upNextStatus : 'Up Next';
-                          }
-
-                          return TimetableCard(
-                            classEvent: c,
-                            status: itemStatus,
-                            isToday: true,
-                          );
-                        },
-                      ),
+                      ..._buildTodayTimelineWidgets(),
                     ] else ...[
-                      // Empty state
                       Container(
                         padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
                         decoration: BoxDecoration(
                           color: AppConstants.surface,
                           borderRadius: BorderRadius.circular(AppConstants.radiusCard),
+                          border: Border.all(color: AppConstants.outline),
                           boxShadow: AppConstants.shadowLevel1,
                         ),
                         child: Center(

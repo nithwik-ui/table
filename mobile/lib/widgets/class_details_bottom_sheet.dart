@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/constants.dart';
 import '../core/utils.dart';
 import '../core/sraap/models/sraap_academic_data.dart';
 import '../core/storage.dart';
@@ -17,7 +18,8 @@ class ClassDetailsBottomSheet extends StatefulWidget {
   });
 
   @override
-  State<ClassDetailsBottomSheet> createState() => _ClassDetailsBottomSheetState();
+  State<ClassDetailsBottomSheet> createState() =>
+      _ClassDetailsBottomSheetState();
 }
 
 class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
@@ -44,7 +46,8 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
       try {
         final data = SraapAcademicData.fromJson(raw);
         _lastSynced = data.lastSynced;
-        final timetableSubject = (widget.classEvent['subject'] as String?) ?? '';
+        final timetableSubject =
+            (widget.classEvent['subject'] as String?) ?? '';
         _attendance = _findMatchingSubject(timetableSubject, data.subjects);
       } catch (_) {}
     }
@@ -54,36 +57,40 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
     });
   }
 
-  SraapSubjectAttendance? _findMatchingSubject(String timetableSubject, List<SraapSubjectAttendance> subjects) {
+  SraapSubjectAttendance? _findMatchingSubject(
+    String timetableSubject,
+    List<SraapSubjectAttendance> subjects,
+  ) {
     if (timetableSubject.isEmpty) return null;
 
     final normTimetable = _normalizeForMatch(timetableSubject);
 
-    // 1. Exact match
     for (var s in subjects) {
       if (_normalizeForMatch(s.subjectName) == normTimetable) {
         return s;
       }
     }
 
-    // 2. Contains match while matching lab / theory mode
-    final isLab = normTimetable.contains('lab') || normTimetable.contains('practical');
+    final isLab =
+        normTimetable.contains('lab') || normTimetable.contains('practical');
     for (var s in subjects) {
       final normSraap = _normalizeForMatch(s.subjectName);
-      final sraapIsLab = normSraap.contains('lab') || normSraap.contains('practical');
+      final sraapIsLab =
+          normSraap.contains('lab') || normSraap.contains('practical');
 
       if (isLab == sraapIsLab) {
-        if (normSraap.contains(normTimetable) || normTimetable.contains(normSraap)) {
+        if (normSraap.contains(normTimetable) ||
+            normTimetable.contains(normSraap)) {
           return s;
         }
       }
     }
 
-    // 3. Fallback check for acronym or partial code match
     for (var s in subjects) {
       if (s.subjectCode != null && s.subjectCode!.isNotEmpty) {
         final normCode = _normalizeForMatch(s.subjectCode!);
-        if (normTimetable.contains(normCode) || normCode.contains(normTimetable)) {
+        if (normTimetable.contains(normCode) ||
+            normCode.contains(normTimetable)) {
           return s;
         }
       }
@@ -97,7 +104,9 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
   }
 
   String _calculateDuration(String? start, String? end) {
-    if (start == null || end == null || start.isEmpty || end.isEmpty) return '1 hour';
+    if (start == null || end == null || start.isEmpty || end.isEmpty) {
+      return '1 hour';
+    }
     try {
       final sp = start.split(':').map(int.parse).toList();
       final ep = end.split(':').map(int.parse).toList();
@@ -118,7 +127,9 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
   }
 
   String _formatLocation(String? roomRaw) {
-    if (roomRaw == null || roomRaw.trim().isEmpty || roomRaw.toLowerCase() == 'no room') {
+    if (roomRaw == null ||
+        roomRaw.trim().isEmpty ||
+        roomRaw.toLowerCase() == 'no room') {
       return 'Room not assigned';
     }
     if (roomRaw.contains('_')) {
@@ -133,7 +144,10 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
   String _formatClassType(String? ltp, String subject) {
     final lowerSub = subject.toLowerCase();
     final lowerLtp = (ltp ?? '').toLowerCase();
-    if (lowerLtp.contains('lab') || lowerLtp.contains('practical') || lowerLtp == 'p' || lowerSub.contains('lab')) {
+    if (lowerLtp.contains('lab') ||
+        lowerLtp.contains('practical') ||
+        lowerLtp == 'p' ||
+        lowerSub.contains('lab')) {
       return 'Practical / Lab';
     }
     if (lowerLtp.contains('tutorial') || lowerLtp == 't') {
@@ -149,11 +163,15 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
   }
 
   Color _getStatusColor(bool isCancelled) {
-    if (isCancelled) return const Color(0xFFDC2626);
+    if (isCancelled) return AppConstants.error;
     final s = widget.status.toLowerCase();
-    if (s.contains('ongoing') || s.contains('now')) return const Color(0xFF16A34A);
-    if (s.contains('up next') || s.contains('start') || s.contains('upcoming')) return const Color(0xFF003870);
-    return const Color(0xFF64748B);
+    if (s.contains('ongoing') || s.contains('now')) return AppConstants.success;
+    if (s.contains('up next') ||
+        s.contains('start') ||
+        s.contains('upcoming')) {
+      return AppConstants.primary;
+    }
+    return AppConstants.textSecondary;
   }
 
   @override
@@ -165,7 +183,8 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
     final ltp = c['ltp'] as String?;
     final startTime = c['start_time'] as String? ?? '';
     final endTime = c['end_time'] as String? ?? '';
-    final isCancelled = c['isCancelled'] == true || widget.status.toLowerCase() == 'cancelled';
+    final isCancelled =
+        c['isCancelled'] == true || widget.status.toLowerCase() == 'cancelled';
 
     final location = _formatLocation(rawRoom);
     final duration = _calculateDuration(startTime, endTime);
@@ -178,9 +197,9 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
     final dateDisplay = widget.dateStr ?? formattedDay;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: AppConstants.surfaceElevated,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
         top: false,
@@ -196,7 +215,7 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFCBD5E1),
+                    color: AppConstants.outline,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -213,21 +232,22 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
                       children: [
                         Text(
                           'CLASS DETAILS',
-                          style: TextStyle(
+                          style: AppConstants.getLabelSmall(
+                            color: AppConstants.textSecondary,
+                          ).copyWith(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.8,
-                            color: Colors.blueGrey.shade600,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           subject,
-                          style: TextStyle(
+                          style: AppConstants.getHeadline().copyWith(
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
-                            color: const Color(0xFF0F172A),
-                            decoration: isCancelled ? TextDecoration.lineThrough : null,
+                            decoration:
+                                isCancelled ? TextDecoration.lineThrough : null,
                           ),
                         ),
                       ],
@@ -235,9 +255,11 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(isCancelled).withValues(alpha: 0.12),
+                      color: _getStatusColor(isCancelled)
+                          .withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -252,7 +274,7 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
                 ],
               ),
               const SizedBox(height: 18),
-              const Divider(height: 1, color: Color(0xFFE2E8F0)),
+              Divider(height: 1, color: AppConstants.outline),
               const SizedBox(height: 14),
 
               // Date
@@ -283,7 +305,9 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
               _buildRow(
                 icon: Icons.person_outline_rounded,
                 label: 'Faculty',
-                value: faculty != null && faculty.isNotEmpty ? faculty : 'Faculty not assigned',
+                value: faculty != null && faculty.isNotEmpty
+                    ? faculty
+                    : 'Faculty not assigned',
               ),
 
               // Class Type
@@ -294,7 +318,7 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
               ),
 
               const SizedBox(height: 14),
-              const Divider(height: 1, color: Color(0xFFE2E8F0)),
+              Divider(height: 1, color: AppConstants.outline),
               const SizedBox(height: 16),
 
               // ATTENDANCE SECTION (Students only)
@@ -302,19 +326,22 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'ATTENDANCE',
-                      style: TextStyle(
+                      style: AppConstants.getLabelSmall(
+                        color: AppConstants.primary,
+                      ).copyWith(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.6,
-                        color: Color(0xFF003870),
                       ),
                     ),
                     if (_lastSynced != null)
                       Text(
                         'Synced ${_formatTimeAgo(_lastSynced!)}',
-                        style: TextStyle(fontSize: 11, color: Colors.blueGrey.shade500),
+                        style: AppConstants.getLabelSmall(
+                          color: AppConstants.textSecondary,
+                        ).copyWith(fontSize: 11),
                       ),
                   ],
                 ),
@@ -331,16 +358,22 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
                     onPressed: () {
                       Navigator.of(context).pop();
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => const AttendanceScreen()),
+                        MaterialPageRoute(
+                            builder: (context) => const AttendanceScreen()),
                       );
                     },
                     icon: const Icon(Icons.analytics_outlined, size: 18),
-                    label: const Text('View Full Attendance', style: TextStyle(fontWeight: FontWeight.w700)),
+                    label: const Text(
+                      'View Full Attendance',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF003870),
+                      backgroundColor: AppConstants.brandNavy,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                   ),
@@ -366,10 +399,10 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
           Container(
             padding: const EdgeInsets.all(7),
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
+              color: AppConstants.secondaryContainer,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, size: 18, color: const Color(0xFF003870)),
+            child: Icon(icon, size: 18, color: AppConstants.primary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -378,19 +411,19 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF64748B),
+                    color: AppConstants.textMuted,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF0F172A),
+                    color: AppConstants.textPrimary,
                   ),
                 ),
               ],
@@ -400,15 +433,15 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
+                color: AppConstants.secondaryContainer,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
                 extra,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF475569),
+                  color: AppConstants.textSecondary,
                 ),
               ),
             ),
@@ -422,15 +455,18 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
+          color: AppConstants.background,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: AppConstants.outline),
         ),
-        child: const Center(
+        child: Center(
           child: SizedBox(
             width: 20,
             height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF003870)),
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppConstants.primary,
+            ),
           ),
         ),
       );
@@ -440,13 +476,14 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
+          color: AppConstants.background,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(color: AppConstants.outline),
         ),
         child: Row(
           children: [
-            const Icon(Icons.info_outline_rounded, size: 20, color: Color(0xFF64748B)),
+            Icon(Icons.info_outline_rounded,
+                size: 20, color: AppConstants.textMuted),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -454,7 +491,7 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: Colors.blueGrey.shade700,
+                  color: AppConstants.textSecondary,
                 ),
               ),
             ),
@@ -469,16 +506,16 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
     final isCondonation = pct >= 65.0 && pct < 75.0;
 
     final Color statusColor = isSafe
-        ? const Color(0xFF16A34A)
+        ? AppConstants.success
         : isCondonation
-            ? const Color(0xFFD97706)
-            : const Color(0xFFDC2626);
+            ? AppConstants.warning
+            : AppConstants.error;
 
     final Color statusBg = isSafe
-        ? const Color(0xFFDCFCE7)
+        ? AppConstants.successContainer
         : isCondonation
-            ? const Color(0xFFFEF3C7)
-            : const Color(0xFFFEE2E2);
+            ? AppConstants.warningContainer
+            : AppConstants.errorContainer;
 
     final String statusLabel = isSafe
         ? 'Safe / Eligible'
@@ -493,9 +530,9 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppConstants.background,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppConstants.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -506,9 +543,13 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Current Attendance',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppConstants.textMuted,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -522,7 +563,8 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: statusBg,
                   borderRadius: BorderRadius.circular(8),
@@ -544,7 +586,7 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
             child: LinearProgressIndicator(
               value: (pct / 100.0).clamp(0.0, 1.0),
               minHeight: 6,
-              backgroundColor: const Color(0xFFE2E8F0),
+              backgroundColor: AppConstants.outline,
               valueColor: AlwaysStoppedAnimation<Color>(statusColor),
             ),
           ),
@@ -554,17 +596,29 @@ class _ClassDetailsBottomSheetState extends State<ClassDetailsBottomSheet> {
             children: [
               Text(
                 'Attended: $attended  ·  Conducted: $conducted',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF475569)),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppConstants.textSecondary,
+                ),
               ),
               if (!isSafe && needed > 0)
                 Text(
                   'Need $needed class${needed > 1 ? 'es' : ''}',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: statusColor),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: statusColor,
+                  ),
                 )
               else if (isSafe)
-                const Text(
+                Text(
                   'Eligible for exams',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF16A34A)),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppConstants.success,
+                  ),
                 ),
             ],
           ),

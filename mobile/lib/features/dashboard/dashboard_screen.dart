@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants.dart';
+import '../../core/theme_controller.dart';
 import '../../core/storage.dart';
 import '../../core/sync.dart';
 import '../../core/updater.dart';
@@ -16,6 +17,7 @@ import 'changes_tab.dart';
 import 'profile_tab.dart';
 import '../academic/academic_tab.dart';
 import '../../core/sraap/sraap_academic_service.dart';
+import '../../widgets/update_dialog.dart';
 import 'ad_banner.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -36,6 +38,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     UpdateService.instance.playStateNotifier.addListener(_onPlayUpdateStateChanged);
+    ThemeController.instance.addListener(_onThemeChanged);
     _currentIndex = widget.initialTab;
     
     // Explicitly restore/schedule exact alarms on startup for existing timetable
@@ -48,6 +51,12 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
         
     if (cachedTimetable.isNotEmpty) {
       NotificationService.reconcileReminders();
+      // Non-blocking background sync on startup to refresh stale "Updated Xh ago" timestamp
+      Future.microtask(() {
+        if (!SyncService.instance.isSyncing) {
+          TimetableRepository.instance.refresh();
+        }
+      });
     } else {
       // If timetable cache is empty and not already syncing, trigger an immediate sync
       if (!SyncService.instance.isSyncing) {
@@ -94,6 +103,12 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
     });
   }
 
+  void _onThemeChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   void _onPlayUpdateStateChanged() {
     if (!mounted) return;
     if (UpdateService.instance.playStateNotifier.value == InAppUpdateState.downloaded) {
@@ -118,6 +133,9 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
     if (state == AppLifecycleState.resumed) {
       SraapAcademicService.instance.pingKeepAlive();
       UpdateService.instance.resumeIfImmediateInProgress();
+      if (!SyncService.instance.isSyncing) {
+        TimetableRepository.instance.refresh();
+      }
     }
   }
 
@@ -125,6 +143,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     UpdateService.instance.playStateNotifier.removeListener(_onPlayUpdateStateChanged);
+    ThemeController.instance.removeListener(_onThemeChanged);
     super.dispose();
   }
 
@@ -147,6 +166,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
     ];
 
     return Scaffold(
+      backgroundColor: AppConstants.background,
       body: Column(
         children: [
           Expanded(
@@ -156,13 +176,13 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
             ),
           ),
           Offstage(
-            offstage: _currentIndex == 3,
+            offstage: !(_currentIndex == 0 || _currentIndex == 1),
             child: const AdBanner(),
           ),
         ],
       ),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           border: Border(
             top: BorderSide(color: AppConstants.outline, width: 1.0),
           ),
@@ -218,7 +238,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
                             child: Container(
                               width: 8,
                               height: 8,
-                              decoration: const BoxDecoration(
+                              decoration: BoxDecoration(
                                 color: AppConstants.error,
                                 shape: BoxShape.circle,
                               ),
@@ -241,55 +261,57 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
   }
 
   void _checkForUpdatesSilently() async {
+    if (UpdateService.dismissedThisSession) return;
     final result = await UpdateService.instance.checkUnifiedUpdate();
-    if (!mounted) return;
+    if (!mounted || UpdateService.dismissedThisSession) return;
 
-    if (result.source == DistributionSource.googlePlay) {
+    if (result.source == DistributionSource.googlePlay && result.updateAvailable) {
       if (result.isCriticalImmediate) {
         // Immediate update required by Google Play policy (priority >= 4)
         await UpdateService.instance.performImmediateUpdate();
-      } else if (result.decision == UpdateDecision.recommendedFlexible ||
-          result.decision == UpdateDecision.optionalFlexible) {
-        // Flexible update (download in background without blocking user)
-        await UpdateService.instance.startFlexibleUpdate();
+      } else {
+        // Recommended flexible update: present prompt to user
+        _showUpdatePrompt(
+          latestTag: result.versionTag ?? '3.1.4',
+          onUpdateNow: () async {
+            Navigator.of(context, rootNavigator: true).pop();
+            if (result.isFlexibleAvailable) {
+              await UpdateService.instance.startFlexibleUpdate();
+            } else {
+              final uri = Uri.parse('https://play.google.com/store/apps/details?id=com.srutimetable.mobile');
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
+            }
+          },
+        );
       }
     } else if (result.source == DistributionSource.directApk && result.updateAvailable) {
-      _showUpdateDialog(result.versionTag ?? '', result.downloadUrl ?? '');
+      _showUpdatePrompt(
+        latestTag: result.versionTag ?? '3.1.4',
+        downloadUrl: result.downloadUrl,
+      );
     }
   }
 
-  void _showUpdateDialog(String latestTag, String downloadUrl) {
+  void _showUpdatePrompt({
+    required String latestTag,
+    String? downloadUrl,
+    VoidCallback? onUpdateNow,
+  }) {
+    if (UpdateService.dismissedThisSession) return;
     showDialog(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Update Available'),
-          content: Text('A new version of SRU Timetable ($latestTag) is available on GitHub. Would you like to download it now?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Later', style: TextStyle(color: AppConstants.textSecondary)),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(dialogContext).pop();
-                try {
-                  final uri = Uri.parse(downloadUrl);
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                  }
-                } catch (_) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Could not open download link.')),
-                    );
-                  }
-                }
-              },
-              child: const Text('Download', style: TextStyle(color: AppConstants.primary, fontWeight: FontWeight.bold)),
-            ),
-          ],
+        return UpdateDialog(
+          latestTag: latestTag,
+          downloadUrl: downloadUrl ?? '',
+          onUpdateNow: onUpdateNow,
+          onLater: () {
+            UpdateService.dismissedThisSession = true;
+            Navigator.of(dialogContext).pop();
+          },
         );
       },
     );
