@@ -18,7 +18,16 @@ class AuthRepository extends ChangeNotifier {
 
   String? _savedIdentifier;
   String? get savedIdentifier => _savedIdentifier;
+  String? _savedPassword;
   bool _rememberMe = true;
+  DateTime? _lastOtpRequestedAt;
+
+  int get otpCooldownSecondsRemaining {
+    if (_lastOtpRequestedAt == null) return 0;
+    final elapsed = DateTime.now().difference(_lastOtpRequestedAt!).inSeconds;
+    final remaining = 60 - elapsed;
+    return remaining > 0 ? remaining : 0;
+  }
 
   void _setState(AuthState newState) {
     if (_state != newState) {
@@ -38,6 +47,7 @@ class AuthRepository extends ChangeNotifier {
     if (cachedRole == null || cachedRole.isEmpty) {
       _currentRole = null;
       _savedIdentifier = null;
+      _savedPassword = null;
       _setState(AuthState.unauthenticated);
       return;
     }
@@ -54,6 +64,9 @@ class AuthRepository extends ChangeNotifier {
       if (sessionData['identifier'] != null) {
         _savedIdentifier = sessionData['identifier'];
       }
+      if (sessionData['password'] != null) {
+        _savedPassword = sessionData['password'];
+      }
 
       _setState(AuthState.authenticated);
       _setState(AuthState.ready);
@@ -61,6 +74,7 @@ class AuthRepository extends ChangeNotifier {
     } else {
       _currentRole = null;
       _savedIdentifier = null;
+      _savedPassword = null;
       _setState(AuthState.unauthenticated);
     }
   }
@@ -75,6 +89,7 @@ class AuthRepository extends ChangeNotifier {
     }
     _isLoginInProgress = true;
     _savedIdentifier = identifier;
+    _savedPassword = password;
     _rememberMe = rememberMe;
     _setState(AuthState.authenticating);
     try {
@@ -135,8 +150,106 @@ class AuthRepository extends ChangeNotifier {
     if (_rememberMe && _savedIdentifier != null) {
       sessionMap['identifier'] = _savedIdentifier;
       sessionMap['rememberMe'] = true;
+      if (_savedPassword != null && _savedPassword!.isNotEmpty) {
+        sessionMap['password'] = _savedPassword;
+      }
     }
     await SecureSessionStore.saveSession(sessionMap, role: role);
+  }
+
+  Future<bool> hasSavedCredentials({String? role}) async {
+    final targetRole = role ?? _currentRole ?? StorageService.getUserMode() ?? 'student';
+    final sessionData = await SecureSessionStore.getSession(role: targetRole);
+    if (sessionData == null) return false;
+    final id = sessionData['identifier']?.toString();
+    final pass = sessionData['password']?.toString() ?? _savedPassword;
+    return id != null && id.isNotEmpty && pass != null && pass.isNotEmpty;
+  }
+
+  Future<void> clearSavedPassword({String? role}) async {
+    _savedPassword = null;
+    final targetRole = role ?? _currentRole ?? StorageService.getUserMode() ?? 'student';
+    final sessionData = await SecureSessionStore.getSession(role: targetRole);
+    if (sessionData != null) {
+      sessionData.remove('password');
+      await SecureSessionStore.saveSession(sessionData, role: targetRole);
+    }
+  }
+
+  /// Safe, explicit user-triggered session renewal via OTP.
+  /// Strictly non-automatic: never invoked from background syncs or timers.
+  Future<Map<String, dynamic>> renewSessionWithOtp({String? role}) async {
+    final cooldown = otpCooldownSecondsRemaining;
+    if (cooldown > 0) {
+      return {
+        'status': 'cooldown',
+        'remainingSeconds': cooldown,
+        'message': 'Please wait $cooldown seconds before requesting another OTP.',
+      };
+    }
+
+    final targetRole = role ?? _currentRole ?? StorageService.getUserMode() ?? 'student';
+    final sessionData = await SecureSessionStore.getSession(role: targetRole);
+    final id = sessionData?['identifier']?.toString() ?? _savedIdentifier;
+    final pass = sessionData?['password']?.toString() ?? _savedPassword;
+
+    if (id == null || id.isEmpty || pass == null || pass.isEmpty) {
+      return {
+        'status': 'no_credentials',
+        'message': 'Saved credentials not found. Please log in with password.',
+      };
+    }
+
+    _savedIdentifier = id;
+    _savedPassword = pass;
+    _currentRole = targetRole;
+
+    _setState(AuthState.authenticating);
+    try {
+      final result = await SruAuthClient.instance.login(id, pass);
+      _lastOtpRequestedAt = DateTime.now();
+
+      if (result['status'] == 'otp_required') {
+        _setState(AuthState.awaitingOTP);
+        return {
+          'status': 'otp_required',
+          'message': 'OTP sent to your registered mobile/email.',
+        };
+      } else if (result['status'] == 'authenticated') {
+        await _saveSession();
+        _setState(AuthState.authenticated);
+        _setState(AuthState.ready);
+        return {
+          'status': 'authenticated',
+          'message': 'Session renewed successfully.',
+        };
+      }
+      return {
+        'status': 'unknown',
+        'message': 'Unexpected response from university server.',
+      };
+    } on SruAuthException catch (e) {
+      _setState(AuthState.authenticationError);
+      final msg = e.message.toLowerCase();
+      if (msg.contains('invalid') || msg.contains('password') || msg.contains('credential')) {
+        // Clear stale password to prevent repeated failed attempts & account lockouts
+        await clearSavedPassword(role: targetRole);
+        return {
+          'status': 'credential_error',
+          'message': 'Your university password appears to have changed. Please log in again.',
+        };
+      }
+      return {
+        'status': 'error',
+        'message': e.message,
+      };
+    } catch (e) {
+      _setState(AuthState.networkError);
+      return {
+        'status': 'network_error',
+        'message': 'Unable to connect to university server. Please check your network.',
+      };
+    }
   }
 
   Future<void> logout() async {
@@ -147,6 +260,7 @@ class AuthRepository extends ChangeNotifier {
     await SraapAcademicService.instance.disconnect();
     await StorageService.fullLogout();
     _savedIdentifier = null;
+    _savedPassword = null;
     _currentRole = null;
     _setState(AuthState.unauthenticated);
   }

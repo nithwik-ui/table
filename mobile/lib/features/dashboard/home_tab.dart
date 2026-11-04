@@ -18,6 +18,7 @@ import '../../core/timetable/timetable_repository.dart';
 import '../../core/auth/auth_repository.dart';
 import '../../core/auth/auth_state.dart';
 import '../onboarding/sru_login_screen.dart';
+import '../onboarding/sru_otp_screen.dart';
 import '../../widgets/timetable_card.dart';
 
 class HomeTab extends StatefulWidget {
@@ -228,6 +229,46 @@ class _HomeTabState extends State<HomeTab> {
     final repo = TimetableRepository.instance;
     if (repo.classes.isEmpty) return true;
     return !_isFresh && _isSyncUnavailable;
+  }
+
+  Future<void> _handleSessionRenewal() async {
+    final role = StorageService.getUserMode() ?? 'student';
+    final hasSaved = await AuthRepository.instance.hasSavedCredentials(role: role);
+    if (!mounted) return;
+    if (hasSaved) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Requesting OTP from university portal...'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      final res = await AuthRepository.instance.renewSessionWithOtp(role: role);
+      if (!mounted) return;
+      if (res['status'] == 'otp_required') {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const SruOtpScreen()),
+        );
+      } else if (res['status'] == 'authenticated') {
+        await TimetableRepository.instance.refresh(force: true);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Session renewed! Timetable updated.')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(res['message']?.toString() ?? 'Unable to renew session.')),
+        );
+        if (res['status'] == 'credential_error' || res['status'] == 'no_credentials') {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => SruLoginScreen(role: role)),
+          );
+        }
+      }
+    } else {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => SruLoginScreen(role: role)),
+      );
+    }
   }
 
   Future<void> _enableWebNotifications() async {
@@ -468,10 +509,7 @@ class _HomeTabState extends State<HomeTab> {
                         onPressed: () {
                           if (SyncService.instance.syncState == SyncState.sessionExpired ||
                               AuthRepository.instance.state == AuthState.sessionExpired) {
-                            final role = StorageService.getUserMode() ?? 'student';
-                            Navigator.of(context).push(
-                              MaterialPageRoute(builder: (context) => SruLoginScreen(role: role)),
-                            );
+                            _handleSessionRenewal();
                           } else {
                             TimetableRepository.instance.refresh(force: true);
                           }
@@ -479,7 +517,7 @@ class _HomeTabState extends State<HomeTab> {
                         child: Text(
                           (SyncService.instance.syncState == SyncState.sessionExpired ||
                                   AuthRepository.instance.state == AuthState.sessionExpired)
-                              ? 'Log in'
+                              ? 'Renew with OTP'
                               : 'Try again',
                           style: AppConstants.getBodyMedium(color: AppConstants.error).copyWith(fontWeight: FontWeight.bold),
                         ),

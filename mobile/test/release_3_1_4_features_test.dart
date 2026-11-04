@@ -9,17 +9,46 @@ import 'package:mobile/core/storage.dart';
 import 'package:mobile/core/theme_controller.dart';
 import 'package:mobile/core/timetable_status_engine.dart';
 import 'package:mobile/core/timetable/timetable_repository.dart';
+import 'package:mobile/core/auth/auth_repository.dart';
+import 'package:mobile/core/auth/secure_session_store.dart';
+import 'package:mobile/widgets/timetable_card.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  final secureStorageValues = <String, String>{};
 
   setUpAll(() async {
+    AppConstants.useSystemFontInTests = true;
     final path = Directory.systemTemp.createTempSync().path;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
       const MethodChannel('plugins.flutter.io/path_provider'),
       (MethodCall methodCall) async => path,
     );
+
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.it_nomads.com/flutter_secure_storage'),
+      (MethodCall methodCall) async {
+        if (methodCall.method == 'write') {
+          secureStorageValues[methodCall.arguments['key'] as String] =
+              methodCall.arguments['value'] as String;
+          return null;
+        } else if (methodCall.method == 'read') {
+          return secureStorageValues[methodCall.arguments['key'] as String];
+        } else if (methodCall.method == 'delete') {
+          secureStorageValues.remove(methodCall.arguments['key'] as String);
+          return null;
+        } else if (methodCall.method == 'deleteAll') {
+          secureStorageValues.clear();
+          return null;
+        } else if (methodCall.method == 'readAll') {
+          return Map<String, String>.from(secureStorageValues);
+        }
+        return null;
+      },
+    );
+
     Hive.init(path);
     await StorageService.init();
   });
@@ -300,6 +329,56 @@ void main() {
       expect(stats.freePeriodsCount, equals(1)); // Monday 10:30-11:30 gap
       expect(stats.busiestDay, equals('Tuesday')); // 3 classes on Tuesday vs 2 on Monday
       expect(stats.lightestDay, equals('Monday'));
+    });
+  });
+
+  group('7. Duplicate Countdown Badge Safety in TimetableCard & Repository', () {
+    testWidgets('TimetableCard suppresses duplicate countdown when status already contains countdown', (WidgetTester tester) async {
+      final mockClass = {
+        'id': '101',
+        'subject': 'Network Security',
+        'faculty': 'Prof. Varma',
+        'room': 'A-201',
+        'start_time': '10:00',
+        'end_time': '11:00',
+        'ltp': 'Lecture',
+      };
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TimetableCard(
+              classEvent: mockClass,
+              status: 'Starts in 43 min',
+              countdownText: 'Starts in 43 min',
+              isToday: true,
+            ),
+          ),
+        ),
+      );
+
+      // Verify "Starts in 43 min" appears EXACTLY ONCE (never duplicated!)
+      expect(find.text('Starts in 43 min'), findsOneWidget);
+    });
+  });
+
+  group('8. 1-Step OTP Session Renewal & Cooldown Engine', () {
+    test('Credentials persistence and cooldown guards work cleanly', () async {
+      await SecureSessionStore.saveSession({
+        'identifier': '24BTCAICYB02',
+        'password': 'test_password_123',
+        'cookie': 'session=abc',
+      }, role: 'student');
+
+      final hasCreds = await AuthRepository.instance.hasSavedCredentials(role: 'student');
+      expect(hasCreds, isTrue);
+
+      expect(AuthRepository.instance.otpCooldownSecondsRemaining, equals(0));
+
+      // Test clearing stale password on credential change
+      await AuthRepository.instance.clearSavedPassword(role: 'student');
+      final credsAfterClear = await AuthRepository.instance.hasSavedCredentials(role: 'student');
+      expect(credsAfterClear, isFalse);
     });
   });
 }

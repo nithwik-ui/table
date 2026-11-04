@@ -154,6 +154,19 @@ class TimetableCard extends StatelessWidget {
       }
     }
 
+    // Guard against duplicate countdown chips (e.g. status badge already showing "Starts in 43 min")
+    if (countdownLabel != null) {
+      final normLabel = countdownLabel.trim().toLowerCase();
+      final normStatus = statusText.trim().toLowerCase();
+      if (normLabel == normStatus ||
+          normStatus.contains(normLabel) ||
+          normLabel.contains(normStatus) ||
+          normStatus.startsWith('starts in') ||
+          normStatus.startsWith('ends in')) {
+        countdownLabel = null;
+      }
+    }
+
     // Left accent indicator based on class type and status
     final Color accentColor;
     if (isCancelled) {

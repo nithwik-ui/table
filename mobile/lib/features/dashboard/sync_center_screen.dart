@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../../core/constants.dart';
 import '../../core/sync.dart';
 import '../../core/storage.dart';
+import '../../core/auth/auth_repository.dart';
 import '../onboarding/sru_login_screen.dart';
+import '../onboarding/sru_otp_screen.dart';
 
 class SyncCenterScreen extends StatefulWidget {
   const SyncCenterScreen({super.key});
@@ -30,63 +32,60 @@ class _SyncCenterScreenState extends State<SyncCenterScreen> {
 
   String _formatDate(DateTime? dt) {
     if (dt == null) return 'Never';
-    return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} ${dt.hour >= 12 ? 'PM' : 'AM'}';
+    return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
   @override
   Widget build(BuildContext context) {
     final syncState = SyncService.instance.syncState;
     final isSyncing = SyncService.instance.isSyncing;
-    final userMode = StorageService.getUserMode();
-    final lastSynced = userMode == 'faculty' ? StorageService.getFacultyLastSyncedAt() : StorageService.getLastSyncedAt();
-    final lastChecked = SyncService.instance.lastCheckedAt ?? lastSynced;
+    final lastChecked = SyncService.instance.lastCheckedAt;
 
-    String networkStatus;
-    IconData networkIcon;
-    Color networkColor;
+    String statusText = 'Online';
+    Color statusColor = AppConstants.success;
+    IconData statusIcon = Icons.cloud_done;
 
     if (syncState == SyncState.offline) {
-      networkStatus = '⚠ Offline';
-      networkIcon = Icons.cloud_off;
-      networkColor = AppConstants.warning;
+      statusText = 'Offline (Check connection)';
+      statusColor = AppConstants.error;
+      statusIcon = Icons.cloud_off;
     } else if (syncState == SyncState.serverUnavailable) {
-      networkStatus = '⚠ SRU server temporarily unavailable';
-      networkIcon = Icons.cloud_off;
-      networkColor = AppConstants.error;
+      statusText = 'University Portal Unavailable';
+      statusColor = AppConstants.warning;
+      statusIcon = Icons.cloud_queue;
     } else if (syncState == SyncState.syncTimeout) {
-      networkStatus = '⚠ Sync timeout';
-      networkIcon = Icons.cloud_off;
-      networkColor = AppConstants.error;
-    } else {
-      networkStatus = '✓ Connected';
-      networkIcon = Icons.cloud_done;
-      networkColor = AppConstants.success;
+      statusText = 'Sync Timed Out';
+      statusColor = AppConstants.warning;
+      statusIcon = Icons.timer_off;
+    } else if (syncState == SyncState.sessionExpired) {
+      statusText = 'Session Expired';
+      statusColor = AppConstants.error;
+      statusIcon = Icons.lock_clock;
     }
 
     return Scaffold(
-      backgroundColor: AppConstants.background,
       appBar: AppBar(
-        title: Text('Sync Center', style: AppConstants.getHeadline().copyWith(fontSize: 18)),
+        title: const Text('Sync Center'),
+        backgroundColor: AppConstants.primary,
+        foregroundColor: Colors.white,
       ),
       body: ListView(
-        padding: const EdgeInsets.all(AppConstants.paddingContainer),
+        padding: const EdgeInsets.all(16),
         children: [
           _buildCard(
-            title: 'Network',
-            icon: networkIcon,
-            color: networkColor,
-            subtitle: networkStatus,
+            title: 'Overall Status',
+            icon: statusIcon,
+            color: statusColor,
+            subtitle: statusText,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           _buildCard(
-            title: 'Timetable',
-            icon: Icons.calendar_today,
+            title: 'Timetable Sync',
+            icon: Icons.calendar_month,
             color: AppConstants.primary,
-            subtitle: syncState == SyncState.offline || syncState != SyncState.online 
-                ? '✓ Using cached timetable'
-                : '✓ Last successful sync: ${_formatDate(lastSynced)}',
+            subtitle: isSyncing ? 'Syncing...' : '✓ Last checked: ${_formatDate(lastChecked)}',
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           _buildCard(
             title: 'Changes',
             icon: Icons.history,
@@ -104,14 +103,37 @@ class _SyncCenterScreenState extends State<SyncCenterScreen> {
               ),
               onPressed: () async {
                 final currentRole = StorageService.getUserMode() ?? 'student';
+                final hasSaved = await AuthRepository.instance.hasSavedCredentials(role: currentRole);
+                if (hasSaved) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Requesting OTP from university portal...'), duration: Duration(seconds: 2)),
+                  );
+                  final res = await AuthRepository.instance.renewSessionWithOtp(role: currentRole);
+                  if (!context.mounted) return;
+                  if (res['status'] == 'otp_required') {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const SruOtpScreen()),
+                    );
+                    return;
+                  } else if (res['status'] == 'authenticated') {
+                    SyncService.instance.syncTimetable(force: true);
+                    return;
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(res['message']?.toString() ?? 'Unable to renew session.')),
+                    );
+                  }
+                }
+                if (!context.mounted) return;
                 final result = await Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => SruLoginScreen(role: currentRole)), 
                 );
                 if (result == true) {
-                  SyncService.instance.syncTimetable();
+                  SyncService.instance.syncTimetable(force: true);
                 }
               },
-              child: const Text('Re-Authenticate', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: const Text('Renew Session with OTP', style: TextStyle(fontWeight: FontWeight.bold)),
             )
           else
             ElevatedButton(

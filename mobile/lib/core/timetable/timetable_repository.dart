@@ -279,7 +279,7 @@ class TimetableRepository extends ChangeNotifier {
           _upNextStatus =
               '${currentBreak.label} • Next at ${TimeUtils.format12Hour(_upNextClass!['start_time'] as String? ?? '00:00')}';
         } else {
-          _upNextStatus = _upNextCountdown;
+          _upNextStatus = 'Up Next';
         }
       }
     } else {
