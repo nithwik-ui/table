@@ -339,6 +339,14 @@ void main() {
       expect(eval.error, equals(SraapLoginError.sessionExpired));
     });
 
+    test('Classifies "In Valid Login" or "Invalid Login" as invalidCredentials', () {
+      final res1 = http.Response('<html><body><h1>In Valid Login</h1></body></html>', 200);
+      expect(SraapAuthManager.evaluateLoginResponse(res1).error, equals(SraapLoginError.invalidCredentials));
+
+      final res2 = http.Response('<html><body><h1>Invalid Login</h1></body></html>', 200);
+      expect(SraapAuthManager.evaluateLoginResponse(res2).error, equals(SraapLoginError.invalidCredentials));
+    });
+
     test('Classifies IP restriction and Server busy as portalUnavailable', () {
       final resIp = http.Response(
         '<html><body>Access Restricted due to shared public IP</body></html>',
@@ -405,6 +413,30 @@ void main() {
       expect(postCount, equals(1));
       // submitLogin itself never triggers an uncontrolled background CAPTCHA fetch loop
       expect(captchaCount, equals(1));
+    });
+
+    test('submitLogin normalizes lowercase roll numbers to uppercase in payload', () async {
+      String? sentUserId;
+      SraapSessionManager.instance.client = MockClient((req) async {
+        if (req.url.path.endsWith('/student_login.php') && req.method == 'POST') {
+          sentUserId = req.bodyFields['user_id'];
+          return http.Response(
+            '',
+            302,
+            headers: {'location': 'student/dash_board.php'},
+          );
+        }
+        return http.Response('', 404);
+      });
+
+      final result = await SraapAuthManager.submitLogin(
+        enrollment: '2403a53050',
+        password: 'password123',
+        captcha: 'abcd',
+      );
+
+      expect(result.success, isTrue);
+      expect(sentUserId, equals('2403A53050'));
     });
 
     test('Background pingKeepAlive is suppressed while isLoginFlowActive is true', () async {

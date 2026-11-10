@@ -443,10 +443,16 @@ class _WeekTabState extends State<WeekTab> {
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => Scaffold(
-                              appBar: AppBar(title: const Text('Changes'), backgroundColor: AppConstants.surface),
-                              body: const SafeArea(child: ChangesTab()),
+                          builder: (context) => Scaffold(
+                            backgroundColor: AppConstants.background,
+                            appBar: AppBar(
+                              title: Text('Changes', style: AppConstants.getHeadline().copyWith(fontSize: 18)),
+                              backgroundColor: AppConstants.surface,
+                              foregroundColor: AppConstants.textPrimary,
+                              elevation: 0,
                             ),
+                            body: const SafeArea(child: ChangesTab()),
+                          ),
                           ),
                         );
                       },

@@ -218,6 +218,33 @@ class ApiService {
     }
   }
 
+  static Future<bool> sendMarksNotification(
+    String rollNumber,
+    String subject,
+    String marks, {
+    String? component,
+  }) async {
+    try {
+      final payload = <String, dynamic>{
+        'rollNumber': rollNumber,
+        'subject': subject,
+        'cieMarks': marks,
+      };
+      if (component != null) {
+        payload['component'] = component;
+      }
+      final response = await _post(
+        '${AppConstants.apiBaseUrl}/api/devices/marks',
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(payload),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Failed to send marks notification: $e');
+      return false;
+    }
+  }
+
   static Future<bool> updatePreferences(String fcmToken, bool notificationsEnabled) async {
     try {
       final response = await _post(

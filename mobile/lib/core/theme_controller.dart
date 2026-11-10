@@ -9,12 +9,12 @@ class ThemeController extends ChangeNotifier {
   static final ThemeController instance = ThemeController._internal();
   ThemeController._internal();
 
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.light;
   ThemeMode get themeMode => _themeMode;
 
   Brightness? _testPlatformBrightnessOverride;
 
-  /// Loads saved theme mode from persistent storage on startup.
+  /// Loads saved theme mode from persistent storage on startup (Light mode default).
   void init() {
     final saved = StorageService.getThemeMode();
     _themeMode = _parseMode(saved);

@@ -285,34 +285,12 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           ),
         );
 
-        final darkTheme = ThemeData(
-          useMaterial3: true,
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: const Color(0xFF0B1120),
-          colorScheme: const ColorScheme.dark(
-            primary: Color(0xFF38BDF8),
-            secondary: Color(0xFF0284C7),
-            tertiary: Color(0xFF0284C7),
-            surface: Color(0xFF131C31),
-            error: Color(0xFFF87171),
-            onPrimary: Color(0xFF0B1120),
-            onSecondary: Colors.white,
-            onSurface: Color(0xFFF8FAFC),
-            outline: Color(0xFF334155),
-          ),
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            iconTheme: IconThemeData(color: Color(0xFFF8FAFC)),
-          ),
-        );
-
         return MaterialApp(
           title: 'SRU Timetable',
           debugShowCheckedModeBanner: false,
           theme: lightTheme,
-          darkTheme: darkTheme,
-          themeMode: ThemeController.instance.themeMode,
+          darkTheme: lightTheme,
+          themeMode: ThemeMode.light,
           navigatorKey: navigatorKey,
           home: const SplashController(),
         );
@@ -342,19 +320,20 @@ class _SplashControllerState extends State<SplashController> {
       ThemeController.instance.init();
       await AppDataMigrationManager.runMigrationIfNeeded();
 
-      const int currentBuild = 31;
+      const int currentBuild = 38;
       final int lastOpenedBuild = StorageService.getInt('last_opened_build_number') ?? 0;
-      final bool v31ResetDone = (StorageService.getInt('v31_fresh_start_done') ?? 0) == 1;
+      final bool v38ResetDone = (StorageService.getInt('v38_fresh_start_done') ?? 0) == 1;
 
-      if (lastOpenedBuild < currentBuild || !v31ResetDone) {
+      if (lastOpenedBuild < currentBuild || !v38ResetDone) {
         debugPrint('[APP_INIT] Version update to build $currentBuild detected. Performing fresh start.');
         isFreshUpdate = true;
         await AuthRepository.instance.logout();
         await SecureSessionStore.clearSession();
         await SraapSessionManager.instance.clearSession();
         await StorageService.clearAll();
+        await StorageService.setThemeMode('light');
         await StorageService.setInt('last_opened_build_number', currentBuild);
-        await StorageService.setInt('v31_fresh_start_done', 1);
+        await StorageService.setInt('v38_fresh_start_done', 1);
       }
 
       // Non-destructive notification prompt reset for 3.1.4 (build 35)

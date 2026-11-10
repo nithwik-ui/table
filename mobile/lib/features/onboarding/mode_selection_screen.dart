@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants.dart';
-import 'sru_login_screen.dart';
+import 'degree_screen.dart';
+import 'faculty_selection_screen.dart';
 
 class ModeSelectionScreen extends StatelessWidget {
   final bool isSwitching;
@@ -9,13 +10,13 @@ class ModeSelectionScreen extends StatelessWidget {
 
   void _selectStudent(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const SruLoginScreen(role: 'student')),
+      MaterialPageRoute(builder: (context) => const DegreeScreen()),
     );
   }
 
   void _selectFaculty(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const SruLoginScreen(role: 'faculty')),
+      MaterialPageRoute(builder: (context) => const FacultySelectionScreen()),
     );
   }
 

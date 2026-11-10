@@ -36,7 +36,7 @@ class StorageService {
   }
 
   static String getThemeMode() {
-    return _prefsBox?.get('theme_mode', defaultValue: 'system') as String? ?? 'system';
+    return _prefsBox?.get('theme_mode', defaultValue: 'light') as String? ?? 'light';
   }
 
   static Future<void> setUserMode(String mode) async {
@@ -381,7 +381,19 @@ class StorageService {
 
   static Future<void> clearSraapAcademicCache() async {
     await _cacheBox?.delete('sraap_academic_cache');
+    await _cacheBox?.delete('sraap_internal_marks_cache');
     await clearPlacementAttendance();
+  }
+
+  static Future<void> saveSraapInternalMarksCache(
+    Map<String, dynamic> data,
+  ) async =>
+      await _cacheBox?.put('sraap_internal_marks_cache', data);
+
+  static Map<String, dynamic>? getSraapInternalMarksCache() {
+    final data = _cacheBox?.get('sraap_internal_marks_cache');
+    if (data == null) return null;
+    return Map<String, dynamic>.from(data as Map);
   }
 
   static Future<void> savePlacementAttendance(double pct) async =>

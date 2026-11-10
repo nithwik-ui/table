@@ -452,7 +452,13 @@ class _HomeTabState extends State<HomeTab> {
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => Scaffold(
-                              appBar: AppBar(title: const Text('Changes'), backgroundColor: AppConstants.surface),
+                              backgroundColor: AppConstants.background,
+                              appBar: AppBar(
+                                title: Text('Changes', style: AppConstants.getHeadline().copyWith(fontSize: 18)),
+                                backgroundColor: AppConstants.surface,
+                                foregroundColor: AppConstants.textPrimary,
+                                elevation: 0,
+                              ),
                               body: const SafeArea(child: ChangesTab()),
                             ),
                           ),

@@ -11,11 +11,12 @@ import '../../core/notifications.dart';
 import '../../core/sync.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../onboarding/mode_selection_screen.dart';
+import '../onboarding/degree_screen.dart';
+import '../onboarding/faculty_selection_screen.dart';
 import 'sync_center_screen.dart';
 import '../../core/sraap/sraap_academic_service.dart';
 import '../../core/auth/auth_repository.dart';
 import '../../core/timetable/timetable_repository.dart';
-import '../onboarding/sru_login_screen.dart';
 import '../../core/auth/secure_session_store.dart';
 import '../../core/update/update_service.dart';
 import '../../core/update/app_update_policy.dart';
@@ -57,8 +58,13 @@ class _ProfileTabState extends State<ProfileTab> {
     super.initState();
     _loadProfileData();
     SyncService.instance.addListener(_onSyncUpdate);
+    SraapAcademicService.instance.addListener(_onSraapStateChanged);
     UpdateService.instance.playStateNotifier.addListener(_onPlayUpdateStateChanged);
     ThemeController.instance.addListener(_onThemeChanged);
+  }
+
+  void _onSraapStateChanged() {
+    if (mounted) _loadProfileData();
   }
 
   void _onThemeChanged() {
@@ -102,6 +108,7 @@ class _ProfileTabState extends State<ProfileTab> {
   @override
   void dispose() {
     SyncService.instance.removeListener(_onSyncUpdate);
+    SraapAcademicService.instance.removeListener(_onSraapStateChanged);
     UpdateService.instance.playStateNotifier.removeListener(_onPlayUpdateStateChanged);
     ThemeController.instance.removeListener(_onThemeChanged);
     super.dispose();
@@ -262,7 +269,11 @@ class _ProfileTabState extends State<ProfileTab> {
                 } else {
                   if (mounted) {
                     Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => SruLoginScreen(role: targetRole)),
+                      MaterialPageRoute(
+                        builder: (context) => targetRole == 'faculty'
+                            ? const FacultySelectionScreen()
+                            : const DegreeScreen(),
+                      ),
                     );
                   }
                 }
@@ -358,45 +369,6 @@ class _ProfileTabState extends State<ProfileTab> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildThemeOption(String label, String modeKey, IconData icon) {
-    final isSelected = ThemeController.instance.themeModeString == modeKey;
-    return Expanded(
-      child: InkWell(
-        onTap: () {
-          ThemeController.instance.setThemeModeFromString(modeKey);
-        },
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? AppConstants.primary.withValues(alpha: 0.14) : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: isSelected ? AppConstants.primary : AppConstants.outline,
-              width: isSelected ? 1.5 : 1.0,
-            ),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                icon,
-                size: 18,
-                color: isSelected ? AppConstants.primary : AppConstants.textSecondary,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: AppConstants.getLabelSmall(
-                  color: isSelected ? AppConstants.primary : AppConstants.textPrimary,
-                ).copyWith(fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -508,51 +480,6 @@ class _ProfileTabState extends State<ProfileTab> {
                           _buildIdentityRow('Batch', _batchCode),
                         if (_registeredContact.isNotEmpty)
                           _buildIdentityRow('Contact', _registeredContact),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // APPEARANCE Section (Section 20)
-                  Text(
-                    'APPEARANCE',
-                    style: AppConstants.getLabelSmall(color: AppConstants.textSecondary).copyWith(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.6,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppConstants.surface,
-                      borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-                      boxShadow: AppConstants.shadowLevel1,
-                      border: Border.all(color: AppConstants.outline),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Theme Preference',
-                          style: AppConstants.getBodyLarge().copyWith(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Choose System default, Light mode, or Dark mode.',
-                          style: AppConstants.getBodyMedium(color: AppConstants.textSecondary).copyWith(fontSize: 12.5),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            _buildThemeOption('System', 'system', Icons.brightness_auto_rounded),
-                            const SizedBox(width: 8),
-                            _buildThemeOption('Light', 'light', Icons.light_mode_outlined),
-                            const SizedBox(width: 8),
-                            _buildThemeOption('Dark', 'dark', Icons.dark_mode_outlined),
-                          ],
-                        ),
                       ],
                     ),
                   ),
@@ -769,6 +696,27 @@ class _ProfileTabState extends State<ProfileTab> {
                         ),
                         Divider(height: 1, color: AppConstants.outline),
                         ListTile(
+                          leading: Icon(Icons.swap_horiz_rounded, color: AppConstants.primary),
+                          title: Text(
+                            isStudent ? 'Change Batch / Section' : 'Change Faculty Schedule',
+                            style: AppConstants.getBodyLarge(),
+                          ),
+                          subtitle: Text(
+                            _batchCode.isNotEmpty ? 'Current: $_batchCode' : 'Select your schedule',
+                            style: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
+                          ),
+                          trailing: Icon(Icons.chevron_right, color: AppConstants.textSecondary),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => isStudent ? const DegreeScreen() : const FacultySelectionScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        Divider(height: 1, color: AppConstants.outline),
+                        ListTile(
                           leading: Icon(Icons.system_update_alt, color: AppConstants.primary),
                           title: Text('Check for updates', style: AppConstants.getBodyLarge()),
                           subtitle: Text('Version $_currentVersion', style: AppConstants.getBodyMedium(color: AppConstants.textSecondary)),
@@ -815,7 +763,7 @@ class _ProfileTabState extends State<ProfileTab> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Build: Production (35)',
+                          'Build: Production (36)',
                           style: AppConstants.getLabelSmall(color: AppConstants.textSecondary),
                         ),
                         const SizedBox(height: 2),

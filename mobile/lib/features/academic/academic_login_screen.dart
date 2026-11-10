@@ -31,7 +31,7 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
     SraapSessionManager.instance.isLoginFlowActive = true;
     final savedRoll = StorageService.getStudentRollNumber();
     if (savedRoll != null && savedRoll.isNotEmpty) {
-      _enrollmentCtrl.text = savedRoll;
+      _enrollmentCtrl.text = savedRoll.toUpperCase();
     }
     _restoreSavedCredentials();
     _fetchCaptcha(forceFreshSession: true);
@@ -43,7 +43,7 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
           await SecureSessionStore.getSession(role: 'sraap_credentials');
       if (creds != null) {
         if (_enrollmentCtrl.text.isEmpty && creds['sraap_roll'] != null) {
-          _enrollmentCtrl.text = creds['sraap_roll'].toString();
+          _enrollmentCtrl.text = creds['sraap_roll'].toString().toUpperCase();
         }
         if (_passwordCtrl.text.isEmpty && creds['sraap_pass'] != null) {
           _passwordCtrl.text = creds['sraap_pass'].toString();
@@ -77,9 +77,11 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
   Future<void> _login() async {
     if (_isLoading || _isRefreshingCaptcha) return;
 
-    if (_enrollmentCtrl.text.trim().isEmpty ||
-        _passwordCtrl.text.isEmpty ||
-        _captchaCtrl.text.trim().isEmpty) {
+    final roll = _enrollmentCtrl.text.trim().toUpperCase();
+    final password = _passwordCtrl.text;
+    final captcha = _captchaCtrl.text.trim();
+
+    if (roll.isEmpty || password.isEmpty || captcha.isEmpty) {
       setState(() => _errorMessage = "Please fill in all fields.");
       return;
     }
@@ -99,9 +101,9 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
 
     try {
       final result = await SraapAuthManager.submitLogin(
-        enrollment: _enrollmentCtrl.text,
-        password: _passwordCtrl.text,
-        captcha: _captchaCtrl.text,
+        enrollment: roll,
+        password: password,
+        captcha: captcha,
       );
 
       if (!mounted) return;
@@ -111,10 +113,10 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
         TextInput.finishAutofillContext(shouldSave: true);
         await StorageService.setSraapConnected(true);
         await SraapSessionManager.instance.markAuthenticated();
-        await StorageService.saveStudentRollNumber(_enrollmentCtrl.text.trim());
+        await StorageService.saveStudentRollNumber(roll);
         await SecureSessionStore.saveSession({
-          'sraap_roll': _enrollmentCtrl.text.trim(),
-          'sraap_pass': _passwordCtrl.text.trim(),
+          'sraap_roll': roll,
+          'sraap_pass': password,
         }, role: 'sraap_credentials');
         SraapAcademicService.instance.startKeepAlive();
         try {
@@ -258,11 +260,18 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
                     _buildLabel('Roll Number'),
                     TextField(
                       controller: _enrollmentCtrl,
+                      style: AppConstants.getBodyLarge(color: AppConstants.textPrimary),
+                      cursorColor: AppConstants.primary,
+                      textCapitalization: TextCapitalization.characters,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                      ],
                       autofillHints: const [AutofillHints.username],
                       keyboardType: TextInputType.text,
                       textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
                         hintText: 'Enter roll number',
+                        hintStyle: AppConstants.getBodyMedium(color: AppConstants.textMuted),
                         filled: true,
                         fillColor: AppConstants.surface,
                         border: OutlineInputBorder(
@@ -289,11 +298,14 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
                     _buildLabel('Password'),
                     TextField(
                       controller: _passwordCtrl,
+                      style: AppConstants.getBodyLarge(color: AppConstants.textPrimary),
+                      cursorColor: AppConstants.primary,
                       obscureText: _obscurePassword,
                       autofillHints: const [AutofillHints.password],
                       textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
                         hintText: 'Enter password',
+                        hintStyle: AppConstants.getBodyMedium(color: AppConstants.textMuted),
                         filled: true,
                         fillColor: AppConstants.surface,
                         border: OutlineInputBorder(
@@ -387,12 +399,15 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
               // CAPTCHA Input
               TextField(
                 controller: _captchaCtrl,
+                style: AppConstants.getBodyLarge(color: AppConstants.textPrimary),
+                cursorColor: AppConstants.primary,
                 textCapitalization: TextCapitalization.none,
                 autocorrect: false,
                 enableSuggestions: false,
                 onSubmitted: (_) => _login(),
                 decoration: InputDecoration(
                   hintText: 'Enter CAPTCHA',
+                  hintStyle: AppConstants.getBodyMedium(color: AppConstants.textMuted),
                   filled: true,
                   fillColor: AppConstants.surface,
                   border: OutlineInputBorder(

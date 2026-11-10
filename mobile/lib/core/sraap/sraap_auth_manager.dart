@@ -142,8 +142,19 @@ class SraapAuthManager extends ChangeNotifier {
       );
     }
 
+    // Check explicit script redirect to session expired / slogin
+    if (body.contains('../slogin.php') ||
+        body.contains("location.href = '../slogin.php'") ||
+        body.contains("location.href='../slogin.php'")) {
+      return const SraapLoginResult(
+        success: false,
+        error: SraapLoginError.sessionExpired,
+      );
+    }
+
     // Check explicit CAPTCHA rejection markers from sraap.in
     if (body.contains('enter captcha code') ||
+        body.contains('enter captcha') ||
         body.contains('invalid captcha') ||
         body.contains('wrong captcha') ||
         body.contains('captcha code is invalid') ||
@@ -161,6 +172,10 @@ class SraapAuthManager extends ChangeNotifier {
         body.contains('wrong password') ||
         body.contains('invalid password') ||
         body.contains('invalid user') ||
+        body.contains('in valid login') ||
+        body.contains('invalid login') ||
+        body.contains('user not found') ||
+        body.contains('enter enrolment no') ||
         body.contains('forgot_passwords.php') ||
         body.contains('forgot / reset password')) {
       return const SraapLoginResult(
@@ -169,8 +184,8 @@ class SraapAuthManager extends ChangeNotifier {
       );
     }
 
-    // Check explicit session expiration markers
-    if (body.contains('slogin.php') || body.contains('in valid login')) {
+    // Compatibility check for general slogin.php redirection
+    if (body.contains('slogin.php')) {
       return const SraapLoginResult(
         success: false,
         error: SraapLoginError.sessionExpired,
@@ -215,8 +230,9 @@ class SraapAuthManager extends ChangeNotifier {
     required String captcha,
   }) async {
     try {
+      final normalizedEnrollment = enrollment.trim().toUpperCase();
       final response = await SraapSessionManager.instance.login(
-        enrollment: enrollment,
+        enrollment: normalizedEnrollment,
         password: password,
         captcha: captcha,
       );

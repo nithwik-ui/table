@@ -7,6 +7,9 @@ import 'analytics_service.dart';
 import 'widget_updater.dart';
 import 'sru/sru_student_source.dart';
 import 'sru/sru_faculty_source.dart';
+import 'sru/sru_timetable_parser.dart';
+import 'sru/sru_profile_parser.dart';
+import 'timetable_normalizer.dart';
 import 'timetable/timetable_repository.dart';
 import 'auth/auth_repository.dart';
 import 'auth/auth_state.dart';
@@ -26,11 +29,80 @@ class SyncService extends ChangeNotifier {
 
   int _retryCount = 0;
   Timer? _retryTimer;
+  Timer? _hourlySyncTimer;
   DateTime? _lastCheckedAt;
   DateTime? get lastCheckedAt => _lastCheckedAt;
   DateTime? _syncStartTime;
   int _syncGeneration = 0;
   int get syncGeneration => _syncGeneration;
+
+  /// Starts the 1-hour periodic background sync against the Cloudflare backend.
+  void startHourlySync() {
+    _hourlySyncTimer?.cancel();
+    _hourlySyncTimer = Timer.periodic(const Duration(hours: 1), (_) {
+      if (!_isSyncing) {
+        TimetableRepository.instance.refresh();
+      }
+    });
+  }
+
+  void stopHourlySync() {
+    _hourlySyncTimer?.cancel();
+    _hourlySyncTimer = null;
+  }
+
+  /// Imports timetable HTML copied from an official browser session (Zero direct SRU network calls).
+  Future<int> importTimetableFromHtml(String htmlContent) async {
+    final userMode = StorageService.getUserMode() ?? 'student';
+    final rawEntries = SruTimetableParser.parseTimetable(htmlContent, source: 'browser_import');
+    final list = TimetableNormalizer.normalize(rawEntries);
+    if (list.isEmpty) {
+      throw Exception('No timetable classes found in the pasted content. Copy the full timetable page source from sruniv.com.');
+    }
+
+    // Extract profile if present in HTML
+    try {
+      final profile = SruProfileParser.parseProfile(htmlContent, userMode);
+      if (profile.isNotEmpty) {
+        final existing = StorageService.getProfile() ?? {};
+        existing.addAll(profile);
+        await StorageService.saveProfile(existing);
+        if (profile['name'] != null && profile['name'] != 'Student') {
+          await StorageService.saveUserName(profile['name']);
+        }
+      }
+    } catch (_) {}
+
+    final oldTimetable = userMode == 'faculty'
+        ? StorageService.getFacultyTimetableCache()
+        : StorageService.getTimetableCache();
+
+    await _detectAndSaveTimetableChanges(oldTimetable, list, userMode);
+
+    final syncedAt = DateTime.now();
+    if (userMode == 'faculty') {
+      await StorageService.saveFacultyTimetableCache(list);
+      await StorageService.saveFacultyLastSyncedAt(syncedAt);
+    } else {
+      await StorageService.saveTimetableCache(list);
+      await StorageService.saveLastSyncedAt(syncedAt);
+    }
+
+    TimetableRepository.instance.updateTimetable(
+      list,
+      source: 'browser_import',
+      syncedAt: syncedAt,
+    );
+
+    if (StorageService.isClassRemindersEnabled()) {
+      await NotificationService.reconcileReminders();
+    }
+
+    _syncState = SyncState.online;
+    _lastCheckedAt = syncedAt;
+    notifyListeners();
+    return list.length;
+  }
 
   /// Executes the strict data freshness pipeline:
   /// fetch timetable -> validate response -> parse timetable -> write cache -> update lastSyncedAt.
@@ -324,6 +396,16 @@ class SyncService extends ChangeNotifier {
         final currentChanges = StorageService.getChangesCache();
         currentChanges.insertAll(0, detectedChanges);
         await StorageService.saveChangesCache(currentChanges);
+      }
+
+      try {
+        await NotificationService.showForegroundNotification(
+          'Timetable Updated',
+          '${detectedChanges.length} schedule change(s) detected in your timetable.',
+          {'type': 'timetable_change'},
+        );
+      } catch (e) {
+        debugPrint('[SYNC] Change notification non-fatal: $e');
       }
     }
   }

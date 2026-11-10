@@ -209,21 +209,27 @@ class _SruLoginScreenState extends State<SruLoginScreen> {
                   children: [
                     TextField(
                       controller: _identifierController,
+                      style: AppConstants.getBodyLarge(color: AppConstants.textPrimary),
+                      cursorColor: AppConstants.primary,
                       autofillHints: const [AutofillHints.username],
                       keyboardType: TextInputType.text,
                       textInputAction: TextInputAction.next,
                       enableSuggestions: true,
                       autocorrect: false,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Student ID / Mobile / SRU Email',
+                        labelStyle: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
                         hintText: 'e.g. 2103A51000 or email',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person_outline),
+                        hintStyle: AppConstants.getBodyMedium(color: AppConstants.textMuted),
+                        border: const OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person_outline, color: AppConstants.textSecondary),
                       ),
                     ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: _passwordController,
+                      style: AppConstants.getBodyLarge(color: AppConstants.textPrimary),
+                      cursorColor: AppConstants.primary,
                       obscureText: !_isPasswordVisible,
                       autofillHints: const [AutofillHints.password],
                       textInputAction: TextInputAction.done,
@@ -234,10 +240,11 @@ class _SruLoginScreenState extends State<SruLoginScreen> {
                       },
                       decoration: InputDecoration(
                         labelText: 'Password',
+                        labelStyle: AppConstants.getBodyMedium(color: AppConstants.textSecondary),
                         border: const OutlineInputBorder(),
-                        prefixIcon: const Icon(Icons.lock_outline),
+                        prefixIcon: Icon(Icons.lock_outline, color: AppConstants.textSecondary),
                         suffixIcon: IconButton(
-                          icon: Icon(_isPasswordVisible ? Icons.visibility_off : Icons.visibility),
+                          icon: Icon(_isPasswordVisible ? Icons.visibility_off : Icons.visibility, color: AppConstants.textSecondary),
                           onPressed: () {
                             setState(() {
                               _isPasswordVisible = !_isPasswordVisible;

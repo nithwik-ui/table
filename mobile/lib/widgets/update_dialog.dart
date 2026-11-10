@@ -9,6 +9,7 @@ class UpdateDialog extends StatelessWidget {
   final String? updateMessage;
   final VoidCallback? onUpdateNow;
   final VoidCallback? onLater;
+  final bool isCritical;
 
   const UpdateDialog({
     super.key,
@@ -17,6 +18,7 @@ class UpdateDialog extends StatelessWidget {
     this.updateMessage,
     this.onUpdateNow,
     this.onLater,
+    this.isCritical = false,
   });
 
   String get _displayVersion {
@@ -41,7 +43,7 @@ class UpdateDialog extends StatelessWidget {
       final uri = Uri.parse(targetUrl);
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
-        if (context.mounted) {
+        if (context.mounted && !isCritical) {
           Navigator.of(context).pop();
         }
       } else {
@@ -70,84 +72,88 @@ class UpdateDialog extends StatelessWidget {
     final message = updateMessage ??
         'SRU Timetable $_displayVersion includes important stability, timetable, dark mode, notification, performance and user experience improvements.';
 
-    return AlertDialog(
-      backgroundColor: AppConstants.surfaceElevated,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppConstants.radiusCard),
-        side: BorderSide(color: AppConstants.outline),
-      ),
-      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-      contentPadding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      title: Row(
-        children: [
-          Icon(
-            Icons.system_update_alt_rounded,
-            color: AppConstants.primary,
-            size: 24,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'New update available',
-              style: AppConstants.getHeadline(
-                color: AppConstants.textPrimary,
-              ).copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+    return PopScope(
+      canPop: !isCritical,
+      child: AlertDialog(
+        backgroundColor: AppConstants.surfaceElevated,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusCard),
+          side: BorderSide(color: AppConstants.outline),
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+        contentPadding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        title: Row(
+          children: [
+            Icon(
+              Icons.system_update_alt_rounded,
+              color: AppConstants.primary,
+              size: 24,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                isCritical ? 'Critical update required' : 'New update available',
+                style: AppConstants.getHeadline(
+                  color: AppConstants.textPrimary,
+                ).copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
               ),
             ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'SRU Timetable $_displayVersion',
+              style: AppConstants.getBodyLarge(
+                color: AppConstants.primary,
+              ).copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              message,
+              style: AppConstants.getBodyMedium(
+                color: AppConstants.textSecondary,
+              ).copyWith(height: 1.4),
+            ),
+          ],
+        ),
+        actions: [
+          if (!isCritical)
+            TextButton(
+              onPressed: () => _handleLater(context),
+              child: Text(
+                'Later',
+                style: TextStyle(
+                  color: AppConstants.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppConstants.brandNavy,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppConstants.radiusButton),
+              ),
+              elevation: 0,
+            ),
+            onPressed: () => _handleUpdate(context),
+            child: const Text(
+              'Update Now',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'SRU Timetable $_displayVersion',
-            style: AppConstants.getBodyLarge(
-              color: AppConstants.primary,
-            ).copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            message,
-            style: AppConstants.getBodyMedium(
-              color: AppConstants.textSecondary,
-            ).copyWith(height: 1.4),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => _handleLater(context),
-          child: Text(
-            'Later',
-            style: TextStyle(
-              color: AppConstants.textSecondary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppConstants.brandNavy,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppConstants.radiusButton),
-            ),
-            elevation: 0,
-          ),
-          onPressed: () => _handleUpdate(context),
-          child: const Text(
-            'Update Now',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
-      ],
     );
   }
 }

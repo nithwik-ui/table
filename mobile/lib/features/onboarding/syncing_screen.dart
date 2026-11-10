@@ -6,6 +6,9 @@ import '../../core/constants.dart';
 import '../../core/api.dart';
 import '../../core/storage.dart';
 import '../../core/notifications.dart';
+import '../../core/timetable/timetable_repository.dart';
+import '../../core/auth/auth_repository.dart';
+import '../../core/auth/secure_session_store.dart';
 import '../dashboard/dashboard_screen.dart';
 
 class SyncingScreen extends StatefulWidget {
@@ -75,20 +78,42 @@ class _SyncingScreenState extends State<SyncingScreen> {
       await ApiService.registerDevice(fcmToken, widget.batchId);
       
       // Delay briefly for animation effect
-      await Future.delayed(const Duration(seconds: 2));
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      final savedName = StorageService.getUserName();
 
       // 4. Save batch variables to local storage (marks onboarding as complete)
       await StorageService.saveProfile({
         'batch': widget.batchCode,
-        'department': widget.batchCode,
+        'batch_name': widget.batchCode,
+        'department': widget.degree,
+        'degree': widget.degree,
+        'year': widget.year,
         'batch_id': widget.batchId,
+        if (savedName != null && savedName.isNotEmpty) 'name': savedName,
+        'role': 'student',
       });
-      
-      // Explicitly set user mode since first-time users skip mode_selection_screen logic
-      await StorageService.setUserMode('student');
+      await StorageService.saveUserIdentifier(widget.batchCode);
 
-      // 5. Update data freshness timestamp
-      await StorageService.saveLastSyncedAt(DateTime.now());
+      // Explicitly set user mode and safe batch session
+      await StorageService.setUserMode('student');
+      await SecureSessionStore.saveSession({
+        'cookie': 'batch_mode=${widget.batchCode}',
+        'role': 'student',
+        'identifier': widget.batchCode,
+        'batch_id': widget.batchId,
+        'batch_code': widget.batchCode,
+      }, role: 'student');
+      await AuthRepository.instance.restoreSession();
+
+      // 5. Update data freshness timestamp and shared repository
+      final syncedAt = DateTime.now();
+      await StorageService.saveLastSyncedAt(syncedAt);
+      TimetableRepository.instance.updateTimetable(
+        entries,
+        source: 'cloudflare_batch',
+        syncedAt: syncedAt,
+      );
 
       if (mounted) {
         // Navigate to dashboard and wipe the navigation stack

@@ -3,6 +3,8 @@ import '../../core/constants.dart';
 import '../../core/sync.dart';
 import '../../core/storage.dart';
 import '../../core/auth/auth_repository.dart';
+import '../onboarding/degree_screen.dart';
+import '../onboarding/faculty_selection_screen.dart';
 import '../onboarding/sru_login_screen.dart';
 import '../onboarding/sru_otp_screen.dart';
 
@@ -80,14 +82,14 @@ class _SyncCenterScreenState extends State<SyncCenterScreen> {
           ),
           const SizedBox(height: 12),
           _buildCard(
-            title: 'Timetable Sync',
+            title: 'Timetable Sync (Auto every 1h)',
             icon: Icons.calendar_month,
             color: AppConstants.primary,
             subtitle: isSyncing ? 'Syncing...' : '✓ Last checked: ${_formatDate(lastChecked)}',
           ),
           const SizedBox(height: 12),
           _buildCard(
-            title: 'Changes',
+            title: 'Changes & Notifications',
             icon: Icons.history,
             color: AppConstants.primary,
             subtitle: '✓ Last checked: ${_formatDate(lastChecked)}',
@@ -143,11 +145,33 @@ class _SyncCenterScreenState extends State<SyncCenterScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusButton)),
               ),
-              onPressed: isSyncing ? null : () => SyncService.instance.syncTimetable(),
+              onPressed: isSyncing ? null : () => SyncService.instance.syncTimetable(force: true),
               child: isSyncing 
                   ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                   : const Text('Sync Now', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppConstants.primary,
+              side: BorderSide(color: AppConstants.primary),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppConstants.radiusButton)),
+            ),
+            onPressed: () {
+              final isFaculty = StorageService.getUserMode() == 'faculty';
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => isFaculty ? const FacultySelectionScreen() : const DegreeScreen(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.swap_horiz_rounded),
+            label: Text(
+              StorageService.getUserMode() == 'faculty' ? 'Change Faculty Schedule' : 'Change Batch / Section',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
         ],
       ),
     );

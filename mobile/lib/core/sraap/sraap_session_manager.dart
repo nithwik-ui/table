@@ -295,7 +295,7 @@ class SraapSessionManager {
             false; // CRITICAL: Stop auto-redirect to capture cookies correctly on mobile
       }
       req.bodyFields = {
-        'user_id': enrollment.trim(),
+        'user_id': enrollment.trim().toUpperCase(),
         'user_password': password,
         'token': captcha.trim(),
         'submit': 'Sign in',
@@ -425,6 +425,22 @@ class SraapSessionManager {
     return res;
   }
 
+  /// General authenticated POST form request (e.g. for detail views in SRAAP).
+  Future<http.Response> postForm(
+    String path,
+    Map<String, String> fields,
+  ) async {
+    final res = await _client
+        .post(
+          Uri.parse('${SraapSessionManager.baseUrl}$path'),
+          headers: _headers(isForm: true),
+          body: fields,
+        )
+        .timeout(const Duration(seconds: 15));
+    _updateCookies(res.headers);
+    return res;
+  }
+
   /// Wipes the session.
   Future<void> clearSession() async {
     _cookieHeader = '';
@@ -458,6 +474,7 @@ class SraapSessionManager {
     };
     if (isForm) {
       headers['Content-Type'] = 'application/x-www-form-urlencoded';
+      headers['Origin'] = SraapSessionManager.baseUrl;
     }
     if (kIsWeb && clearProxyCookie) {
       headers['x-proxy-clear-cookie'] = '1';

@@ -11,6 +11,8 @@ import 'package:mobile/core/timetable_status_engine.dart';
 import 'package:mobile/core/timetable/timetable_repository.dart';
 import 'package:mobile/core/auth/auth_repository.dart';
 import 'package:mobile/core/auth/secure_session_store.dart';
+import 'package:mobile/core/sraap/sraap_parser.dart';
+import 'package:mobile/core/sync.dart';
 import 'package:mobile/widgets/timetable_card.dart';
 
 void main() {
@@ -379,6 +381,118 @@ void main() {
       await AuthRepository.instance.clearSavedPassword(role: 'student');
       final credsAfterClear = await AuthRepository.instance.hasSavedCredentials(role: 'student');
       expect(credsAfterClear, isFalse);
+    });
+  });
+
+  group('9. Safe Browser HTML Import & Hourly Auto-Sync', () {
+    test('importTimetableFromHtml parses .stt-slot HTML and updates cache & repository without hitting sruniv.com', () async {
+      await StorageService.setUserMode('student');
+      const sampleHtml = '''
+      <ul>
+        <li class="stt-slot" data-day="1" data-from="570" data-to="630">
+          <div class="stt-class">
+            <div class="stt-subject">Cloud Security</div>
+            <div class="stt-type">Lecture</div>
+            <div class="stt-room">Room 402</div>
+            <div class="stt-person">Faculty Dr. Kumar</div>
+          </div>
+        </li>
+      </ul>
+      ''';
+
+      final count = await SyncService.instance.importTimetableFromHtml(sampleHtml);
+      expect(count, equals(1));
+      expect(TimetableRepository.instance.classes.length, equals(1));
+      expect(TimetableRepository.instance.classes.first['subject'], equals('Cloud Security'));
+    });
+  });
+
+  group('10. SRAAP Internal Marks (CIE / ETE) & Detailed Subject Breakdown Parser', () {
+    test('parseInternalMarks and parseCourseMarksDetail parse Examination Marks View and component breakdown accurately', () {
+      const mid1Html = '''
+      <html>
+        <body>
+          <h3>Examination Marks View</h3>
+          <table class="table">
+            <tr>
+              <th>S.No</th>
+              <th>Year-Sem</th>
+              <th>Course</th>
+              <th>CIE</th>
+              <th>ETE</th>
+              <th>View</th>
+            </tr>
+            <tr>
+              <td>1</td>
+              <td>3-1</td>
+              <td>24CS301PC311-SOFTWARE ENGINEERING AND SYSTEM DESIGN</td>
+              <td>17</td>
+              <td>0</td>
+              <td><a href="student_mid1.php?course_code=24CS301PC311"><img src="view.png"/></a></td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>3-1</td>
+              <td>24CS312ES301-ALGORITHMS</td>
+              <td>18</td>
+              <td>0</td>
+              <td><a href="student_mid1.php?course_code=24CS312ES301"><img src="view.png"/></a></td>
+            </tr>
+          </table>
+        </body>
+      </html>
+      ''';
+
+      final courses = SraapParser.parseInternalMarks(mid1Html);
+      expect(courses.length, equals(2));
+      expect(courses[0].sNo, equals(1));
+      expect(courses[0].yearSem, equals('3-1'));
+      expect(courses[0].courseCode, equals('24CS301PC311'));
+      expect(courses[0].courseName, equals('SOFTWARE ENGINEERING AND SYSTEM DESIGN'));
+      expect(courses[0].cie, equals('17'));
+      expect(courses[0].ete, equals('0'));
+      expect(courses[0].detailHref, equals('/student/student_mid1.php?course_code=24CS301PC311'));
+
+      const detailHtml = '''
+      <html>
+        <body>
+          <h4>Course :SOFTWARE ENGINEERING AND SYSTEM DESIGN(24CS301PC311)</h4>
+          <table border="1">
+            <tr>
+              <th>Mid Term Examination (20)</th>
+              <th>Lab Exam (10)</th>
+              <th>End Lab Exam (20)</th>
+              <th>Project (10)</th>
+              <th>Re Mid Marks</th>
+              <th>End Term Examination (40)</th>
+            </tr>
+            <tr>
+              <td>17</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td>0</td>
+            </tr>
+          </table>
+        </body>
+      </html>
+      ''';
+
+      final details = SraapParser.parseCourseMarksDetail(
+        detailHtml,
+        courseCode: '24CS301PC311',
+      );
+      expect(details.length, equals(6));
+      expect(details[0].label, equals('Mid Term Examination (20)'));
+      expect(details[0].value, equals('17'));
+      expect(details[0].maxMarks, equals(20.0));
+      expect(details[0].scoredMarks, equals(17.0));
+      expect(details[1].label, equals('Lab Exam (10)'));
+      expect(details[1].isEntered, isFalse);
+      expect(details[5].label, equals('End Term Examination (40)'));
+      expect(details[5].value, equals('0'));
+      expect(details[5].isEndTerm, isTrue);
     });
   });
 }

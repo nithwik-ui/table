@@ -39,6 +39,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
     WidgetsBinding.instance.addObserver(this);
     UpdateService.instance.playStateNotifier.addListener(_onPlayUpdateStateChanged);
     ThemeController.instance.addListener(_onThemeChanged);
+    SyncService.instance.startHourlySync();
     _currentIndex = widget.initialTab;
     
     // Explicitly restore/schedule exact alarms on startup for existing timetable
@@ -141,6 +142,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
 
   @override
   void dispose() {
+    SyncService.instance.stopHourlySync();
     WidgetsBinding.instance.removeObserver(this);
     UpdateService.instance.playStateNotifier.removeListener(_onPlayUpdateStateChanged);
     ThemeController.instance.removeListener(_onThemeChanged);
@@ -266,22 +268,15 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
     if (!mounted || UpdateService.dismissedThisSession) return;
 
     if (result.source == DistributionSource.googlePlay && result.updateAvailable) {
-      if (result.isCriticalImmediate) {
-        // Immediate update required by Google Play policy (priority >= 4)
-        await UpdateService.instance.performImmediateUpdate();
-      } else {
-        // Recommended flexible update: present prompt to user
+      final triggered = await UpdateService.instance.performImmediateUpdate();
+      if (!triggered && mounted) {
         _showUpdatePrompt(
           latestTag: result.versionTag ?? '3.1.4',
+          isCritical: true,
           onUpdateNow: () async {
-            Navigator.of(context, rootNavigator: true).pop();
-            if (result.isFlexibleAvailable) {
-              await UpdateService.instance.startFlexibleUpdate();
-            } else {
-              final uri = Uri.parse('https://play.google.com/store/apps/details?id=com.srutimetable.mobile');
-              if (await canLaunchUrl(uri)) {
-                await launchUrl(uri, mode: LaunchMode.externalApplication);
-              }
+            final uri = Uri.parse('https://play.google.com/store/apps/details?id=com.srutimetable.mobile');
+            if (await canLaunchUrl(uri)) {
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
             }
           },
         );
@@ -290,6 +285,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
       _showUpdatePrompt(
         latestTag: result.versionTag ?? '3.1.4',
         downloadUrl: result.downloadUrl,
+        isCritical: true,
       );
     }
   }
@@ -298,16 +294,18 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
     required String latestTag,
     String? downloadUrl,
     VoidCallback? onUpdateNow,
+    bool isCritical = true,
   }) {
-    if (UpdateService.dismissedThisSession) return;
+    if (!isCritical && UpdateService.dismissedThisSession) return;
     showDialog(
       context: context,
-      barrierDismissible: true,
+      barrierDismissible: !isCritical,
       builder: (BuildContext dialogContext) {
         return UpdateDialog(
           latestTag: latestTag,
           downloadUrl: downloadUrl ?? '',
           onUpdateNow: onUpdateNow,
+          isCritical: isCritical,
           onLater: () {
             UpdateService.dismissedThisSession = true;
             Navigator.of(dialogContext).pop();

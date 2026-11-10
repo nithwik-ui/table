@@ -1,5 +1,5 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/constants.dart';
 import '../../core/theme_controller.dart';
 import '../../core/storage.dart';
@@ -11,6 +11,7 @@ import '../../core/sraap/sraap_academic_service.dart';
 import '../../core/sraap/models/sraap_academic_data.dart';
 import 'academic_login_screen.dart';
 import 'attendance_screen.dart';
+import 'internal_marks_screen.dart';
 
 class AcademicDashboard extends StatefulWidget {
   const AcademicDashboard({super.key});
@@ -25,6 +26,7 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
   bool _isSessionExpired = false;
   bool _isShowingFresh = false;
   SraapAcademicData? _data;
+  SraapInternalMarksData? _internalMarks;
   double? _placementAttendance;
   String? _error;
 
@@ -33,7 +35,9 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
     super.initState();
     ThemeController.instance.addListener(_onThemeChanged);
     _isSessionExpired = SraapSessionManager.instance.isSessionExpired;
-    _placementAttendance = SraapAcademicService.instance.getCachedPlacementAttendance();
+    _placementAttendance =
+        SraapAcademicService.instance.getCachedPlacementAttendance();
+    _internalMarks = SraapAcademicService.instance.getCachedInternalMarks();
     _loadData();
   }
 
@@ -55,6 +59,10 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
       _isLoading = false;
       _isShowingFresh = false;
     }
+    final cachedMarks = SraapAcademicService.instance.getCachedInternalMarks();
+    if (cachedMarks != null && _internalMarks == null) {
+      _internalMarks = cachedMarks;
+    }
 
     if (mounted) {
       setState(() {
@@ -74,6 +82,15 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
         }
       }).catchError((_) {});
 
+      // Non-blocking internal marks refresh
+      SraapAcademicService.instance
+          .fetchInternalMarks(forceRefresh: forceRefresh)
+          .then((marks) {
+        if (mounted && marks != null) {
+          setState(() => _internalMarks = marks);
+        }
+      }).catchError((_) {});
+
       try {
         final fresh = await SraapAcademicService.instance.getAcademicData(
           forceRefresh: forceRefresh,
@@ -89,7 +106,7 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
           if (forceRefresh) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Attendance updated from SRAAP'),
+                content: Text('Academic data updated from SRAAP'),
                 duration: Duration(seconds: 2),
                 behavior: SnackBarBehavior.floating,
               ),
@@ -113,7 +130,7 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
         if (mounted && forceRefresh) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Could not reach SRAAP. Showing saved attendance.'),
+              content: Text('Could not reach SRAAP. Showing saved data.'),
               duration: Duration(seconds: 2),
               behavior: SnackBarBehavior.floating,
             ),
@@ -243,7 +260,9 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
         : (isCondonation ? AppConstants.warningText : AppConstants.errorText);
     final badgeBg = isSafe
         ? AppConstants.successContainer
-        : (isCondonation ? AppConstants.warningContainer : AppConstants.errorContainer);
+        : (isCondonation
+              ? AppConstants.warningContainer
+              : AppConstants.errorContainer);
     final statusText = isSafe
         ? 'Safe / Eligible'
         : isCondonation
@@ -251,10 +270,16 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
             : 'Low Attendance';
 
     // Fresh vs Cached / Stale indicator (Section 16)
-    final isStale = _isSessionExpired || !_isShowingFresh || DateTime.now().difference(data.lastSynced).inMinutes > 30;
+    final isStale = _isSessionExpired ||
+        !_isShowingFresh ||
+        DateTime.now().difference(data.lastSynced).inMinutes > 30;
     final freshnessLabel = isStale ? 'Cached / Stale' : 'Fresh';
-    final freshnessColor = isStale ? AppConstants.warningText : AppConstants.successText;
-    final freshnessBg = isStale ? AppConstants.warningContainer : AppConstants.successContainer;
+    final freshnessColor =
+        isStale ? AppConstants.warningText : AppConstants.successText;
+    final freshnessBg =
+        isStale ? AppConstants.warningContainer : AppConstants.successContainer;
+
+    final marksCourses = _internalMarks?.courses ?? const [];
 
     return ListView(
       padding: const EdgeInsets.symmetric(
@@ -281,21 +306,31 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: freshnessBg,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           freshnessLabel,
-                          style: AppConstants.getMonoLabel(color: freshnessColor).copyWith(fontSize: 10),
+                          style: AppConstants.getMonoLabel(
+                            color: freshnessColor,
+                          ).copyWith(fontSize: 10),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'SRAAP • ${_formatTimeAgo(data.lastSynced)}',
+                    [
+                      'SRAAP',
+                      if (data.yearSem != null && data.yearSem!.isNotEmpty)
+                        'Sem ${data.yearSem}',
+                      _formatTimeAgo(data.lastSynced),
+                    ].join(' • '),
                     style: AppConstants.getBodyMedium(
                       color: AppConstants.textSecondary,
                     ),
@@ -321,7 +356,42 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
+
+        // Portal Announcements Marquee Banner (if any active schedule notice on SRAAP)
+        if (data.announcements.isNotEmpty) ...[
+          Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppConstants.secondaryContainer.withValues(alpha: 0.65),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppConstants.primary.withValues(alpha: 0.25),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.campaign_rounded,
+                  color: AppConstants.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Today on SRAAP: ${data.announcements.join(' • ')}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppConstants.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
 
         if (_isSessionExpired) ...[
           Container(
@@ -354,7 +424,7 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Showing saved attendance. Tap RENEW to enter CAPTCHA and refresh live attendance.',
+                        'Showing saved data. Tap RENEW to enter CAPTCHA and refresh live attendance & marks.',
                         style: AppConstants.getBodyMedium(
                           color: AppConstants.textSecondary,
                         ).copyWith(fontSize: 12),
@@ -386,7 +456,7 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
           ),
         ],
 
-        // 1. Featured Overall Attendance Card (Section 14)
+        // 1. Featured Overall Attendance Card
         Container(
           decoration: BoxDecoration(
             color: AppConstants.surface,
@@ -482,7 +552,9 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                isSafe ? Icons.check_circle_outline_rounded : Icons.warning_amber_rounded,
+                                isSafe
+                                    ? Icons.check_circle_outline_rounded
+                                    : Icons.warning_amber_rounded,
                                 size: 13,
                                 color: statusColor,
                               ),
@@ -528,7 +600,7 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'Tap to view subject breakdown',
+                              'Tap to view subject & daily attendance',
                               style: AppConstants.getBodyMedium(
                                 color: AppConstants.primary,
                               ).copyWith(fontWeight: FontWeight.w600),
@@ -549,7 +621,12 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
           ),
         ),
 
-        // 2. Placements Attendance Card (Section 15)
+        const SizedBox(height: 14),
+
+        // 2. Featured Results & Internal Marks (CIE / ETE) Card
+        _buildFeaturedResultsCard(marksCourses),
+
+        // 3. Placements Attendance Card
         if (_placementAttendance != null) ...[
           const SizedBox(height: 14),
           Container(
@@ -565,41 +642,62 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: AppConstants.secondaryContainer,
-                            borderRadius: BorderRadius.circular(10),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppConstants.secondaryContainer,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              Icons.school_rounded,
+                              size: 20,
+                              color: AppConstants.primary,
+                            ),
                           ),
-                          child: Icon(Icons.school_rounded, size: 20, color: AppConstants.primary),
-                        ),
-                        const SizedBox(width: 10),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Placements Attendance',
-                              style: AppConstants.getHeadline().copyWith(fontSize: 15),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Placements Attendance',
+                                  style: AppConstants.getHeadline().copyWith(
+                                    fontSize: 15,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  'Campus Recruitment & Training',
+                                  style: AppConstants.getLabelSmall(
+                                    color: AppConstants.textSecondary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ),
-                            Text(
-                              'Campus Recruitment & Training',
-                              style: AppConstants.getLabelSmall(color: AppConstants.textSecondary),
-                            ),
-                          ],
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 10),
                     Text(
-                      _placementAttendance!.truncateToDouble() == _placementAttendance!
+                      _placementAttendance!.truncateToDouble() ==
+                              _placementAttendance!
                           ? '${_placementAttendance!.toInt()}%'
                           : '${_placementAttendance!.toStringAsFixed(1)}%',
                       style: AppConstants.getDisplay(
                         color: _placementAttendance! >= 75
                             ? AppConstants.successText
-                            : (_placementAttendance! >= 65 ? AppConstants.warningText : AppConstants.errorText),
+                            : (_placementAttendance! >= 65
+                                  ? AppConstants.warningText
+                                  : AppConstants.errorText),
                       ).copyWith(fontSize: 22),
                     ),
                   ],
@@ -614,7 +712,9 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
                     valueColor: AlwaysStoppedAnimation<Color>(
                       _placementAttendance! >= 75
                           ? AppConstants.successText
-                          : (_placementAttendance! >= 65 ? AppConstants.warningText : AppConstants.errorText),
+                          : (_placementAttendance! >= 65
+                                ? AppConstants.warningText
+                                : AppConstants.errorText),
                     ),
                   ),
                 ),
@@ -638,13 +738,33 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          childAspectRatio: 1.35,
+          childAspectRatio: 1.32,
           children: [
+            _buildOptionCard(
+              icon: Icons.assessment_outlined,
+              title: 'CIE / Mid Marks',
+              value: marksCourses.isNotEmpty
+                  ? 'Avg ${_internalMarks!.averageCie}'
+                  : 'View Marks',
+              subtitle: marksCourses.isNotEmpty
+                  ? '${marksCourses.length} courses • Sem ${marksCourses.first.yearSem}'
+                  : 'Sem-wise CIE & ETE',
+              accentColor: AppConstants.primary,
+              onTap: () {
+                Navigator.of(context)
+                    .push(
+                      MaterialPageRoute(
+                        builder: (_) => const InternalMarksScreen(),
+                      ),
+                    )
+                    .then((_) => _loadData());
+              },
+            ),
             _buildOptionCard(
               icon: Icons.fact_check_outlined,
               title: 'Attendance',
               value: '${attendance.toStringAsFixed(1)}%',
-              subtitle: 'Subject breakdown',
+              subtitle: 'Subject & daily log',
               accentColor: statusColor,
               onTap: () {
                 Navigator.of(context)
@@ -658,31 +778,49 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
             ),
             _buildOptionCard(
               icon: Icons.bar_chart_rounded,
-              title: 'CGPA',
+              title: 'CGPA & Credits',
               value: cgpa,
-              subtitle: 'Out of 10.0',
+              subtitle: data.backlogsCount != null
+                  ? '${data.coursesCount ?? 0} Courses • ${data.backlogsCount} Backlogs'
+                  : 'Out of 10.0',
               accentColor: AppConstants.info,
               onTap: () {
-                _showInfoModal(
-                  'CGPA',
-                  'Current Cumulative GPA is $cgpa / 10.0.',
-                );
+                final details = [
+                  'Current Cumulative GPA: $cgpa / 10.0',
+                  if (data.yearSem != null) 'Current Year-Sem: ${data.yearSem}',
+                  if (data.batchNumber != null) 'Batch: ${data.batchNumber}',
+                  if (data.coursesCount != null)
+                    'Completed Courses: ${data.coursesCount}',
+                  if (data.backlogsCount != null)
+                    'Total Backlogs: ${data.backlogsCount}',
+                ].join('\n');
+                _showInfoModal('CGPA & Academic Standing', details);
               },
             ),
             _buildOptionCard(
               icon: Icons.person_outline_rounded,
-              title: 'Mentor',
+              title: 'Faculty Mentor',
               value: mentorName.split(' ').first,
               subtitle: mentorDept,
               accentColor: AppConstants.success,
-              onTap: () {
-                _showInfoModal(
-                  'Faculty Mentor',
-                  'Mentor: $mentorName\nDetails: $mentorDept',
-                );
-              },
+              onTap: () => _showMentorModal(mentorName, mentorDept),
             ),
-            if (_placementAttendance != null)
+            if (data.alphaCoins != null || data.sigmaCoins != null)
+              _buildOptionCard(
+                icon: Icons.stars_rounded,
+                title: 'SSM Coins',
+                value: _extractCoinSummary(data.alphaCoins),
+                subtitle: data.sigmaCoins ?? 'Student Success Mgmt',
+                accentColor: AppConstants.warningText,
+                onTap: () {
+                  final msg = [
+                    if (data.alphaCoins != null) data.alphaCoins!,
+                    if (data.sigmaCoins != null) data.sigmaCoins!,
+                  ].join('\n');
+                  _showInfoModal('Student Success Management (SSM)', msg);
+                },
+              )
+            else if (_placementAttendance != null)
               _buildOptionCard(
                 icon: Icons.work_outline_rounded,
                 title: 'Placements',
@@ -704,6 +842,181 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
 
         const SizedBox(height: 20),
       ],
+    );
+  }
+
+  String _extractCoinSummary(String? raw) {
+    if (raw == null || raw.isEmpty) return 'SSM';
+    final match = RegExp(r'(\d+\s*Coins)', caseSensitive: false).firstMatch(raw);
+    if (match != null) return 'Alpha: ${match.group(1)}';
+    return raw;
+  }
+
+  Widget _buildFeaturedResultsCard(List<SraapCourseMarks> courses) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppConstants.surface,
+        borderRadius: BorderRadius.circular(AppConstants.radiusCard),
+        border: Border.all(color: AppConstants.outline),
+        boxShadow: AppConstants.shadowLevel1,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppConstants.radiusCard),
+          onTap: () {
+            Navigator.of(context)
+                .push(
+                  MaterialPageRoute(
+                    builder: (_) => const InternalMarksScreen(),
+                  ),
+                )
+                .then((_) => _loadData());
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppConstants.secondaryContainer,
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.radiusButton,
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.workspace_premium_rounded,
+                              color: AppConstants.primary,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Results & Internal Marks',
+                                  style: AppConstants.getHeadline().copyWith(
+                                    fontSize: 15.5,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  courses.isNotEmpty
+                                      ? 'Sem ${courses.first.yearSem} • ${courses.length} Courses CIE / ETE'
+                                      : 'Sem Wise CIE / ETE Marks',
+                                  style: AppConstants.getLabelSmall(
+                                    color: AppConstants.textSecondary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (courses.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppConstants.secondaryContainer,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          'Avg CIE: ${_internalMarks!.averageCie}',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppConstants.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                if (courses.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: courses.take(4).map((c) {
+                      final shortName = c.courseName.length > 18
+                          ? '${c.courseName.substring(0, 18)}…'
+                          : c.courseName;
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppConstants.background,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppConstants.outline),
+                        ),
+                        child: Text(
+                          '$shortName: ${c.cie}',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppConstants.textPrimary,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.find_in_page_rounded,
+                          size: 15,
+                          color: AppConstants.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'View subject CIE, Mid, Lab & End-Term marks',
+                          style: AppConstants.getBodyMedium(
+                            color: AppConstants.primary,
+                          ).copyWith(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 12,
+                      color: AppConstants.primary,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -800,14 +1113,66 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
     );
   }
 
+  void _showMentorModal(String mentorName, String mentorContact) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppConstants.surface,
+        title: Text(
+          'Faculty Mentor',
+          style: AppConstants.getHeadline(color: AppConstants.primary),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              mentorName,
+              style: AppConstants.getHeadline().copyWith(fontSize: 16),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Contact: $mentorContact',
+              style: AppConstants.getBodyMedium(
+                color: AppConstants.textSecondary,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          if (RegExp(r'\d{8,}').hasMatch(mentorContact))
+            TextButton.icon(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: mentorContact));
+                Navigator.of(ctx).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Mentor phone number copied to clipboard'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+              icon: const Icon(Icons.copy_rounded, size: 16),
+              label: const Text('Copy Number'),
+            ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _showQuickReconnectSheet() async {
     final creds = await SecureSessionStore.getSession(
       role: 'sraap_credentials',
     );
-    final roll =
-        creds?['sraap_roll']?.toString() ??
-        StorageService.getStudentRollNumber() ??
-        '';
+    final roll = (creds?['sraap_roll']?.toString() ??
+            StorageService.getStudentRollNumber() ??
+            '')
+        .trim()
+        .toUpperCase();
     final pass = creds?['sraap_pass']?.toString() ?? '';
 
     if (!mounted) return;
@@ -830,7 +1195,7 @@ class _AcademicDashboardState extends State<AcademicDashboard> {
         password: pass,
         onSuccess: () {
           Navigator.of(ctx).pop();
-          _loadData();
+          _loadData(forceRefresh: true);
         },
       ),
     );
@@ -904,7 +1269,9 @@ class _QuickReconnectModalState extends State<_QuickReconnectModal> {
     }
 
     if (_captchaBytes == null) {
-      setState(() => _errorMsg = 'CAPTCHA not loaded yet. Tap image to reload.');
+      setState(
+        () => _errorMsg = 'CAPTCHA not loaded yet. Tap image to reload.',
+      );
       return;
     }
 
@@ -915,7 +1282,7 @@ class _QuickReconnectModalState extends State<_QuickReconnectModal> {
 
     try {
       final result = await SraapAuthManager.submitLogin(
-        enrollment: widget.rollNumber,
+        enrollment: widget.rollNumber.trim().toUpperCase(),
         password: widget.password,
         captcha: code,
       );
@@ -1022,7 +1389,7 @@ class _QuickReconnectModalState extends State<_QuickReconnectModal> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Your university session timed out. Solve the CAPTCHA code below to instantly refresh your attendance.',
+              'Your university session timed out. Solve the CAPTCHA code below to instantly refresh your attendance & marks.',
               style: AppConstants.getBodyMedium(
                 color: AppConstants.textSecondary,
               ),
@@ -1043,7 +1410,7 @@ class _QuickReconnectModalState extends State<_QuickReconnectModal> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Roll No: ${widget.rollNumber}',
+                    'Roll No: ${widget.rollNumber.trim().toUpperCase()}',
                     style: AppConstants.getBodyMedium().copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -1108,10 +1475,17 @@ class _QuickReconnectModalState extends State<_QuickReconnectModal> {
                     textCapitalization: TextCapitalization.none,
                     autocorrect: false,
                     enableSuggestions: false,
-                    decoration: const InputDecoration(
+                    cursorColor: AppConstants.primary,
+                    style: AppConstants.getBodyLarge(
+                      color: AppConstants.textPrimary,
+                    ),
+                    decoration: InputDecoration(
                       hintText: 'Enter code',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(
+                      hintStyle: AppConstants.getBodyMedium(
+                        color: AppConstants.textMuted,
+                      ),
+                      border: const OutlineInputBorder(),
+                      contentPadding: const EdgeInsets.symmetric(
                         horizontal: 14,
                         vertical: 12,
                       ),
@@ -1171,7 +1545,7 @@ class _QuickReconnectModalState extends State<_QuickReconnectModal> {
                       ),
                     )
                   : const Text(
-                      'VERIFY & REFRESH ATTENDANCE',
+                      'VERIFY & REFRESH',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
             ),

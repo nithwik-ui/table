@@ -441,6 +441,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         _buildSubjectSectionHeader(subjects.length),
         const SizedBox(height: 12),
         ...subjects.map((sub) => _buildSubjectCard(sub)),
+        if (data.recentDailyAttendance.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          _buildRecentDailyAttendanceSection(data.recentDailyAttendance),
+        ],
         const SizedBox(height: 20),
         _buildPlacementSectionHeader(),
         const SizedBox(height: 12),
@@ -1622,6 +1626,35 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 ),
               ),
               const SizedBox(height: 20),
+              if (sub.detailHref != null && sub.detailHref!.isNotEmpty) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _showPortalDetailLogSheet(
+                        title: sub.subjectName,
+                        subtitle: 'Subject-wise Attendance Log',
+                        path: sub.detailHref!,
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppConstants.primary,
+                      side: BorderSide(color: AppConstants.primary),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.list_alt_rounded, size: 18),
+                    label: const Text(
+                      'View Date-Wise Attendance Log',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -1637,6 +1670,280 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRecentDailyAttendanceSection(
+    List<SraapDailyAttendance> dailyList,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Last Week Attendance',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: AppConstants.textPrimary,
+              ),
+            ),
+            Text(
+              'Tap date for period log',
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: AppConstants.primary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Container(
+          decoration: BoxDecoration(
+            color: AppConstants.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppConstants.outline),
+            boxShadow: AppConstants.shadowLevel1,
+          ),
+          child: Column(
+            children: List.generate(dailyList.length, (i) {
+              final d = dailyList[i];
+              final isFull = d.held > 0 && d.attended == d.held;
+              final isZero = d.attended == 0;
+              final color = isFull
+                  ? AppConstants.successText
+                  : (isZero ? AppConstants.errorText : AppConstants.warningText);
+              final bg = isFull
+                  ? AppConstants.successContainer
+                  : (isZero
+                        ? AppConstants.errorContainer
+                        : AppConstants.warningContainer);
+
+              return Column(
+                children: [
+                  if (i > 0) Divider(height: 1, color: AppConstants.outline),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: d.detailHref != null && d.detailHref!.isNotEmpty
+                        ? () => _showPortalDetailLogSheet(
+                              title: 'Attendance on ${d.date}',
+                              subtitle:
+                                  'Attended ${d.attended} of ${d.held} classes',
+                              path: d.detailHref!,
+                            )
+                        : null,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: bg,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.calendar_today_rounded,
+                                  size: 15,
+                                  color: color,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    d.date,
+                                    style: TextStyle(
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppConstants.textPrimary,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Held: ${d.held} • Attended: ${d.attended}',
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      color: AppConstants.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: bg,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '${d.attended}/${d.held}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: color,
+                                  ),
+                                ),
+                              ),
+                              if (d.detailHref != null &&
+                                  d.detailHref!.isNotEmpty) ...[
+                                const SizedBox(width: 6),
+                                Icon(
+                                  Icons.arrow_forward_ios_rounded,
+                                  size: 12,
+                                  color: AppConstants.textMuted,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showPortalDetailLogSheet({
+    required String title,
+    required String subtitle,
+    required String path,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppConstants.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.65,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (ctx, scrollController) {
+            return FutureBuilder<List<Map<String, String>>>(
+              future: SraapAcademicService.instance.fetchPortalDetailTable(path),
+              builder: (context, snapshot) {
+                final loading =
+                    snapshot.connectionState == ConnectionState.waiting;
+                final rows = snapshot.data ?? const [];
+
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: AppConstants.outline,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        title,
+                        style: AppConstants.getHeadline().copyWith(
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: AppConstants.getLabelSmall(
+                          color: AppConstants.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Expanded(
+                        child: loading
+                            ? Center(
+                                child: CircularProgressIndicator(
+                                  color: AppConstants.primary,
+                                ),
+                              )
+                            : rows.isEmpty
+                                ? Center(
+                                    child: Text(
+                                      'No detailed records returned from SRAAP.',
+                                      style: AppConstants.getBodyMedium(
+                                        color: AppConstants.textSecondary,
+                                      ),
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    controller: scrollController,
+                                    itemCount: rows.length,
+                                    itemBuilder: (_, idx) {
+                                      final row = rows[idx];
+                                      return Container(
+                                        margin: const EdgeInsets.only(
+                                          bottom: 8,
+                                        ),
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: AppConstants.background,
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          border: Border.all(
+                                            color: AppConstants.outline,
+                                          ),
+                                        ),
+                                        child: Wrap(
+                                          spacing: 12,
+                                          runSpacing: 6,
+                                          children: row.entries
+                                              .map(
+                                                (e) => Text(
+                                                  '${e.key}: ${e.value}',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: AppConstants
+                                                        .textPrimary,
+                                                  ),
+                                                ),
+                                              )
+                                              .toList(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
         );
       },
     );

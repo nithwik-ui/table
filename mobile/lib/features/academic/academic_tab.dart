@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants.dart';
 import '../../core/theme_controller.dart';
 import '../../core/storage.dart';
+import '../../core/sraap/sraap_academic_service.dart';
 import 'academic_login_screen.dart';
 import 'academic_dashboard.dart';
 
@@ -19,15 +20,21 @@ class _AcademicTabState extends State<AcademicTab> {
   void initState() {
     super.initState();
     ThemeController.instance.addListener(_onThemeChanged);
+    SraapAcademicService.instance.addListener(_onSraapStateChanged);
   }
 
   void _onThemeChanged() {
     if (mounted) setState(() {});
   }
 
+  void _onSraapStateChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
     ThemeController.instance.removeListener(_onThemeChanged);
+    SraapAcademicService.instance.removeListener(_onSraapStateChanged);
     super.dispose();
   }
 

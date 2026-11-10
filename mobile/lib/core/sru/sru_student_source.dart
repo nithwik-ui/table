@@ -4,41 +4,45 @@ import 'sru_timetable_parser.dart';
 import 'sru_profile_parser.dart';
 import '../timetable_normalizer.dart';
 import '../storage.dart';
+import '../api.dart';
 
 class SruStudentSource {
   static final SruStudentSource instance = SruStudentSource._();
   SruStudentSource._();
 
+  String? _resolveConfiguredBatch() {
+    final profile = StorageService.getProfile();
+    final batchId = profile?['batch_id']?.toString().trim();
+    if (batchId != null && batchId.isNotEmpty) return batchId;
+    final batchCode = (profile?['batch'] ?? profile?['batch_name'])?.toString().trim();
+    if (batchCode != null && batchCode.isNotEmpty) return batchCode;
+    return null;
+  }
+
   Future<Map<String, dynamic>> fetchProfile() async {
-    // 1. Try /student/details
-    try {
-      final detailsRes = await SruAuthClient.instance.getAuthenticated('${SruAuthClient.baseUrl}/student/details');
-      if (detailsRes.statusCode == 200 && !detailsRes.body.toLowerCase().contains('login')) {
-        final profile = SruProfileParser.parseProfile(detailsRes.body, 'student');
-        if (profile['name'] != null && profile['name'] != 'Student' && profile['name'] != 'User') {
-          return profile;
-        }
-      }
-    } catch (e) {
-      debugPrint('Student details fetch non-fatal: $e');
+    final existing = StorageService.getProfile();
+    if (existing != null && existing.isNotEmpty) {
+      return existing;
     }
-
-    // 2. Try /student/timetable (contains Welcome: <Name> and My Timetable - <Batch>)
-    try {
-      final ttRes = await SruAuthClient.instance.getAuthenticated('${SruAuthClient.baseUrl}/student/timetable');
-      if (ttRes.statusCode == 200 && !ttRes.body.toLowerCase().contains('login')) {
-        final profile = SruProfileParser.parseProfile(ttRes.body, 'student');
-        return profile;
-      }
-    } catch (e) {
-      debugPrint('Student timetable profile fetch non-fatal: $e');
-    }
-
-    // 3. Fallback to existing or default profile
     return SruProfileParser.parseProfile('', 'student');
   }
 
   Future<List<dynamic>> fetchTimetable() async {
+    final batchTarget = _resolveConfiguredBatch();
+    if (batchTarget != null && batchTarget.isNotEmpty) {
+      // Safe Cloudflare Backend Batch Sync (Never touches sruniv.com)
+      final entries = await ApiService.fetchTimetable(batchTarget);
+      try {
+        final backendChanges = await ApiService.fetchChanges(batchTarget);
+        if (backendChanges.isNotEmpty) {
+          await StorageService.saveChangesCache(backendChanges);
+        }
+      } catch (e) {
+        debugPrint('[SYNC] Backend batch changes fetch non-fatal: $e');
+      }
+      return entries;
+    }
+
     final response = await SruAuthClient.instance.getAuthenticated('${SruAuthClient.baseUrl}/student/timetable');
     if (response.statusCode == 200) {
       if (response.body.toLowerCase().contains('login') && response.body.toLowerCase().contains('password')) {
