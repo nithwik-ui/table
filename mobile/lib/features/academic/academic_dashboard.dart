@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants.dart';
 import '../../core/theme_controller.dart';
 import '../../core/storage.dart';
@@ -1518,6 +1519,21 @@ class _QuickReconnectModalState extends State<_QuickReconnectModal> {
                           .then((_) => widget.onSuccess());
                     },
                     child: const Text('Sign In to SRAAP Manually'),
+                  ),
+                ),
+                Center(
+                  child: TextButton.icon(
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppConstants.primary,
+                    ),
+                    onPressed: () async {
+                      final uri = Uri.parse('https://sraap.in/student_login.php');
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      }
+                    },
+                    icon: const Icon(Icons.open_in_browser_rounded, size: 16),
+                    label: const Text('Open Official SRAAP in Browser'),
                   ),
                 ),
               ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants.dart';
 import '../../core/storage.dart';
 import '../../core/auth/secure_session_store.dart';
@@ -222,6 +223,52 @@ class _AcademicLoginScreenState extends State<AcademicLoginScreen> {
                 ),
               ),
               const SizedBox(height: 24),
+
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppConstants.surface,
+                  borderRadius: BorderRadius.circular(AppConstants.radiusCard),
+                  border: Border.all(color: AppConstants.outline),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.verified_user_outlined, color: AppConstants.primary, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Official University Portal',
+                          style: TextStyle(fontWeight: FontWeight.bold, color: AppConstants.primary, fontSize: 14),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Access attendance, internal marks, and exam memos directly through SR University\'s official portal safely in your browser.',
+                      style: AppConstants.getBodyMedium(color: AppConstants.textSecondary).copyWith(fontSize: 12),
+                    ),
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppConstants.primary,
+                        side: BorderSide(color: AppConstants.primary),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      ),
+                      onPressed: () async {
+                        final uri = Uri.parse('https://sraap.in/student_login.php');
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        }
+                      },
+                      icon: const Icon(Icons.open_in_browser_rounded, size: 18),
+                      label: const Text('Open Official SRAAP Portal', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
 
               if (_errorMessage != null) ...[
                 Container(
